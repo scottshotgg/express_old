@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"strconv"
 	"unicode"
 
@@ -10,7 +12,6 @@ import (
 
 // TODO: we currently have to have the space afterwards, need to add the parsing code into the semicolon code
 // TODO: we currently only have numbers being parsed within floats, so nothing like '9.9f', etc
-var input = "bool a := true .+ 9;"
 
 // Program ...
 type Program struct {
@@ -110,7 +111,7 @@ func lex() {
 		OnlyNumbers: true,
 	}
 
-	for _, char := range input {
+	for _, char := range p.Value {
 		// FIXME: make a map for token delmiters
 		switch char {
 		case ' ':
@@ -175,6 +176,75 @@ func lex() {
 				// }
 			}
 
+		case ':':
+			meta.Accumulator += string(char)
+			determineToken(meta)
+			meta.Accumulator = ""
+
+		case '=':
+			meta.Accumulator += string(char)
+			determineToken(meta)
+			meta.Accumulator = ""
+
+		case '{':
+			// meta.Accumulator += string(char)
+			// if meta.EscapeNext {
+			// 	meta.EscapeNext = false
+			// 	continue
+			// }
+			// // if meta.Enclosed.Value == 0 {
+			// // 	// meta.Enclosed.Value = '{'
+			// // 	meta.Accumulator += string(char)
+			// // }
+			// p.Tokens = append(p.Tokens, token.Token{
+			// 	Type: "L_BRACKET",
+			// 	Value: token.Value{
+			// 		Type:   "L_BRACKET",
+			// 		String: meta.Accumulator,
+			// 	},
+			// })
+			// meta.Accumulator = ""
+			meta.Accumulator += string(char)
+			determineToken(meta)
+			meta.Accumulator = ""
+
+		case '}':
+			// meta.Accumulator += string(char)
+			// if meta.EscapeNext {
+			// 	meta.EscapeNext = false
+			// 	continue
+			// }
+			// p.Tokens = append(p.Tokens, token.Token{
+			// 	Type: "R_BRACKET",
+			// 	Value: token.Value{
+			// 		Type:   "R_BRACKET",
+			// 		String: meta.Accumulator,
+			// 	},
+			// })
+			// meta.Accumulator = ""
+			meta.Accumulator += string(char)
+			determineToken(meta)
+			meta.Accumulator = ""
+
+			// This first if block controls whether quotes are included in the value of a string literal
+			// if meta.Enclosed.Value == '{' && meta.Enclosed.Matched == false {
+			// 	meta.Enclosed.Matched = true
+			// 	meta.Accumulator += string(char)
+
+			// 	p.Tokens = append(p.Tokens, token.Token{
+			// 		Type: "LITERAL",
+			// 		Value: token.Value{
+			// 			Type:   "string",
+			// 			String: meta.Accumulator,
+			// 		},
+			// 	})
+
+			// 	meta.Accumulator = ""
+			// 	// meta = ParseMeta{
+			// 	// 	OnlyNumbers: true,
+			// 	// }
+			// }
+
 		case '\\':
 			meta.EscapeNext = true
 
@@ -207,12 +277,29 @@ func printTokens() {
 }
 
 func main() {
+	// wordPtr := flag.String("word", "", "a string")
+	// flag.Parse()
+
+	// fmt.Println("word:", *wordPtr)
+
+	if len(os.Args) < 2 {
+		fmt.Println("ERROR: You must provide an input program")
+		return
+	}
+	programName := os.Args[1:][0]
+
+	input, err := ioutil.ReadFile(programName)
+	if err != nil {
+		fmt.Printf("ERROR: Cannot read input program: %s\n", programName)
+		return
+	}
+
 	p = Program{
-		Value:  input,
+		Value:  string(input),
 		Length: len(input),
 	}
 
-	fmt.Println(input)
+	fmt.Println(p.Value)
 	fmt.Println()
 
 	lex()
