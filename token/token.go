@@ -4,21 +4,22 @@ import "reflect"
 
 // Value ...
 type Value struct {
-	Type   string
-	True   interface{}
-	String string
+	Type   string      `json:",omitempty"`
+	True   interface{} `json:",omitempty"`
+	String string      `json:",omitempty"`
 }
 
 // Token ...
 type Token struct {
-	ID       int
-	Type     string
-	Expected string
-	Value    Value
+	ID       int    `json:",omitempty"`
+	Type     string `json:",omitempty"`
+	Expected string `json:",omitempty"`
+	Value    Value  `json:",omitempty"`
 }
 
 // TODO: make a map of all enclosers, map[string]Token
-
+// TODO: Verify ALL 'Expected' and 'Type' attributes
+// TODO: might look into doing some letters from other natural languages (ie, `forwardtick`)
 // TokenMap ...
 var TokenMap = map[string]Token{
 	// TYPES
@@ -144,6 +145,86 @@ var TokenMap = map[string]Token{
 			String: "/",
 		},
 	},
+	"%": Token{
+		Type:     "MOD",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3",
+			String: "%",
+		},
+	},
+	"^": Token{
+		Type:     "EXP",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3",
+			String: "^",
+		},
+	},
+	"!": Token{
+		Type:     "NOT",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3",
+			String: "!",
+		},
+	},
+	// TODO: look up what this is called and shit
+	"?": Token{
+		Type:     "NOT",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3",
+			String: "!",
+		},
+	},
+	"_": Token{
+		Type:     "UNDERSCORE",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3",
+			String: "_",
+		},
+	},
+	// FIXME: DOLLA DOLLA BILLS YALL: define this
+	"$": Token{
+		Type:     "DDBY",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3",
+			String: "$",
+		},
+	},
+	// FIXME: AMP/AND - define this
+	"&": Token{
+		Type:     "AMP",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3",
+			String: "&",
+		},
+	},
+	// FIXME: PIPE/OR - define what a pipe is/does
+	"|": Token{
+		Type:     "PIPE",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3",
+			String: "|",
+		},
+	},
+	// FIXME: still need to decide what to do with this one
+	"#": Token{
+		Type:     "HASH",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3",
+			String: "#",
+		},
+	},
+
+	// TODO: we should just make the parser look for "." and then "+"
+	// VECTOR OPERANDS
 	".+": Token{
 		Type:     "VEC_ADD",
 		Expected: "EXPR",
@@ -192,6 +273,120 @@ var TokenMap = map[string]Token{
 			Type:   "bool",
 			True:   false,
 			String: "false",
+		},
+	},
+
+	// SEPARATORS
+	",": Token{
+		Type:     "SEPARATOR",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "comma",
+			String: ",",
+		},
+	},
+	" ": Token{
+		Type: "WS",
+		Value: Value{
+			Type:   "space",
+			String: " ",
+		},
+	},
+	"\t": Token{
+		Type: "WS",
+		Value: Value{
+			Type:   "tab",
+			String: "\t",
+		},
+	},
+	"\n": Token{
+		Type: "WS",
+		Value: Value{
+			Type:   "newline",
+			String: "\n",
+		},
+	},
+	";": Token{
+		Type: "EOS",
+		// Expected: "STATEMENT",
+		Value: Value{
+			Type:   "semicolon",
+			String: ";",
+		},
+	},
+
+	// ENCLOSERS
+	"(": Token{
+		Type:     "L_PAREN",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3", // TODO: check all these
+			String: "(",
+		},
+	},
+	")": Token{
+		Type:     "R_PAREN",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3", // TODO: check all these
+			String: ")",
+		},
+	},
+	"`": Token{
+		Type:     "GRAVE",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3",
+			String: "`",
+		},
+	},
+	"~": Token{
+		Type:     "TILDE",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3",
+			String: "~",
+		},
+	},
+	"'": Token{
+		Type:     "S_QUOTE",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3",
+			String: "'",
+		},
+	},
+	"\"": Token{
+		Type:     "D_QUOTE",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3",
+			String: "\"",
+		},
+	},
+	"<": Token{
+		Type:     "L_THAN",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3",
+			String: "<",
+		},
+	},
+	">": Token{
+		Type:     "G_THAN",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3",
+			String: ">",
+		},
+	},
+	// TODO: not sure if this will be an encloser or not
+	"@": Token{
+		Type:     "AT",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3",
+			String: "@",
 		},
 	},
 }

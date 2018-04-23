@@ -1,0 +1,13 @@
+{"Type":"TYPE","Expected":"IDENT","Value":{"Type":"var","String":"var"}}
+{"Type":"WS","Value":{"String":" "}}
+{"Type":"IDENT","Expected":"ASSIGN","Value":{"Type":"ident","String":"a"}}
+{"Type":"WS","Value":{"String":" "}}
+{"Type":"ASSIGN","Expected":"EXPR","Value":{"Type":"set_assign","String":":"}}
+{"Type":"ASSIGN","Expected":"EXPR","Value":{"Type":"assign","String":"="}}
+{"Type":"WS","Value":{"String":" "}}
+{"Type":"IDENT","Expected":"ASSIGN","Value":{"Type":"ident","String":"a"}}
+{"Type":"WS","Value":{"String":" "}}
+{"Type":"VEC_ADD","Expected":"EXPR","Value":{"Type":"op_3","String":".+"}}
+{"Type":"WS","Value":{"String":" "}}
+{"Type":"LITERAL","Value":{"Type":"float","True":0,"String":"b"}}
+{"Type":"EOF","Value":{"String":"\u0000"}}

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bufio"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -16,6 +18,7 @@ import (
 // Program ...
 type Program struct {
 	Index  int
+	Name   string
 	Value  string
 	Length int
 	EOS    bool
@@ -34,7 +37,10 @@ type ParseMeta struct {
 	}
 }
 
-var p Program
+var (
+	p          Program
+	jsonIndent string
+)
 
 func determineToken(meta ParseMeta) {
 	if meta.Accumulator != "" {
@@ -122,8 +128,9 @@ func lex() {
 
 			determineToken(meta)
 
+			// FIXME: convert this to read from the map
 			p.Tokens = append(p.Tokens, token.Token{
-				Type: "SPACE",
+				Type: "WS",
 				Value: token.Value{
 					String: " ",
 				},
@@ -171,9 +178,9 @@ func lex() {
 				})
 
 				meta.Accumulator = ""
-				// meta = ParseMeta{
-				// 	OnlyNumbers: true,
-				// }
+				meta = ParseMeta{
+					OnlyNumbers: true,
+				}
 			}
 
 		case ':':
@@ -184,6 +191,17 @@ func lex() {
 			}
 			determineToken(meta)
 			meta.Accumulator = ":"
+			determineToken(meta)
+			meta.Accumulator = ""
+
+		case ',':
+			if meta.EscapeNext {
+				meta.Accumulator += string(char)
+				meta.EscapeNext = false
+				continue
+			}
+			determineToken(meta)
+			meta.Accumulator = ","
 			determineToken(meta)
 			meta.Accumulator = ""
 
@@ -230,6 +248,38 @@ func lex() {
 			})
 			meta.Accumulator = ""
 
+		case '[':
+			if meta.EscapeNext {
+				meta.Accumulator += string(char)
+				meta.EscapeNext = false
+				continue
+			}
+			determineToken(meta)
+			p.Tokens = append(p.Tokens, token.Token{
+				Type: "L_BRACKET",
+				Value: token.Value{
+					Type:   "L_BRACKET",
+					String: "[",
+				},
+			})
+			meta.Accumulator = ""
+
+		case ']':
+			if meta.EscapeNext {
+				meta.Accumulator += string(char)
+				meta.EscapeNext = false
+				continue
+			}
+			determineToken(meta)
+			p.Tokens = append(p.Tokens, token.Token{
+				Type: "R_BRACKET",
+				Value: token.Value{
+					Type:   "R_BRACKET",
+					String: "]",
+				},
+			})
+			meta.Accumulator = ""
+
 			// This first if block controls whether quotes are included in the value of a string literal
 			// if meta.Enclosed.Value == '{' && meta.Enclosed.Matched == false {
 			// 	meta.Enclosed.Matched = true
@@ -250,7 +300,13 @@ func lex() {
 			// }
 
 		case '\\':
-			meta.EscapeNext = true
+			if meta.Enclosed.Value == '"' || meta.Enclosed.Value == '\'' {
+				// TODO: could do a get next here or something and just escape it at that point
+				meta.EscapeNext = true
+				continue
+			}
+			// TODO: define what we should do if it is not enclosed
+			fmt.Println("Backslash out of place")
 
 		case '.':
 			// if meta.Enclosed.Value != "" {
@@ -259,7 +315,34 @@ func lex() {
 			meta.Accumulator += string(char)
 			meta.Period = true
 
+		case '\n':
+			if meta.EscapeNext {
+				meta.Accumulator += string(char)
+				meta.EscapeNext = false
+				continue
+			}
+			determineToken(meta)
+			p.Tokens = append(p.Tokens, token.Token{
+				Type: "NEWLINE",
+				Value: token.Value{
+					Type:   "newline",
+					String: "\n",
+				},
+			})
+			meta.Accumulator = ""
+
+		case '\t':
+			p.Tokens = append(p.Tokens, token.Token{
+				Type: "WS",
+				Value: token.Value{
+					Type:   "tab",
+					String: "\t",
+				},
+			})
+
 		default:
+			// FIXME: need to add *unallowed* characters in here or in the determineToken function
+
 			// if unicode.IsLetter(char) {
 			// 	meta.OnlyNumbers = false
 			// }
@@ -270,27 +353,122 @@ func lex() {
 	}
 
 	if meta.Accumulator != "" {
-		fmt.Printf("Accumulator not empty %#v\n", meta)
+		// TODO: might need to make this return something so that we can determine what we get back
+		determineToken(meta)
+		// if we found a token, which we should atleast get a literal back, then clear the accumulator, otherwise print an error
+		// TODO: make the determineMeta do this function automatically
+		meta.Accumulator = ""
+
+		// fmt.Printf("Accumulator not empty %#v\n", meta)
 	}
 }
 
 func printTokens() {
-	for _, token := range p.Tokens {
-		fmt.Printf("%#v\n", token)
+	fmt.Println()
+
+	if jsonIndent != "" {
+		for _, token := range p.Tokens {
+			tokenJSON, err := json.MarshalIndent(token, "", jsonIndent)
+			if err != nil {
+				fmt.Printf("\nERROR: Could not marshal JSON from token: %#v\n", token)
+				os.Exit(9)
+			}
+			fmt.Println(string(tokenJSON))
+		}
+	} else {
+		for _, token := range p.Tokens {
+			tokenJSON, err := json.Marshal(token)
+			if err != nil {
+				fmt.Printf("\nERROR: Could not marshal JSON from token: %#v\n", token)
+				os.Exit(9)
+			}
+			fmt.Println(string(tokenJSON))
+		}
 	}
 }
 
+func outputTokens() {
+	tokenFilename := p.Name + ".tokens"
+
+	// For more granular writes, open a file for writing.
+	f, err := os.Create(tokenFilename)
+	defer f.Close()
+	if err != nil {
+		fmt.Println("ERROR: Could not open token output file:", tokenFilename)
+		os.Exit(9)
+	}
+	w := bufio.NewWriter(f)
+
+	fmt.Println()
+	fmt.Println("Outputting tokens to:", tokenFilename)
+
+	var tokenJSON []byte
+	if jsonIndent != "" {
+		for index, token := range p.Tokens {
+			tokenJSON, err = json.MarshalIndent(token, "", jsonIndent)
+			if err != nil {
+				fmt.Printf("\nERROR: Could not marshal JSON from token: %#v\n", token)
+				os.Exit(9)
+			}
+			if index < len(p.Tokens)-1 {
+				tokenJSON = append(tokenJSON, '\n')
+			}
+			// TODO: we should check the amount later
+			_, err = w.Write(tokenJSON)
+			if err != nil {
+				fmt.Println("ERROR: Could not write to token output file:", tokenFilename)
+				os.Exit(9)
+			}
+		}
+	} else {
+		for index, token := range p.Tokens {
+			tokenJSON, err = json.Marshal(token)
+			if err != nil {
+				fmt.Printf("\nERROR: Could not marshal JSON from token: %#v\n", token)
+				os.Exit(9)
+			}
+			if index < len(p.Tokens)-1 {
+				tokenJSON = append(tokenJSON, '\n')
+			}
+			_, err = w.Write(tokenJSON)
+			if err != nil {
+				fmt.Println("ERROR: Could not write to token output file:", tokenFilename)
+				os.Exit(9)
+			}
+		}
+	}
+
+	err = w.Flush()
+	if err != nil {
+		fmt.Println("ERROR: Could not flush writer, data may be missing:", tokenFilename)
+	}
+}
+
+// TODO: should look into making english-like inputs for the indentation
+// TODO: add flags for verbosity, printouts, whether to not parse the tokens, output file for outputting tokens, output format (xml, json, native) etc
+// TODO: check if the file exists and if it does warn them that the output file will be overridden and ask if they still want to go through
+// func parseFlags() {
+// 	jsonIndentPtr := flag.String("jsonIndent", "blank", "Indent that will be used for the JSON printout of the tokens")
+// 	flag.Parse()
+
+// 	fmt.Println("jsonptr", *jsonIndentPtr)
+
+// 	// jsonIndent
+// 	jsonIndent = *jsonIndentPtr
+// }
+
 func main() {
-	// wordPtr := flag.String("word", "", "a string")
-	// flag.Parse()
+	// TODO: add some flags later
+	// parseFlags()
 
-	// fmt.Println("word:", *wordPtr)
+	argLen := len(os.Args)
 
-	if len(os.Args) < 2 {
+	if argLen < 3 {
 		fmt.Println("ERROR: You must provide an input program")
 		return
 	}
-	programName := os.Args[1:][0]
+
+	programName := os.Args[argLen-1]
 
 	input, err := ioutil.ReadFile(programName)
 	if err != nil {
@@ -300,10 +478,17 @@ func main() {
 
 	p = Program{
 		Value:  string(input),
+		Name:   programName,
 		Length: len(input),
 	}
 
+	fmt.Println("=======================")
+	fmt.Println()
+	fmt.Println("Tokenizing:")
+	fmt.Println()
 	fmt.Println(p.Value)
+	fmt.Println()
+	fmt.Println("=======================")
 	fmt.Println()
 
 	lex()
@@ -329,4 +514,7 @@ func main() {
 	})
 
 	printTokens()
+
+	// TODO: always output tokens right now
+	outputTokens()
 }
