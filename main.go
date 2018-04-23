@@ -135,7 +135,10 @@ func lex() {
 					String: " ",
 				},
 			})
-			meta.Accumulator = ""
+			meta = ParseMeta{
+				// FIXME: invert this var name
+				OnlyNumbers: true,
+			}
 
 		case ';':
 			if meta.Enclosed.Value != 0 && meta.Enclosed.Matched != true {
