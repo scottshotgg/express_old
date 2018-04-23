@@ -177,53 +177,57 @@ func lex() {
 			}
 
 		case ':':
-			meta.Accumulator += string(char)
+			if meta.EscapeNext {
+				meta.Accumulator += string(char)
+				meta.EscapeNext = false
+				continue
+			}
+			determineToken(meta)
+			meta.Accumulator = ":"
 			determineToken(meta)
 			meta.Accumulator = ""
 
 		case '=':
-			meta.Accumulator += string(char)
+			if meta.EscapeNext {
+				meta.Accumulator += string(char)
+				meta.EscapeNext = false
+				continue
+			}
+			determineToken(meta)
+			meta.Accumulator = "="
 			determineToken(meta)
 			meta.Accumulator = ""
 
 		case '{':
-			// meta.Accumulator += string(char)
-			// if meta.EscapeNext {
-			// 	meta.EscapeNext = false
-			// 	continue
-			// }
-			// // if meta.Enclosed.Value == 0 {
-			// // 	// meta.Enclosed.Value = '{'
-			// // 	meta.Accumulator += string(char)
-			// // }
-			// p.Tokens = append(p.Tokens, token.Token{
-			// 	Type: "L_BRACKET",
-			// 	Value: token.Value{
-			// 		Type:   "L_BRACKET",
-			// 		String: meta.Accumulator,
-			// 	},
-			// })
-			// meta.Accumulator = ""
-			meta.Accumulator += string(char)
+			if meta.EscapeNext {
+				meta.Accumulator += string(char)
+				meta.EscapeNext = false
+				continue
+			}
 			determineToken(meta)
+			p.Tokens = append(p.Tokens, token.Token{
+				Type: "L_BRACE",
+				Value: token.Value{
+					Type:   "L_BRACE",
+					String: "{",
+				},
+			})
 			meta.Accumulator = ""
 
 		case '}':
-			// meta.Accumulator += string(char)
-			// if meta.EscapeNext {
-			// 	meta.EscapeNext = false
-			// 	continue
-			// }
-			// p.Tokens = append(p.Tokens, token.Token{
-			// 	Type: "R_BRACKET",
-			// 	Value: token.Value{
-			// 		Type:   "R_BRACKET",
-			// 		String: meta.Accumulator,
-			// 	},
-			// })
-			// meta.Accumulator = ""
-			meta.Accumulator += string(char)
+			if meta.EscapeNext {
+				meta.Accumulator += string(char)
+				meta.EscapeNext = false
+				continue
+			}
 			determineToken(meta)
+			p.Tokens = append(p.Tokens, token.Token{
+				Type: "R_BRACE",
+				Value: token.Value{
+					Type:   "R_BRACE",
+					String: "}",
+				},
+			})
 			meta.Accumulator = ""
 
 			// This first if block controls whether quotes are included in the value of a string literal
