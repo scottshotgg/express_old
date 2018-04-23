@@ -20,6 +20,7 @@ type Token struct {
 // TODO: make a map of all enclosers, map[string]Token
 // TODO: Verify ALL 'Expected' and 'Type' attributes
 // TODO: might look into doing some letters from other natural languages (ie, `forwardtick`)
+
 // TokenMap ...
 var TokenMap = map[string]Token{
 	// TYPES
