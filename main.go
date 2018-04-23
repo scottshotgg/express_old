@@ -395,7 +395,11 @@ func outputTokens() {
 
 	// For more granular writes, open a file for writing.
 	f, err := os.Create(tokenFilename)
-	defer f.Close()
+	defer func() {
+		if err = f.Close(); err != nil {
+			fmt.Println("ERROR: Could not close file:", tokenFilename)
+		}
+	}()
 	if err != nil {
 		fmt.Println("ERROR: Could not open token output file:", tokenFilename)
 		os.Exit(9)
