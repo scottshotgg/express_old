@@ -42,9 +42,20 @@ var (
 	jsonIndent string
 )
 
+// TODO: make something that is like += but does it for the beginning, also -= from strings
 func determineToken(meta ParseMeta) {
 	if meta.Accumulator != "" {
-		if t, ok := token.TokenMap[meta.Accumulator]; ok {
+		// FIXME: this will work for periods, but we should do the same type of template ops for [math]= and some others
+		if meta.Period && len(meta.Accumulator) > 1 {
+			if t, ok := token.TokenMap[string(meta.Accumulator[1])]; ok {
+
+				t.Type = "VEC_" + t.Type
+				t.Value.String = "." + t.Value.String
+				p.Tokens = append(p.Tokens, t)
+
+				return
+			}
+		} else if t, ok := token.TokenMap[meta.Accumulator]; ok {
 			p.Tokens = append(p.Tokens, t)
 		} else {
 			// Check if we are enclosed by a " and if so process as a string
@@ -395,7 +406,11 @@ func outputTokens() {
 
 	// For more granular writes, open a file for writing.
 	f, err := os.Create(tokenFilename)
-	defer f.Close()
+	defer func() {
+		if err = f.Close(); err != nil {
+			fmt.Println("ERROR: Could not close file:", tokenFilename)
+		}
+	}()
 	if err != nil {
 		fmt.Println("ERROR: Could not open token output file:", tokenFilename)
 		os.Exit(9)

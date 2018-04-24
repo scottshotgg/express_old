@@ -226,38 +226,38 @@ var TokenMap = map[string]Token{
 
 	// TODO: we should just make the parser look for "." and then "+"
 	// VECTOR OPERANDS
-	".+": Token{
-		Type:     "VEC_ADD",
-		Expected: "EXPR",
-		Value: Value{
-			Type:   "op_3",
-			String: ".+",
-		},
-	},
-	".-": Token{
-		Type:     "VEC_SUB",
-		Expected: "EXPR",
-		Value: Value{
-			Type:   "op_4",
-			String: ".-",
-		},
-	},
-	".*": Token{
-		Type:     "VEC_MULT",
-		Expected: "EXPR",
-		Value: Value{
-			Type:   "op_3",
-			String: ".*",
-		},
-	},
-	"./": Token{
-		Type:     "VEC_DIV",
-		Expected: "EXPR",
-		Value: Value{
-			Type:   "op_3",
-			String: "./",
-		},
-	},
+	// ".+": Token{
+	// 	Type:     "VEC_ADD",
+	// 	Expected: "EXPR",
+	// 	Value: Value{
+	// 		Type:   "op_3",
+	// 		String: ".+",
+	// 	},
+	// },
+	// ".-": Token{
+	// 	Type:     "VEC_SUB",
+	// 	Expected: "EXPR",
+	// 	Value: Value{
+	// 		Type:   "op_4",
+	// 		String: ".-",
+	// 	},
+	// },
+	// ".*": Token{
+	// 	Type:     "VEC_MULT",
+	// 	Expected: "EXPR",
+	// 	Value: Value{
+	// 		Type:   "op_3",
+	// 		String: ".*",
+	// 	},
+	// },
+	// "./": Token{
+	// 	Type:     "VEC_DIV",
+	// 	Expected: "EXPR",
+	// 	Value: Value{
+	// 		Type:   "op_3",
+	// 		String: "./",
+	// 	},
+	// },
 
 	// LITERALS
 	"true": Token{

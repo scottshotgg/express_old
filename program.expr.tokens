@@ -7,7 +7,7 @@
 {"Type":"WS","Value":{"String":" "}}
 {"Type":"IDENT","Expected":"ASSIGN","Value":{"Type":"ident","String":"a"}}
 {"Type":"WS","Value":{"String":" "}}
-{"Type":"VEC_ADD","Expected":"EXPR","Value":{"Type":"op_3","String":".+"}}
+{"Type":"VEC_ADD","Expected":"EXPR","Value":{"Type":"op_4","String":".+"}}
 {"Type":"WS","Value":{"String":" "}}
 {"Type":"IDENT","Expected":"ASSIGN","Value":{"Type":"ident","String":"b"}}
 {"Type":"EOF","Value":{"String":"\u0000"}}
