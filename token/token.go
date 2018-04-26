@@ -391,3 +391,109 @@ var TokenMap = map[string]Token{
 		},
 	},
 }
+
+// SeparatorMap ...
+var SeparatorMap = map[string]Token{
+	" ": Token{
+		Type: "WS",
+		Value: Value{
+			Type:   "space",
+			String: " ",
+		},
+	},
+	"\t": Token{
+		Type: "WS",
+		Value: Value{
+			Type:   "tab",
+			String: "\t",
+		},
+	},
+	"\n": Token{
+		Type: "WS",
+		Value: Value{
+			Type:   "newline",
+			String: "\n",
+		},
+	},
+	";": Token{
+		Type: "WS",
+		Value: Value{
+			Type:   "space",
+			String: ";",
+		},
+	},
+	":": Token{
+		Type: "WS",
+		Value: Value{
+			Type:   "space",
+			String: ":",
+		},
+	},
+}
+
+var EncloserMap = map[string]Token{
+	"(": Token{
+		Type:     "L_PAREN",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3", // TODO: check all these
+			String: "(",
+		},
+	},
+	")": Token{
+		Type:     "R_PAREN",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3", // TODO: check all these
+			String: ")",
+		},
+	},
+	"`": Token{
+		Type:     "GRAVE",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3",
+			String: "`",
+		},
+	},
+	"~": Token{
+		Type:     "TILDE",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3",
+			String: "~",
+		},
+	},
+	"'": Token{
+		Type:     "S_QUOTE",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3",
+			String: "'",
+		},
+	},
+	"\"": Token{
+		Type:     "D_QUOTE",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3",
+			String: "\"",
+		},
+	},
+	"<": Token{
+		Type:     "L_THAN",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3",
+			String: "<",
+		},
+	},
+	">": Token{
+		Type:     "G_THAN",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3",
+			String: ">",
+		},
+	},
+}

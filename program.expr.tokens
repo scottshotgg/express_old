@@ -2,12 +2,8 @@
 {"Type":"WS","Value":{"String":" "}}
 {"Type":"IDENT","Expected":"ASSIGN","Value":{"Type":"ident","String":"a"}}
 {"Type":"WS","Value":{"String":" "}}
-{"Type":"ASSIGN","Expected":"EXPR","Value":{"Type":"set_assign","String":":"}}
 {"Type":"ASSIGN","Expected":"EXPR","Value":{"Type":"assign","String":"="}}
 {"Type":"WS","Value":{"String":" "}}
-{"Type":"IDENT","Expected":"ASSIGN","Value":{"Type":"ident","String":"a"}}
-{"Type":"WS","Value":{"String":" "}}
-{"Type":"VEC_ADD","Expected":"EXPR","Value":{"Type":"op_4","String":".+"}}
-{"Type":"WS","Value":{"String":" "}}
-{"Type":"IDENT","Expected":"ASSIGN","Value":{"Type":"ident","String":"b"}}
+{"Type":"LITERAL","Value":{"Type":"integer","True":5,"String":"5"}}
+{"Type":"EOS","Value":{"String":";"}}
 {"Type":"EOF","Value":{"String":"\u0000"}}

@@ -481,7 +481,7 @@ func main() {
 
 	argLen := len(os.Args)
 
-	if argLen < 3 {
+	if argLen < 2 {
 		fmt.Println("ERROR: You must provide an input program")
 		return
 	}
