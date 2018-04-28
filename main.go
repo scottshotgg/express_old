@@ -25,6 +25,18 @@ type Program struct {
 	Tokens []token.Token
 }
 
+// LexMeta ...
+type LexMeta struct {
+	Accumulator string
+	EscapeNext  bool
+	Period      bool
+	OnlyNumbers bool
+	Enclosed    struct {
+		Value   byte
+		Matched bool
+	}
+}
+
 // ParseMeta ...
 type ParseMeta struct {
 	Accumulator string
@@ -42,7 +54,7 @@ var (
 	jsonIndent string
 )
 
-func determineToken(meta ParseMeta) {
+func determineToken(meta LexMeta) {
 	if meta.Accumulator != "" {
 		if t, ok := token.TokenMap[meta.Accumulator]; ok {
 			p.Tokens = append(p.Tokens, t)
@@ -112,7 +124,7 @@ func determineToken(meta ParseMeta) {
 }
 
 func lex() {
-	meta := ParseMeta{
+	meta := LexMeta{
 		// FIXME: invert this var name
 		OnlyNumbers: true,
 	}
@@ -135,7 +147,7 @@ func lex() {
 					String: " ",
 				},
 			})
-			meta = ParseMeta{
+			meta = LexMeta{
 				// FIXME: invert this var name
 				OnlyNumbers: true,
 			}
@@ -181,7 +193,7 @@ func lex() {
 				})
 
 				meta.Accumulator = ""
-				meta = ParseMeta{
+				meta = LexMeta{
 					OnlyNumbers: true,
 				}
 			}
@@ -297,7 +309,7 @@ func lex() {
 			// 	})
 
 			// 	meta.Accumulator = ""
-			// 	// meta = ParseMeta{
+			// 	// meta = LexMeta {
 			// 	// 	OnlyNumbers: true,
 			// 	// }
 			// }
@@ -464,13 +476,25 @@ func outputTokens() {
 // 	jsonIndent = *jsonIndentPtr
 // }
 
+func parse() {
+	fmt.Println()
+	fmt.Println("Outtputting")
+
+	parseMeta := ParseMeta{}
+
+	for _, t := range p.Tokens {
+		fmt.Println(t)
+
+	}
+}
+
 func main() {
 	// TODO: add some flags later
 	// parseFlags()
 
 	argLen := len(os.Args)
 
-	if argLen < 3 {
+	if argLen < 2 {
 		fmt.Println("ERROR: You must provide an input program")
 		return
 	}
@@ -524,4 +548,6 @@ func main() {
 
 	// TODO: always output tokens right now
 	outputTokens()
+
+	parse()
 }
