@@ -4,17 +4,19 @@ Tokenizer for Express written in Go
 ```bnf
 program : stmt+ ;
 
-stmt    : var ass_op term <EOS> |
+stmt    : var assign_op term <EOS> |
           expr <EOS>            ;
 
 expr    : term sec_op term |
           term             ;
 
-ass_op  : ASS_SET |
-          ASS     ;
+assign_op : SET    |
+            ASSIGN |
+            INIT   ;
 
-ASS     : `=`
-ASS_SET : `:=`
+ASSIGN : `=`
+SET    : `:`
+INIT   : SET ASSIGN
 
 sec_op  : ADD     |
           VEC_ADD |
