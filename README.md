@@ -16,7 +16,7 @@ assign_op : SET    |
 
 ASSIGN : `=`
 SET    : `:`
-INIT   : SET ASSIGN
+INIT   : [ SET ASSIGN ]
 
 sec_op  : ADD     |
           VEC_ADD |
