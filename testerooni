@@ -1,0 +1,4 @@
+clang -S -emit-llvm test.cpp -O0 &&
+/usr/local/Cellar/llvm/6.0.0/bin/llc test.ll &&
+clang test.s &&
+./a.out

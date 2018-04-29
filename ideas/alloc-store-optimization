@@ -1,0 +1,5 @@
+only store value when someone tries to use it
+
+further more: queue the alloc, only do it when used
+
+further: dont even alloc vars if they aren't used

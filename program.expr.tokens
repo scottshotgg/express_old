@@ -1,9 +1,9 @@
-{"Type":"TYPE","Expected":"IDENT","Value":{"Type":"var","String":"var"}}
+{"Type":"TYPE","Expected":"IDENT","Value":{"Type":"var","True":2,"String":"int"}}
 {"Type":"WS","Value":{"String":" "}}
 {"Type":"IDENT","Expected":"ASSIGN","Value":{"Type":"ident","String":"a"}}
 {"Type":"WS","Value":{"String":" "}}
-{"Type":"ASSIGN","Expected":"EXPR","Value":{"Type":"set_assign","String":":"}}
 {"Type":"ASSIGN","Expected":"EXPR","Value":{"Type":"assign","String":"="}}
 {"Type":"WS","Value":{"String":" "}}
-{"Type":"LITERAL","Value":{"Type":"float","True":5.5,"String":"5.5"}}
+{"Type":"LITERAL","Value":{"Type":"integer","True":666,"String":"666"}}
+{"Type":"EOS","Value":{"String":";"}}
 {"Type":"EOF","Value":{"String":"\u0000"}}

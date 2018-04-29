@@ -10,6 +10,7 @@ import (
 	"unicode"
 
 	"github.com/sgg7269/tokenizer/token"
+	//"llvm.org/llvm/bindings/go/llvm"
 )
 
 // TODO: we currently have to have the space afterwards, need to add the parsing code into the semicolon code
@@ -25,20 +26,14 @@ type Program struct {
 	Tokens []token.Token
 }
 
-// LexMeta ...
-type LexMeta struct {
-	Accumulator string
-	EscapeNext  bool
-	Period      bool
-	OnlyNumbers bool
-	Enclosed    struct {
-		Value   byte
-		Matched bool
-	}
-}
-
 // ParseMeta ...
 type ParseMeta struct {
+	Expected  string // TODO: this should change to an int later after we properly assign IDs
+	LastToken token.Token
+}
+
+// LexMeta ...
+type LexMeta struct {
 	Accumulator string
 	EscapeNext  bool
 	Period      bool
@@ -52,6 +47,9 @@ type ParseMeta struct {
 var (
 	p          Program
 	jsonIndent string
+	endTokens  = []token.Token{}
+	llvmStart  = []byte("define i32 @main() #0 {\n")
+	llvmEnd    = []byte("\nret i32 0\n}\n")
 )
 
 func determineToken(meta LexMeta) {
@@ -476,16 +474,155 @@ func outputTokens() {
 // 	jsonIndent = *jsonIndentPtr
 // }
 
+// TODO: we need a `getNextNonWSToken`
+
+func getFactor(i int) bool {
+	fmt.Println("getting factor")
+
+	// FIXME: we should first add a check for parens
+	// FIXME: this will only work for spaces between them; hence the +2
+	if p.Tokens[i+2].Type == "LITERAL" {
+		fmt.Println("Found a literal")
+		endTokens = append(endTokens, p.Tokens[i+2])
+		return true
+	}
+
+	return false
+}
+
+func getTerm(i int) bool {
+	fmt.Println("getting term")
+
+	return getFactor(i)
+}
+
+func getExpr(i int) bool {
+	fmt.Println("getting expr")
+
+	// TODO: this needs to check EOS
+	// its fine now since we only have one statement
+	return getTerm(i)
+}
+
 func parse() {
+
 	fmt.Println()
 	fmt.Println("Outtputting")
 
-	parseMeta := ParseMeta{}
+	meta := ParseMeta{}
 
-	for _, t := range p.Tokens {
+	// FIXME: Need to make this not a range over
+	for i := 0; i < len(p.Tokens); i++ {
+		t := p.Tokens[i]
+		// strip out WS tokens for now
+		if t.Type == "WS" || t.Type == "EOF" {
+			continue
+		}
+
+		fmt.Println(endTokens)
+
+		// FIXME: this should be an int after the change
+		if meta.Expected != "" {
+			if t.Type == meta.Expected {
+				fmt.Println("Wow we were actually expected")
+				fmt.Println(t)
+				// TODO: run some function, do stuff
+				meta.Expected = t.Expected
+				meta.LastToken = t
+				endTokens = append(endTokens, t)
+				continue
+			} else {
+				fmt.Println("wtf why mom")
+				// TODO: need to handle this
+
+				// TODO: it might be more useful if we compare the current types of the token and the meta.LastToken
+				switch meta.LastToken.Value.String {
+				case ":":
+					switch t.Value.String {
+					case "=":
+						fmt.Println("New token:")
+						tok := token.TokenMap[meta.LastToken.Value.String+t.Value.String]
+						fmt.Println(tok)
+						meta.Expected = "EXPR"
+						meta.LastToken = tok
+						endTokens[len(endTokens)-1] = tok
+
+						if getExpr(i) {
+							i = i + 3
+							meta.Expected = "EOS"
+							meta.LastToken = p.Tokens[i]
+							endTokens = append(endTokens, p.Tokens[i])
+							continue
+						} else {
+							// TODO: this would be an error
+							fmt.Println()
+							fmt.Println("Syntax ERROR")
+							fmt.Println()
+							os.Exit(666)
+						}
+					}
+				}
+			}
+		}
+		fmt.Println(t)
+		meta.Expected = t.Expected
+		meta.LastToken = t
+		fmt.Println(t)
+		endTokens = append(endTokens, t)
+	}
+
+	f, err := os.Create("thing.ll")
+	if err != nil {
+		fmt.Println("omggg!!!1")
+		return
+	}
+	defer f.Close()
+
+	_, err = f.Write(llvmStart)
+	if err != nil {
+		fmt.Println("omggg!!!2")
+		return
+	}
+
+	llvmInstructionString := ""
+
+	fmt.Println()
+	fmt.Println("End Tokens:")
+	for i := 0; i < len(endTokens); i++ {
+		t := endTokens[i]
 		fmt.Println(t)
 
+		switch t.Type {
+		case "TYPE":
+			switch t.Value.String {
+			case "int":
+				// TODO: see if the variable declaration is something we already have
+				llvmInstructionString += "%1 = alloca i32, align 4\n"
+				// TODO: default value will force-find the next literal
+			}
+		case "LITERAL":
+			llvmInstructionString += "store i32 " + t.Value.String + ", i32* %1, align 4"
+		}
+
+		// if t.Value.String == "int" {
+		// 	llvmInstructionString += "%1 = alloca i32, align 4\n"
+		// } else if t.Value.Type == "integer" {
+		// 	llvmInstructionString += "store i32 5, i32* %1, align 4\n"
+		// }
 	}
+
+	_, err = f.Write([]byte(llvmInstructionString))
+	if err != nil {
+		fmt.Println("omggg!!!2")
+		return
+	}
+
+	_, err = f.Write(llvmEnd)
+	if err != nil {
+		fmt.Println("omggg!!!4")
+		return
+	}
+
 }
 
 func main() {

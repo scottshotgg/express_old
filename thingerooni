@@ -1,0 +1,3 @@
+/usr/local/Cellar/llvm/6.0.0/bin/llc thing.ll &&
+clang thing.s &&
+./a.out
