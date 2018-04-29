@@ -1,22 +1,30 @@
 # tokenizer
 Tokenizer for Express written in Go
 
-```program : stmt+ ; 
+```bnf
+program : stmt+ ;
 
-stmt    : expr <EOS> ;
+stmt    : var ass_op term <EOS> |
+          expr <EOS>            ;
 
 expr    : term sec_op term |
           term             ;
+
+ass_op  : ASS_SET |
+          ASS     ;
+
+ASS     : `=`
+ASS_SET : `:=`
 
 sec_op  : ADD     |
           VEC_ADD |
           SUB     |
           VEC_SUB ;
 
-ADD     : "+"  ;
-VEC_ADD : ".+" ;
-SUB     : "-"  ;
-VEC_SUB : ".-" ;
+ADD     : `+`  ;
+VEC_ADD : `.+` ;
+SUB     : `-`  ;
+VEC_SUB : `.-` ;
 
 term    : factor pri_op term |
           factor             ;
@@ -27,23 +35,23 @@ pri_op  : MULT     |
           VEC_DIV  |
           MOD      ;
 
-MULT      : "*"  ;
-DIV       : "/"  ;
-VEC_MULT  : ".*" ;
-VEC_DIV   : "./" ;
-MOD       : "%"  ;
-VEC_MOD   : ".%" ;
+MULT      : `*`  ;
+DIV       : `/`  ;
+VEC_MULT  : `.*` ;
+VEC_DIV   : `./` ;
+MOD       : `%`  ;
+VEC_MOD   : `.%` ;
 
 factor  : L_PAREN expr R_PAREN |
           <literal>            |
-          var                  ;
+          ident                ;
 
-L_PAREN : "(" ;
-R_PAREN : ")" ;
+L_PAREN : `(` ;
+R_PAREN : `)` ;
 
 var     : type ident ;
 
-type    : "var"  |
+type    : `var`  |
           number |
           char   |
           string |
@@ -65,9 +73,10 @@ number  : binary   |
           radical  |
           complex  ;
 
-binary  : [ "0" | "1" ]+ ;
-octal   : [ "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" ]+ ;
-hex     : [ "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | 
-            "8" | "9" |"A" | "B" | "C" | "D" | "E" | "F" ]+ ;
-int     : [ "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ]+ ;
-float   : []```
+binary  : [ `0` | `1` ]+ ;
+octal   : [ `0` | `1` | `2` | `3` | `4` | `5` | `6` | `7` ]+ ;
+hex     : [ `0` | `1` | `2` | `3` | `4` | `5` | `6` | `7` |
+            `8` | `9` |`A` | `B` | `C` | `D` | `E` | `F` ]+ ;
+int     : [ `0` | `1` | `2` | `3` | `4` | `5` | `6` | `7` | `8` | `9` ]+ ;
+float   : [ int `.` int ]
+```

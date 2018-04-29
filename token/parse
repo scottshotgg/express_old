@@ -1,0 +1,4 @@
+// separate lex and parse maps that will define different tokens for different uses
+// LEX tokens just define the identification possibility of those tokens
+// PARSE tokens define, on a function aspect, what should happen when that token is encountered 
+//		and what should be done to complete the token definition 

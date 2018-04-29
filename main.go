@@ -48,8 +48,8 @@ var (
 	p          Program
 	jsonIndent string
 	endTokens  = []token.Token{}
-	llvmStart  = []byte("define i32 @main() #0 {\n")
-	llvmEnd    = []byte("\nret i32 0\n}\n")
+	llvmStart  = "define i32 @main() #0 {\n"
+	llvmEnd    = "ret i32 0\n}"
 )
 
 func determineToken(meta LexMeta) {
@@ -400,24 +400,25 @@ func printTokens() {
 	}
 }
 
+// TODO: rename this function and redo all comments/printouts to reflect that
 func outputTokens() {
-	tokenFilename := p.Name + ".tokens"
+	lexFilename := p.Name + ".lex"
 
 	// For more granular writes, open a file for writing.
-	f, err := os.Create(tokenFilename)
+	f, err := os.Create(lexFilename)
 	defer func() {
 		if err = f.Close(); err != nil {
-			fmt.Println("ERROR: Could not close file:", tokenFilename)
+			fmt.Println("ERROR: Could not close file:", lexFilename)
 		}
 	}()
 	if err != nil {
-		fmt.Println("ERROR: Could not open token output file:", tokenFilename)
+		fmt.Println("ERROR: Could not open token output file:", lexFilename)
 		os.Exit(9)
 	}
 	w := bufio.NewWriter(f)
 
 	fmt.Println()
-	fmt.Println("Outputting tokens to:", tokenFilename)
+	fmt.Println("Outputting tokens to:", lexFilename)
 
 	var tokenJSON []byte
 	if jsonIndent != "" {
@@ -433,7 +434,7 @@ func outputTokens() {
 			// TODO: we should check the amount later
 			_, err = w.Write(tokenJSON)
 			if err != nil {
-				fmt.Println("ERROR: Could not write to token output file:", tokenFilename)
+				fmt.Println("ERROR: Could not write to token output file:", lexFilename)
 				os.Exit(9)
 			}
 		}
@@ -449,7 +450,7 @@ func outputTokens() {
 			}
 			_, err = w.Write(tokenJSON)
 			if err != nil {
-				fmt.Println("ERROR: Could not write to token output file:", tokenFilename)
+				fmt.Println("ERROR: Could not write to token output file:", lexFilename)
 				os.Exit(9)
 			}
 		}
@@ -457,7 +458,7 @@ func outputTokens() {
 
 	err = w.Flush()
 	if err != nil {
-		fmt.Println("ERROR: Could not flush writer, data may be missing:", tokenFilename)
+		fmt.Println("ERROR: Could not flush writer, data may be missing:", lexFilename)
 	}
 }
 
@@ -468,7 +469,7 @@ func outputTokens() {
 // 	jsonIndentPtr := flag.String("jsonIndent", "blank", "Indent that will be used for the JSON printout of the tokens")
 // 	flag.Parse()
 
-// 	fmt.Println("jsonptr", *jsonIndentPtr)
+// 	fmt.Println("jsonptr", *jsonIndentPctr)
 
 // 	// jsonIndent
 // 	jsonIndent = *jsonIndentPtr
@@ -571,26 +572,55 @@ func parse() {
 		endTokens = append(endTokens, t)
 	}
 
-	f, err := os.Create("thing.ll")
-	if err != nil {
-		fmt.Println("omggg!!!1")
-		return
-	}
-	defer f.Close()
+	tokenFilename := p.Name + ".tokens"
 
-	_, err = f.Write(llvmStart)
+	// For more granular writes, open a file for writing.
+	tokenFile, err := os.Create(tokenFilename)
+	defer func() {
+		if err = tokenFile.Close(); err != nil {
+			fmt.Println("ERROR: Could not close file:", tokenFilename)
+		}
+	}()
 	if err != nil {
-		fmt.Println("omggg!!!2")
-		return
+		fmt.Println("ERROR: Could not open token output file:", tokenFilename)
+		os.Exit(9)
 	}
+	tokenWriter := bufio.NewWriter(tokenFile)
+
+	llFilename := p.Name + ".ll"
+
+	// For more granular writes, open a file for writing.
+	f, err := os.Create(llFilename)
+	defer func() {
+		if err = f.Close(); err != nil {
+			fmt.Println("ERROR: Could not close file:", llFilename)
+		}
+	}()
+	if err != nil {
+		fmt.Println("ERROR: Could not open token output file:", llFilename)
+		os.Exit(9)
+	}
+	w := bufio.NewWriter(f)
 
 	llvmInstructionString := ""
 
+	// TODO: this needs to be outputted as program.expr.parse
 	fmt.Println()
 	fmt.Println("End Tokens:")
 	for i := 0; i < len(endTokens); i++ {
 		t := endTokens[i]
 		fmt.Println(t)
+
+		// TODO: should make a function specifically for writing the tokens
+		tokenJSON, jerr := json.Marshal(t)
+		if jerr != nil {
+			fmt.Println("ERROR: Could not marshal token JSON: ", t)
+		}
+
+		_, err = tokenWriter.WriteString(string(tokenJSON) + "\n")
+		if err != nil || jerr != nil {
+			fmt.Println("ERROR: Could not write token data: ", tokenJSON)
+		}
 
 		switch t.Type {
 		case "TYPE":
@@ -611,18 +641,33 @@ func parse() {
 		// }
 	}
 
-	_, err = f.Write([]byte(llvmInstructionString))
+	err = tokenWriter.Flush()
+	if err != nil {
+		fmt.Println("ERROR: Could not flush writer, data may be missing:", tokenFilename)
+	}
+
+	_, err = w.WriteString(llvmStart)
+	if err != nil {
+		fmt.Println("omggg!!!1")
+		return
+	}
+
+	_, err = w.WriteString(llvmInstructionString + "\n")
 	if err != nil {
 		fmt.Println("omggg!!!2")
 		return
 	}
 
-	_, err = f.Write(llvmEnd)
+	_, err = w.WriteString(llvmEnd)
 	if err != nil {
 		fmt.Println("omggg!!!4")
 		return
 	}
 
+	err = w.Flush()
+	if err != nil {
+		fmt.Println("ERROR: Could not flush writer, data may be missing:", llFilename)
+	}
 }
 
 func main() {

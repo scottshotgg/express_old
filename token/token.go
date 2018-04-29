@@ -4,17 +4,17 @@ import "reflect"
 
 // Value ...
 type Value struct {
-	Type   string      `json:",omitempty"`
-	True   interface{} `json:",omitempty"`
-	String string      `json:",omitempty"`
+	Type   string
+	True   interface{}
+	String string
 }
 
 // Token ...
 type Token struct {
-	ID       int    `json:",omitempty"`
-	Type     string `json:",omitempty"`
-	Expected string `json:",omitempty"`
-	Value    Value  `json:",omitempty"`
+	ID       int
+	Type     string
+	Expected string
+	Value    Value
 }
 
 // TODO: make a map of all enclosers, map[string]Token
@@ -23,6 +23,15 @@ type Token struct {
 
 // TokenMap ...
 var TokenMap = map[string]Token{
+	"TYPE": Token{
+		Type:     "TYPE",
+		Expected: "IDENT",
+		Value: Value{
+			Type:   "var",
+			String: "let",
+		},
+	},
+
 	// TYPES
 	"let": Token{
 		Type:     "TYPE",

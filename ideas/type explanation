@@ -1,0 +1,20 @@
+var something =
+something float =
+float something =
+
+// Initialize an integer with value 6
+something := 6
+
+// Initialize a dynamic with value 6
+// something : 6;
+
+// Normal static int type
+int thing = 666
+
+// Upgradable int type
+Int thing = 666
+
+bool c = true
+string we = "hey this is " + c.String
+// "hey this is true"
+
