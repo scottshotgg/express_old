@@ -477,18 +477,39 @@ func outputTokens() {
 
 // TODO: we need a `getNextNonWSToken`
 
+// func getFactor(i int) bool {
+// 	fmt.Println("getting factor")
+
+// 	// FIXME: we should first add a check for parens
+// 	// FIXME: this will only work for spaces between them; hence the +2
+// 	fmt.Println(p.Tokens[i].Type)
+// 	if p.Tokens[i].Type == "LITERAL" {
+// 		fmt.Println("Found a literal")
+// 		endTokens = append(endTokens, p.Tokens[i])
+// 		return true
+// 	}
+
+// 	return false
+// }
+
 func getFactor(i int) bool {
 	fmt.Println("getting factor")
 
 	// FIXME: we should first add a check for parens
 	// FIXME: this will only work for spaces between them; hence the +2
-	if p.Tokens[i+2].Type == "LITERAL" {
+	lookAhead := p.Tokens[i]
+	if lookAhead.Type == "LITERAL" {
 		fmt.Println("Found a literal")
-		endTokens = append(endTokens, p.Tokens[i+2])
-		return true
+	} else if lookAhead.Type == "IDENT" {
+		fmt.Println("Found an ident")
+		lookAhead.Expected = ""
+	} else {
+		fmt.Println("Didn't find a factor")
+		return false
 	}
 
-	return false
+	endTokens = append(endTokens, lookAhead)
+	return true
 }
 
 func getTerm(i int) bool {
@@ -503,6 +524,40 @@ func getExpr(i int) bool {
 	// TODO: this needs to check EOS
 	// its fine now since we only have one statement
 	return getTerm(i)
+}
+
+func equals(t token.Token, meta ParseMeta, i int) bool {
+	fmt.Println("New token:")
+	tok := token.TokenMap[meta.LastToken.Value.String+t.Value.String]
+	fmt.Println(tok)
+	meta.Expected = "EXPR"
+	meta.LastToken = tok
+	endTokens[len(endTokens)-1] = tok
+
+	ge := getExpr(i)
+	fmt.Println()
+	fmt.Println("ge", ge)
+	fmt.Println()
+
+	if ge {
+		i = i + 1
+		meta.Expected = "EOS"
+		meta.LastToken = p.Tokens[i]
+		endTokens = append(endTokens, p.Tokens[i])
+		// FIXME: clean this shit up
+		return true
+	} else {
+		// TODO: this would be an error
+		fmt.Println()
+		fmt.Println("Syntax ERROR")
+		fmt.Println()
+		// TODO: need to put actual error codes here
+		// FIXME: we shouldn't os.exit here, instead return an error, handle it, probably should have some kind of map lookup for the specific error shit
+		// FIXME: we also need to print out debuf information about the current parse information
+		os.Exit(666)
+	}
+
+	return false
 }
 
 func parse() {
@@ -537,31 +592,33 @@ func parse() {
 				// TODO: need to handle this
 
 				// TODO: it might be more useful if we compare the current types of the token and the meta.LastToken
+				// TODO: this is where we could have functions already plug and play defined that have the token check the 'nextToken' and then return the token that should be used
 				switch meta.LastToken.Value.String {
 				case ":":
+					// TODO: this could be recursive
 					switch t.Value.String {
 					case "=":
-						fmt.Println("New token:")
-						tok := token.TokenMap[meta.LastToken.Value.String+t.Value.String]
-						fmt.Println(tok)
-						meta.Expected = "EXPR"
-						meta.LastToken = tok
-						endTokens[len(endTokens)-1] = tok
-
-						if getExpr(i) {
-							i = i + 3
-							meta.Expected = "EOS"
-							meta.LastToken = p.Tokens[i]
-							endTokens = append(endTokens, p.Tokens[i])
+						// FIXME: these are very hacky right now because the function actually os.Exits out
+						if equals(t, meta, i+2) {
+							i++
 							continue
-						} else {
-							// TODO: this would be an error
-							fmt.Println()
-							fmt.Println("Syntax ERROR")
-							fmt.Println()
-							os.Exit(666)
 						}
 					}
+				case "=":
+					if equals(t, meta, i) {
+						i++
+						continue
+					}
+				case ";":
+					endTokens = append(endTokens, t)
+				default:
+					fmt.Println()
+					fmt.Printf("Syntax ERROR: default case hit %+v %+v %d\n", t, meta, i)
+					fmt.Println()
+					// TODO: need to put actual error codes here
+					// FIXME: we shouldn't os.exit here, instead return an error, handle it, probably should have some kind of map lookup for the specific error shit
+					// FIXME: we also need to print out debuf information about the current parse information
+					os.Exit(666)
 				}
 			}
 		}

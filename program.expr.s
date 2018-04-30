@@ -5,7 +5,6 @@
 _main:                                  ## @main
 	.cfi_startproc
 ## %bb.0:
-	movl	$666, -4(%rsp)          ## imm = 0x29A
 	xorl	%eax, %eax
 	retq
 	.cfi_endproc
