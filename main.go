@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"unicode"
 
+	"github.com/sgg7269/tokenizer/parse"
 	"github.com/sgg7269/tokenizer/token"
 	//"llvm.org/llvm/bindings/go/llvm"
 )
@@ -24,12 +25,6 @@ type Program struct {
 	Length int
 	EOS    bool
 	Tokens []token.Token
-}
-
-// ParseMeta ...
-type ParseMeta struct {
-	Expected  string // TODO: this should change to an int later after we properly assign IDs
-	LastToken token.Token
 }
 
 // LexMeta ...
@@ -293,6 +288,108 @@ func lex() {
 			})
 			meta.Accumulator = ""
 
+		case '-':
+			if meta.EscapeNext {
+				meta.Accumulator += string(char)
+				meta.EscapeNext = false
+				continue
+			}
+			determineToken(meta)
+			p.Tokens = append(p.Tokens, token.Token{
+				Type:     "SEC_OP",
+				Expected: "EXPR",
+				Value: token.Value{
+					Type:   "sub",
+					String: "-",
+				},
+			})
+			meta.Accumulator = ""
+
+		case '+':
+			if meta.EscapeNext {
+				meta.Accumulator += string(char)
+				meta.EscapeNext = false
+				continue
+			}
+			determineToken(meta)
+			p.Tokens = append(p.Tokens, token.Token{
+				Type:     "SEC_OP",
+				Expected: "EXPR",
+				Value: token.Value{
+					Type:   "add",
+					String: "+",
+				},
+			})
+			meta.Accumulator = ""
+
+		case '/':
+			if meta.EscapeNext {
+				meta.Accumulator += string(char)
+				meta.EscapeNext = false
+				continue
+			}
+			determineToken(meta)
+			p.Tokens = append(p.Tokens, token.Token{
+				Type:     "PRI_OP",
+				Expected: "EXPR",
+				Value: token.Value{
+					Type:   "div",
+					String: "/",
+				},
+			})
+			meta.Accumulator = ""
+
+		case '*':
+			if meta.EscapeNext {
+				meta.Accumulator += string(char)
+				meta.EscapeNext = false
+				continue
+			}
+			determineToken(meta)
+			p.Tokens = append(p.Tokens, token.Token{
+				Type:     "PRI_OP",
+				Expected: "EXPR",
+				Value: token.Value{
+					Type:   "mult",
+					String: "*",
+				},
+			})
+			meta.Accumulator = ""
+
+		case '(':
+			if meta.EscapeNext {
+				meta.Accumulator += string(char)
+				meta.EscapeNext = false
+				continue
+			}
+			determineToken(meta)
+			p.Tokens = append(p.Tokens, token.Token{
+				Type:     "L_PAREN",
+				Expected: "EXPR",
+				Value: token.Value{
+					Type:   "op_3", // TODO: check all these
+					String: "(",
+				},
+			})
+			meta.Accumulator = ""
+
+		case ')':
+			if meta.EscapeNext {
+				meta.Accumulator += string(char)
+				meta.EscapeNext = false
+				continue
+			}
+			determineToken(meta)
+			p.Tokens = append(p.Tokens, token.Token{
+				Type:     "R_PAREN",
+				Expected: "EXPR",
+				Value: token.Value{
+					Type:   "op_3", // TODO: check all these
+					String: ")",
+				},
+			})
+			meta.Accumulator = ""
+
 			// This first if block controls whether quotes are included in the value of a string literal
 			// if meta.Enclosed.Value == '{' && meta.Enclosed.Matched == false {
 			// 	meta.Enclosed.Matched = true
@@ -492,240 +589,70 @@ func outputTokens() {
 // 	return false
 // }
 
-func getFactor(i int) bool {
-	fmt.Println("getting factor")
+// func llvmConversion(endTokens []token.Token) {
+// 	llFilename := p.Name + ".ll"
 
-	// FIXME: we should first add a check for parens
-	// FIXME: this will only work for spaces between them; hence the +2
-	lookAhead := p.Tokens[i]
-	if lookAhead.Type == "LITERAL" {
-		fmt.Println("Found a literal")
-	} else if lookAhead.Type == "IDENT" {
-		fmt.Println("Found an ident")
-		lookAhead.Expected = ""
-	} else {
-		fmt.Println("Didn't find a factor")
-		return false
-	}
+// 	// For more granular writes, open a file for writing.
+// 	f, err := os.Create(llFilename)
+// 	defer func() {
+// 		if err = f.Close(); err != nil {
+// 			fmt.Println("ERROR: Could not close file:", llFilename)
+// 		}
+// 	}()
+// 	if err != nil {
+// 		fmt.Println("ERROR: Could not open token output file:", llFilename)
+// 		os.Exit(9)
+// 	}
+// 	w := bufio.NewWriter(f)
 
-	endTokens = append(endTokens, lookAhead)
-	return true
-}
+// 	llvmInstructionString := ""
 
-func getTerm(i int) bool {
-	fmt.Println("getting term")
+// 	// TODO: this needs to be outputted as program.expr.parse
+// 	for i := 0; i < len(endTokens); i++ {
+// 		t := endTokens[i]
 
-	return getFactor(i)
-}
+// 		switch t.Type {
+// 		case "TYPE":
+// 			switch t.Value.String {
+// 			case "int":
+// 				// TODO: see if the variable declaration is something we already have
+// 				llvmInstructionString += "%1 = alloca i32, align 4\n"
+// 				// TODO: default value will force-find the next literal
+// 			}
+// 		case "LITERAL":
+// 			llvmInstructionString += "store i32 " + t.Value.String + ", i32* %1, align 4"
+// 		}
 
-func getExpr(i int) bool {
-	fmt.Println("getting expr")
+// 		// if t.Value.String == "int" {
+// 		// 	llvmInstructionString += "%1 = alloca i32, align 4\n"
+// 		// } else if t.Value.Type == "integer" {
+// 		// 	llvmInstructionString += "store i32 5, i32* %1, align 4\n"
+// 		// }
+// 	}
 
-	// TODO: this needs to check EOS
-	// its fine now since we only have one statement
-	return getTerm(i)
-}
+// 	_, err = w.WriteString(llvmStart)
+// 	if err != nil {
+// 		fmt.Println("omggg!!!1")
+// 		return
+// 	}
 
-func equals(t token.Token, meta ParseMeta, i int) bool {
-	fmt.Println("New token:")
-	tok := token.TokenMap[meta.LastToken.Value.String+t.Value.String]
-	fmt.Println(tok)
-	meta.Expected = "EXPR"
-	meta.LastToken = tok
-	endTokens[len(endTokens)-1] = tok
+// 	_, err = w.WriteString(llvmInstructionString + "\n")
+// 	if err != nil {
+// 		fmt.Println("omggg!!!2")
+// 		return
+// 	}
 
-	ge := getExpr(i)
-	fmt.Println()
-	fmt.Println("ge", ge)
-	fmt.Println()
+// 	_, err = w.WriteString(llvmEnd)
+// 	if err != nil {
+// 		fmt.Println("omggg!!!4")
+// 		return
+// 	}
 
-	if ge {
-		i = i + 1
-		meta.Expected = "EOS"
-		meta.LastToken = p.Tokens[i]
-		endTokens = append(endTokens, p.Tokens[i])
-		// FIXME: clean this shit up
-		return true
-	} else {
-		// TODO: this would be an error
-		fmt.Println()
-		fmt.Println("Syntax ERROR")
-		fmt.Println()
-		// TODO: need to put actual error codes here
-		// FIXME: we shouldn't os.exit here, instead return an error, handle it, probably should have some kind of map lookup for the specific error shit
-		// FIXME: we also need to print out debuf information about the current parse information
-		os.Exit(666)
-	}
-
-	return false
-}
-
-func parse() {
-
-	fmt.Println()
-	fmt.Println("Outtputting")
-
-	meta := ParseMeta{}
-
-	// FIXME: Need to make this not a range over
-	for i := 0; i < len(p.Tokens); i++ {
-		t := p.Tokens[i]
-		// strip out WS tokens for now
-		if t.Type == "WS" || t.Type == "EOF" {
-			continue
-		}
-
-		fmt.Println(endTokens)
-
-		// FIXME: this should be an int after the change
-		if meta.Expected != "" {
-			if t.Type == meta.Expected {
-				fmt.Println("Wow we were actually expected")
-				fmt.Println(t)
-				// TODO: run some function, do stuff
-				meta.Expected = t.Expected
-				meta.LastToken = t
-				endTokens = append(endTokens, t)
-				continue
-			} else {
-				fmt.Println("wtf why mom")
-				// TODO: need to handle this
-
-				// TODO: it might be more useful if we compare the current types of the token and the meta.LastToken
-				// TODO: this is where we could have functions already plug and play defined that have the token check the 'nextToken' and then return the token that should be used
-				switch meta.LastToken.Value.String {
-				case ":":
-					// TODO: this could be recursive
-					switch t.Value.String {
-					case "=":
-						// FIXME: these are very hacky right now because the function actually os.Exits out
-						if equals(t, meta, i+2) {
-							i++
-							continue
-						}
-					}
-				case "=":
-					if equals(t, meta, i) {
-						i++
-						continue
-					}
-				case ";":
-					endTokens = append(endTokens, t)
-				default:
-					fmt.Println()
-					fmt.Printf("Syntax ERROR: default case hit %+v %+v %d\n", t, meta, i)
-					fmt.Println()
-					// TODO: need to put actual error codes here
-					// FIXME: we shouldn't os.exit here, instead return an error, handle it, probably should have some kind of map lookup for the specific error shit
-					// FIXME: we also need to print out debuf information about the current parse information
-					os.Exit(666)
-				}
-			}
-		}
-		fmt.Println(t)
-		meta.Expected = t.Expected
-		meta.LastToken = t
-		fmt.Println(t)
-		endTokens = append(endTokens, t)
-	}
-
-	tokenFilename := p.Name + ".tokens"
-
-	// For more granular writes, open a file for writing.
-	tokenFile, err := os.Create(tokenFilename)
-	defer func() {
-		if err = tokenFile.Close(); err != nil {
-			fmt.Println("ERROR: Could not close file:", tokenFilename)
-		}
-	}()
-	if err != nil {
-		fmt.Println("ERROR: Could not open token output file:", tokenFilename)
-		os.Exit(9)
-	}
-	tokenWriter := bufio.NewWriter(tokenFile)
-
-	llFilename := p.Name + ".ll"
-
-	// For more granular writes, open a file for writing.
-	f, err := os.Create(llFilename)
-	defer func() {
-		if err = f.Close(); err != nil {
-			fmt.Println("ERROR: Could not close file:", llFilename)
-		}
-	}()
-	if err != nil {
-		fmt.Println("ERROR: Could not open token output file:", llFilename)
-		os.Exit(9)
-	}
-	w := bufio.NewWriter(f)
-
-	llvmInstructionString := ""
-
-	// TODO: this needs to be outputted as program.expr.parse
-	fmt.Println()
-	fmt.Println("End Tokens:")
-	for i := 0; i < len(endTokens); i++ {
-		t := endTokens[i]
-		fmt.Println(t)
-
-		// TODO: should make a function specifically for writing the tokens
-		tokenJSON, jerr := json.Marshal(t)
-		if jerr != nil {
-			fmt.Println("ERROR: Could not marshal token JSON: ", t)
-		}
-
-		_, err = tokenWriter.WriteString(string(tokenJSON) + "\n")
-		if err != nil || jerr != nil {
-			fmt.Println("ERROR: Could not write token data: ", tokenJSON)
-		}
-
-		switch t.Type {
-		case "TYPE":
-			switch t.Value.String {
-			case "int":
-				// TODO: see if the variable declaration is something we already have
-				llvmInstructionString += "%1 = alloca i32, align 4\n"
-				// TODO: default value will force-find the next literal
-			}
-		case "LITERAL":
-			llvmInstructionString += "store i32 " + t.Value.String + ", i32* %1, align 4"
-		}
-
-		// if t.Value.String == "int" {
-		// 	llvmInstructionString += "%1 = alloca i32, align 4\n"
-		// } else if t.Value.Type == "integer" {
-		// 	llvmInstructionString += "store i32 5, i32* %1, align 4\n"
-		// }
-	}
-
-	err = tokenWriter.Flush()
-	if err != nil {
-		fmt.Println("ERROR: Could not flush writer, data may be missing:", tokenFilename)
-	}
-
-	_, err = w.WriteString(llvmStart)
-	if err != nil {
-		fmt.Println("omggg!!!1")
-		return
-	}
-
-	_, err = w.WriteString(llvmInstructionString + "\n")
-	if err != nil {
-		fmt.Println("omggg!!!2")
-		return
-	}
-
-	_, err = w.WriteString(llvmEnd)
-	if err != nil {
-		fmt.Println("omggg!!!4")
-		return
-	}
-
-	err = w.Flush()
-	if err != nil {
-		fmt.Println("ERROR: Could not flush writer, data may be missing:", llFilename)
-	}
-}
+// 	err = w.Flush()
+// 	if err != nil {
+// 		fmt.Println("ERROR: Could not flush writer, data may be missing:", llFilename)
+// 	}
+// }
 
 func main() {
 	// TODO: add some flags later
@@ -786,7 +713,15 @@ func main() {
 	printTokens()
 
 	// TODO: always output tokens right now
+	// TODO: change the name of this to accurately reflect lex vs parse tokens
 	outputTokens()
 
-	parse()
+	endTokens = parse.Parse(p.Tokens, p.Name)
+	fmt.Println()
+	fmt.Println("Endtokens:")
+
+	for _, et := range endTokens {
+		fmt.Println(et)
+	}
+	// llvmConversion(endTokens)
 }

@@ -124,18 +124,18 @@ var TokenMap = map[string]Token{
 
 	// OPERANDS
 	"+": Token{
-		Type:     "ADD",
+		Type:     "SEC_OP",
 		Expected: "EXPR",
 		Value: Value{
-			Type:   "op_4",
+			Type:   "add",
 			String: "+",
 		},
 	},
 	"-": Token{
-		Type:     "SUB",
+		Type:     "SEC_OP",
 		Expected: "EXPR",
 		Value: Value{
-			Type:   "op_4",
+			Type:   "sub",
 			String: "-",
 		},
 	},
