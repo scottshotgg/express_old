@@ -3,11 +3,13 @@ package parse
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/sgg7269/tokenizer/token"
 )
 
 var endTokens []token.Token
+var identMap = map[string]token.Value{}
 
 // TODO: take another look at the returns on this function later
 func getFactor(i int, tokens []token.Token) (token.Token, error) {
@@ -15,7 +17,7 @@ func getFactor(i int, tokens []token.Token) (token.Token, error) {
 
 	// FIXME: we should first add a check for parens
 	// FIXME: this will only work for spaces between them; hence the +2
-	lookAhead := tokens[i]
+	// lookAhead := tokens[i]
 
 	lookAheadNext, i := getNextNonWSToken(parseIndex)
 	fmt.Println("next", lookAheadNext)
@@ -35,10 +37,18 @@ func getFactor(i int, tokens []token.Token) (token.Token, error) {
 		endTokens = append(endTokens, lookAheadNext)
 		parseIndex = parseIndex + i
 	} else if lookAheadNext.Type == "IDENT" {
+		// gonna need to look up the ident; this could be a var or a keyword, but we need to check if its actually a function and stuff
+		if ident, ok := identMap[lookAheadNext.Value.String]; ok {
+			fmt.Println("woah i found the var", ident)
+		} else {
+			fmt.Println("wtf mom go away")
+			return token.Token{}, nil
+		}
+
 		fmt.Println("Found an ident")
 		endTokens = append(endTokens, lookAheadNext)
 		parseIndex = parseIndex + i
-		lookAhead.Expected = ""
+		// lookAhead.Expected = ""
 	} else if lookAheadNext.Type == "L_PAREN" {
 		fmt.Println("Found a paren")
 		endTokens = append(endTokens, lookAheadNext)
@@ -111,7 +121,7 @@ func getPriOp() (token.Token, error) {
 		return op, nil
 	}
 
-	fmt.Println(op, i)
+	fmt.Println("pri op, i", op, i)
 
 	return op, errors.New("Did not find ze pri op")
 }
@@ -126,7 +136,7 @@ func getSecOp() (token.Token, error) {
 		return op, nil
 	}
 
-	fmt.Println(op, i)
+	fmt.Println("sec op, i", op, i)
 
 	return op, errors.New("Did not find ze op")
 }
@@ -138,7 +148,8 @@ func getExpr(i int, tokens []token.Token) (token.Token, error) {
 	// Find a negative or positive
 	// TODO: should check the error later
 	_, err := getSecOp()
-	if err != nil {
+	if err == nil {
+
 	}
 
 	for {
@@ -344,13 +355,18 @@ func getNextNonWSToken(i int) (token.Token, int) {
 
 // TODO: think of a different name
 // For now just return the token like this
-func getType() (token.Token, error) {
+func getType(t token.Token) (token.Token, error) {
 	nextToken, i := getNextNonWSToken(parseIndex)
 
 	switch nextToken.Type {
 	case "IDENT":
 		endTokens = append(endTokens, nextToken)
 		parseIndex = parseIndex + i
+		identMap[nextToken.Value.String] = token.Value{
+			Type: t.Value.String,
+			True: "",
+			// String: "",
+		}
 		return nextToken, nil
 	default:
 		return nextToken, errors.New("Didn't find a valid token")
@@ -402,11 +418,11 @@ func Parse(tokens []token.Token, name string) []token.Token {
 			switch t.Type {
 			case "TYPE":
 				endTokens = append(endTokens, t)
-				// token, err := getType()
-				// if err != nil {
-				// 	fmt.Printf("ERROR: %s\nFound: %#v\n", err, token)
-				// 	os.Exit(666)
-				// }
+				token, err := getType(t)
+				if err != nil {
+					fmt.Printf("ERROR: %s\nFound: %#v\n", err, token)
+					os.Exit(666)
+				}
 
 			case "IDENT":
 				endTokens = append(endTokens, t)
@@ -433,12 +449,16 @@ func Parse(tokens []token.Token, name string) []token.Token {
 			case "EOS":
 				endTokens = append(endTokens, t)
 				fmt.Println("found an EOS")
-				// We might need this later for something else if we reuse the semicolon
-				// token, err := getEOS()
-				// if err != nil {
-				// 	fmt.Printf("ERROR: %s\nFound: %#v\n", err, token)
-				// 	os.Exit(666)
-				// }
+			// We might need this later for something else if we reuse the semicolon
+			// token, err := getEOS()
+			// if err != nil {
+			// 	fmt.Printf("ERROR: %s\nFound: %#v\n", err, token)
+			// 	os.Exit(666)
+			// }
+
+			case "NEWLINE":
+				// endTokens = append(endTokens, t)
+				// fmt.Println("found newline")
 
 			case "EOF":
 				endTokens = append(endTokens, t)
@@ -461,5 +481,9 @@ func Parse(tokens []token.Token, name string) []token.Token {
 		parseIndex++
 	}
 
+	fmt.Println("identMap", identMap)
+
 	return endTokens
 }
+
+// TODO: FIXME: we need to implement something that will track the statement and origanize the data in such a away that will make it easy to to build the variable map
