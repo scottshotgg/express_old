@@ -85,6 +85,8 @@ func getFactor(i int, tokens []token.Token) (token.Token, error) {
 		if err != nil {
 			fmt.Println("something when wrong in the block", blockTok, err)
 		}
+		return blockTok, nil
+
 	} else {
 		return lookAheadNext, errors.New("Didn't find a factor")
 	}
@@ -210,10 +212,13 @@ func getExpr(i int, tokens []token.Token) (token.Token, error) {
 		termToken, err := getTerm(i, tokens)
 		if err != nil {
 			// FIXME: fix this shoehorned EOF
+			// FIXME: switch on the token type instead
 			if termToken.Type == "EOF" {
 				fmt.Println("APPENDING TO EOF", termToken)
 				endTokens = append(endTokens, termToken)
 				return termToken, nil
+			} else if termToken.Type == "NEWLINE" {
+				fmt.Println("YEAH BAYBEE YEAH")
 			}
 			fmt.Println("ERROR:", err)
 			return termToken, err
@@ -523,6 +528,12 @@ func Parse(tokens []token.Token, name string) []token.Token {
 				fmt.Println("right found a thingerooni", t)
 				endTokens = append(endTokens, t)
 				return endTokens
+
+			// TODO: using this for comma rn, but this might fuck something up later
+			case "SEPARATOR":
+				fmt.Println("found a separator", t)
+				endTokens = append(endTokens, t)
+				// return
 
 			case "EOS":
 				endTokens = append(endTokens, t)
