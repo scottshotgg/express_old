@@ -21,3 +21,5 @@ object type <br>
 Nexted enclosers <br>
 
 add debug printouts
+
+## for now the lexer does the literal identification; for instance, with floats and string, but this should probably move to the parser

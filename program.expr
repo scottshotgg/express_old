@@ -1,5 +1,2 @@
-var thing = {
-  hey: -(6 + 3) * 5,
-  its: "me",
-  me: true
-}
+var thing = "5";
+var nothing = 3;
