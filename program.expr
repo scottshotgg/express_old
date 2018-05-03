@@ -1,4 +1,5 @@
 var thing = {
-  me: -(6 + 3) * 5;
-  hey: me;
+  hey: -(6 + 3) * 5;
+  its: hey;
+  me: "!";
 }
