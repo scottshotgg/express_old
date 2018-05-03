@@ -8,11 +8,8 @@
 {"ID":0,"Type":"NEWLINE","Expected":"","Value":{"Type":"newline","True":null,"String":"\n"}}
 {"ID":0,"Type":"WS","Expected":"","Value":{"Type":"","True":null,"String":" "}}
 {"ID":0,"Type":"WS","Expected":"","Value":{"Type":"","True":null,"String":" "}}
-{"ID":0,"Type":"TYPE","Expected":"IDENT","Value":{"Type":"var","True":2,"String":"int"}}
-{"ID":0,"Type":"WS","Expected":"","Value":{"Type":"","True":null,"String":" "}}
 {"ID":0,"Type":"IDENT","Expected":"ASSIGN","Value":{"Type":"ident","True":null,"String":"me"}}
-{"ID":0,"Type":"WS","Expected":"","Value":{"Type":"","True":null,"String":" "}}
-{"ID":0,"Type":"ASSIGN","Expected":"EXPR","Value":{"Type":"assign","True":null,"String":"="}}
+{"ID":0,"Type":"ASSIGN","Expected":"EXPR","Value":{"Type":"set_assign","True":null,"String":":"}}
 {"ID":0,"Type":"WS","Expected":"","Value":{"Type":"","True":null,"String":" "}}
 {"ID":0,"Type":"SEC_OP","Expected":"EXPR","Value":{"Type":"sub","True":null,"String":"-"}}
 {"ID":0,"Type":"L_PAREN","Expected":"EXPR","Value":{"Type":"op_3","True":null,"String":"("}}

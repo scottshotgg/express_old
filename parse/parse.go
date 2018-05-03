@@ -46,6 +46,7 @@ func getFactor(i int, tokens []token.Token) (token.Token, error) {
 	// lookAheadNext, _ = getNextNonWSToken(parseIndex)
 	// fmt.Println("next", lookAheadNext)
 
+	// FIXME: this should be a switch case
 	if lookAheadNext.Type == "LITERAL" {
 		fmt.Println("Found a literal")
 		endTokens = append(endTokens, lookAheadNext)
@@ -79,6 +80,11 @@ func getFactor(i int, tokens []token.Token) (token.Token, error) {
 		endTokens = append(endTokens, rParen)
 		parseIndex = parseIndex + i
 
+	} else if lookAheadNext.Type == "L_BRACE" {
+		blockTok, err := getBlock()
+		if err != nil {
+			fmt.Println("something when wrong in the block", blockTok, err)
+		}
 	} else {
 		return lookAheadNext, errors.New("Didn't find a factor")
 	}
@@ -96,6 +102,7 @@ func getFactor(i int, tokens []token.Token) (token.Token, error) {
 func getTerm(i int, tokens []token.Token) (token.Token, error) {
 	fmt.Println("getting term")
 
+	// FIXME: need to look at how this will effect negative mult/div statements
 	factor, err := getFactor(i, tokens)
 	if err != nil {
 		return factor, err
@@ -105,6 +112,12 @@ func getTerm(i int, tokens []token.Token) (token.Token, error) {
 	for {
 		opTerm, err := getPriOp()
 		if err != nil {
+			// FIXME: fix this shoehorned EOF
+			if opTerm.Type == "EOF" {
+				fmt.Println("APPENDING TO EOF", opTerm)
+				endTokens = append(endTokens, opTerm)
+				return opTerm, nil
+			}
 			fmt.Println("ERROR:", err)
 			return opTerm, nil
 		}
@@ -183,25 +196,25 @@ func getExpr(i int, tokens []token.Token) (token.Token, error) {
 
 	// Find a negative or positive
 	// TODO: should check the error later
-	tok, err := getSecOp()
+	_, err := getSecOp()
 	if err == nil {
 		fmt.Println("no error...? what to do")
 	}
 
-	// TODO: idk need to solve this later, 3 lazy 5 u
-	if err != nil {
-		fmt.Println("need to do something else ", tok)
-		if tok.Type == "L_BRACE" {
-			blockTok, err := getBlock()
-			if err != nil {
-				fmt.Println("something when wrong in the block", blockTok, err)
-			}
-		}
-	}
+	// // TODO: idk need to solve this later, 3 lazy 5 u
+	// if err != nil {
+
+	// }
 
 	for {
 		termToken, err := getTerm(i, tokens)
 		if err != nil {
+			// FIXME: fix this shoehorned EOF
+			if termToken.Type == "EOF" {
+				fmt.Println("APPENDING TO EOF", termToken)
+				endTokens = append(endTokens, termToken)
+				return termToken, nil
+			}
 			fmt.Println("ERROR:", err)
 			return termToken, err
 		}

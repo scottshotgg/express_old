@@ -1,4 +1,4 @@
 var thing = {
-  int me = -(6 + 3) * 5;
+  me: -(6 + 3) * 5;
   hey: me;
 }
