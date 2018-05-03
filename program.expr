@@ -1,2 +1,4 @@
-int me = -(6 + 3) * 5;
-string hey = "hey";
+var thing = {
+  int me = -(6 + 3) * 5;
+  hey: me;
+}

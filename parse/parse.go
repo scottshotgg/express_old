@@ -9,7 +9,21 @@ import (
 )
 
 var endTokens []token.Token
+
+// FIXME: This will probably need to be a map to an actual scope which will then be
+// a map[string]token.Value{}
 var identMap = map[string]token.Value{}
+
+func getLastParsedToken() (token.Token, int, error) {
+	fmt.Println("getLastParsedToken")
+	fmt.Println(endTokens[len(endTokens)-1])
+
+	if parseIndex > 0 {
+		return endTokens[len(endTokens)-1], parseIndex, nil
+	}
+
+	return token.Token{}, parseIndex, errors.New("parseIndex less than 1")
+}
 
 // TODO: take another look at the returns on this function later
 func getFactor(i int, tokens []token.Token) (token.Token, error) {
@@ -41,8 +55,8 @@ func getFactor(i int, tokens []token.Token) (token.Token, error) {
 		if ident, ok := identMap[lookAheadNext.Value.String]; ok {
 			fmt.Println("woah i found the var", ident)
 		} else {
-			fmt.Println("wtf mom go away")
-			return token.Token{}, nil
+			fmt.Println("wtf mom the var isnt there")
+			return token.Token{}, errors.New("undefined variable reference")
 		}
 
 		fmt.Println("Found an ident")
@@ -84,7 +98,7 @@ func getTerm(i int, tokens []token.Token) (token.Token, error) {
 
 	factor, err := getFactor(i, tokens)
 	if err != nil {
-
+		return factor, err
 	}
 	fmt.Println("factor", factor)
 
@@ -126,6 +140,28 @@ func getPriOp() (token.Token, error) {
 	return op, errors.New("Did not find ze pri op")
 }
 
+func getBlock() (token.Token, error) {
+	fmt.Println("getBlock")
+
+	lBrace, i := getNextNonWSToken(parseIndex)
+	fmt.Println("lBrace, i", lBrace, i)
+	endTokens = append(endTokens, lBrace)
+	// need to do a get statements thing
+	// savedParseIndex = parseIndex+1
+	// TODO: we should also make this return an error
+	Parse(tokensGlobal[parseIndex+1:], "namerino")
+
+	// rBrace, i := getNextNonWSToken(parseIndex)
+	rBrace, i, err := getLastParsedToken() //parseIndex)
+	fmt.Println("rBrace, i, err", rBrace, i, err)
+	// endTokens = append(endTokens, rBrace)
+	if rBrace.Type == "R_BRACE" {
+		fmt.Println("found an r brace again")
+	}
+
+	return rBrace, nil
+}
+
 func getSecOp() (token.Token, error) {
 	fmt.Println("getSecOp")
 
@@ -147,9 +183,20 @@ func getExpr(i int, tokens []token.Token) (token.Token, error) {
 
 	// Find a negative or positive
 	// TODO: should check the error later
-	_, err := getSecOp()
+	tok, err := getSecOp()
 	if err == nil {
+		fmt.Println("no error...? what to do")
+	}
 
+	// TODO: idk need to solve this later, 3 lazy 5 u
+	if err != nil {
+		fmt.Println("need to do something else ", tok)
+		if tok.Type == "L_BRACE" {
+			blockTok, err := getBlock()
+			if err != nil {
+				fmt.Println("something when wrong in the block", blockTok, err)
+			}
+		}
 	}
 
 	for {
@@ -360,13 +407,18 @@ func getType(t token.Token) (token.Token, error) {
 
 	switch nextToken.Type {
 	case "IDENT":
+		// TODO: this needs to have some logic to say if it is already there then wtf to do
+		// TODO: this needs to do keywords too
+		if _, ok := identMap[nextToken.Value.String]; !ok {
+			fmt.Println("DID NOT FOUND THE VARIABLE")
+			identMap[nextToken.Value.String] = token.Value{
+				Type: t.Value.String,
+				True: "",
+				// String: "",
+			}
+		}
 		endTokens = append(endTokens, nextToken)
 		parseIndex = parseIndex + i
-		identMap[nextToken.Value.String] = token.Value{
-			Type: t.Value.String,
-			True: "",
-			// String: "",
-		}
 		return nextToken, nil
 	default:
 		return nextToken, errors.New("Didn't find a valid token")
@@ -428,7 +480,7 @@ func Parse(tokens []token.Token, name string) []token.Token {
 				endTokens = append(endTokens, t)
 				fmt.Println("found an ident")
 
-			// TODO: in the case for ":" (SET), there needs to be some checking for the assign/equals/set tokens
+			// TODO: in the case for ":" (SET), there n$eeds to be some checking for the assign/equals/set tokens
 			case "ASSIGN":
 				endTokens = append(endTokens, t)
 				fmt.Println("found an equals")
@@ -446,6 +498,19 @@ func Parse(tokens []token.Token, name string) []token.Token {
 				}
 				fmt.Println("exprToken", exprToken)
 
+			case "NEWLINE":
+				// endTokens = append(endTokens, t)
+				// fmt.Println("found newline")
+
+			case "L_BRACE":
+				fmt.Println("left found a thingerooni", t)
+
+			case "R_BRACE":
+				// This should not be hit for a standard object definition
+				fmt.Println("right found a thingerooni", t)
+				endTokens = append(endTokens, t)
+				return endTokens
+
 			case "EOS":
 				endTokens = append(endTokens, t)
 				fmt.Println("found an EOS")
@@ -455,10 +520,6 @@ func Parse(tokens []token.Token, name string) []token.Token {
 			// 	fmt.Printf("ERROR: %s\nFound: %#v\n", err, token)
 			// 	os.Exit(666)
 			// }
-
-			case "NEWLINE":
-				// endTokens = append(endTokens, t)
-				// fmt.Println("found newline")
 
 			case "EOF":
 				endTokens = append(endTokens, t)

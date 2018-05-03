@@ -1,0 +1,15 @@
+{
+  "name": "xterm.js",
+  "homepage": "https://github.com/sourcelair/xterm.js",
+  "version": "3.3.0",
+  "_release": "3.3.0",
+  "_resolution": {
+    "type": "version",
+    "tag": "3.3.0",
+    "commit": "048b10ebf650bd7b07d31380dd08d1ac79262f5a"
+  },
+  "_source": "https://github.com/sourcelair/xterm.js.git",
+  "_target": "^3.3.0",
+  "_originalSource": "xterm.js",
+  "_direct": true
+}
