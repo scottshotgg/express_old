@@ -65,7 +65,6 @@ func NewProgram(programName string) (Program, error) {
 
 // TODO: make this take a compile stage
 func (p *Program) PrintTokens(stage string) {
-
 	if jsonIndent != "" {
 		for _, token := range p.Tokens[stage] {
 			tokenJSON, err := json.MarshalIndent(token, "", jsonIndent)
@@ -132,13 +131,18 @@ func main() {
 
 	p.PrintTokens("lex")
 
+	return
+
 	// TODO: always output tokens right now
 	// TODO: change the name of this to accurately reflect lex vs parse tokens
 	// outputTokens()
 
-	// TODO: fix this
-	p.Tokens["parse"] = parse.Parse(p.Tokens["lex"], p.Name)
+	// TODO: fix this to return an err
 	fmt.Println()
+	p.Tokens["parse"], err = parse.Parse(p.Tokens["lex"], p.Name)
+	if err != nil {
+		fmt.Println("ERROR:", err)
+	}
 	fmt.Println("Endtokens:")
 
 	p.PrintTokens("parse")

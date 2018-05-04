@@ -1,4 +1,12 @@
-# tokenizer
+# Stages:
+### - Lexer:   Tokenize the file
+### - Parsing: Parse the tokens, squash tokens together
+### - Check:   Check the tokens syntactically
+Parse until you don't have to make any changes to any tokens
+<br>
+<br>
+
+## Tokenizer
 Tokenizer for Express written in Go
 
 ```bnf

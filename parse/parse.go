@@ -475,9 +475,13 @@ var parseLen = 0
 var tokensGlobal []token.Token
 
 // Parse ...
-func Parse(tokens []token.Token, name string) []token.Token {
+func Parse(tokens []token.Token, name string) ([]token.Token, error) {
 	tokensGlobal = tokens
 	parseLen = len(tokens) - 1
+
+	if len(tokens) < 1 {
+		return endTokens, errors.New("No tokens to parse")
+	}
 
 	// FIXME: we should start off with things like GetStatement(), GetExpr(), GetTerm(), etc
 	for {
@@ -512,7 +516,7 @@ func Parse(tokens []token.Token, name string) []token.Token {
 				exprToken, err := getExpr(parseIndex+1, tokens[parseIndex+1:])
 				if err != nil {
 					fmt.Println("got a fucking error dude")
-					return endTokens
+					return endTokens, err
 				}
 				fmt.Println("exprToken", exprToken)
 
@@ -527,7 +531,7 @@ func Parse(tokens []token.Token, name string) []token.Token {
 				// This should not be hit for a standard object definition
 				fmt.Println("right found a thingerooni", t)
 				endTokens = append(endTokens, t)
-				return endTokens
+				return endTokens, nil
 
 			// TODO: using this for comma rn, but this might fuck something up later
 			case "SEPARATOR":
@@ -553,7 +557,7 @@ func Parse(tokens []token.Token, name string) []token.Token {
 			default:
 				fmt.Println("I did not recognize this token")
 				fmt.Println(t)
-				return endTokens
+				return endTokens, nil
 			}
 
 			fmt.Println(t)
@@ -568,7 +572,7 @@ func Parse(tokens []token.Token, name string) []token.Token {
 
 	fmt.Println("identMap", identMap)
 
-	return endTokens
+	return endTokens, nil
 }
 
 // TODO: FIXME: we need to implement something that will track the statement and origanize the data in such a away that will make it easy to to build the variable map

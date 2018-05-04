@@ -1,5 +1,10 @@
 package token
 
+import (
+	"fmt"
+	"os"
+)
+
 // var lexems = []token.Token{
 // 	"=": Token{
 // 		Type:     "ASSIGN",
@@ -16,13 +21,37 @@ package token
 // LexemeMap ... fk u go
 // TODO: make an accessor function for this var
 // TODO: just do this for now
-// var LexemeMap = map[string]string{
-// 	"=",
-// 	"+",
-// 	"-",
-// 	"(",
-// 	")",
-// 	"\"",
-// 	"*",
-// 	";",
-// }
+
+// Lexemes ...
+var Lexemes = []string{
+	"var",
+	"int",
+	"=",
+	"+",
+	"-",
+	"*",
+	"/",
+	"(",
+	")",
+	"{",
+	"}",
+	"[",
+	"]",
+	"\"",
+	";",
+}
+
+// LexemeMap ...
+var LexemeMap = map[string]Token{}
+
+func init() {
+	for _, lexeme := range Lexemes {
+		if lexToken, ok := TokenMap[lexeme]; !ok {
+			fmt.Println("ERROR: Lexeme not found in TokenMap: ", lexeme)
+			// fmt.Println("TokenMap: %#v")
+			os.Exit(7)
+		} else {
+			LexemeMap[lexeme] = lexToken
+		}
+	}
+}

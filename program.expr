@@ -1,2 +1,2 @@
-var thing = "5";
-var nothing = 3;
+int thing = "5";
+var dyn = {};

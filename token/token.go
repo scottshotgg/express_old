@@ -342,6 +342,38 @@ var TokenMap = map[string]Token{
 			String: ")",
 		},
 	},
+	"{": Token{
+		Type:     "L_BRACE",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3", // TODO: check all these
+			String: "{",
+		},
+	},
+	"}": Token{
+		Type:     "R_BRACE",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3", // TODO: check all these
+			String: "}",
+		},
+	},
+	"[": Token{
+		Type:     "L_BRACKET",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3", // TODO: check all these
+			String: "[",
+		},
+	},
+	"]": Token{
+		Type:     "R_BRACKET",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "op_3", // TODO: check all these
+			String: "]",
+		},
+	},
 	"`": Token{
 		Type:     "GRAVE",
 		Expected: "EXPR",
