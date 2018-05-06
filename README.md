@@ -12,7 +12,7 @@ Tokenizer for Express written in Go
 ```bnf
 program : stmt+ ;
 
-stmt    : var assign_op term <EOS> |
+stmt    : var expr <EOS> |
           expr <EOS>            ;
 
 expr    : term sec_op term |

@@ -106,7 +106,7 @@ var TokenMap = map[string]Token{
 		},
 	},
 	":": Token{
-		Type:     "ASSIGN",
+		Type:     "SET",
 		Expected: "EXPR",
 		Value: Value{
 			Type:   "set_assign",
@@ -114,7 +114,7 @@ var TokenMap = map[string]Token{
 		},
 	},
 	":=": Token{
-		Type:     "ASSIGN",
+		Type:     "INIT",
 		Expected: "EXPR",
 		Value: Value{
 			Type:   "init_assign",

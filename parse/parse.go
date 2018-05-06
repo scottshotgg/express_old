@@ -1,578 +1,550 @@
 package parse
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
 	"os"
 
+	"github.com/pkg/errors"
 	"github.com/sgg7269/tokenizer/token"
 )
 
-var endTokens []token.Token
-
-// FIXME: This will probably need to be a map to an actual scope which will then be
-// a map[string]token.Value{}
-var identMap = map[string]token.Value{}
-
-func getLastParsedToken() (token.Token, int, error) {
-	fmt.Println("getLastParsedToken")
-	fmt.Println(endTokens[len(endTokens)-1])
-
-	if parseIndex > 0 {
-		return endTokens[len(endTokens)-1], parseIndex, nil
-	}
-
-	return token.Token{}, parseIndex, errors.New("parseIndex less than 1")
-}
-
-// TODO: take another look at the returns on this function later
-func getFactor(i int, tokens []token.Token) (token.Token, error) {
-	fmt.Println("getting factor")
-
-	// FIXME: we should first add a check for parens
-	// FIXME: this will only work for spaces between them; hence the +2
-	// lookAhead := tokens[i]
-
-	lookAheadNext, i := getNextNonWSToken(parseIndex)
-	fmt.Println("next", lookAheadNext)
-
-	// 3 + 9 * 4
-	// 9 * 4 + 3
-
-	// lookAheadNext, _ = getNextNonWSToken(parseIndex)
-	// parseIndex = parseIndex + i
-	// fmt.Println("next", lookAheadNext)
-
-	// lookAheadNext, _ = getNextNonWSToken(parseIndex)
-	// fmt.Println("next", lookAheadNext)
-
-	// FIXME: this should be a switch case
-	if lookAheadNext.Type == "LITERAL" {
-		fmt.Println("Found a literal")
-		endTokens = append(endTokens, lookAheadNext)
-		parseIndex = parseIndex + i
-	} else if lookAheadNext.Type == "IDENT" {
-		// gonna need to look up the ident; this could be a var or a keyword, but we need to check if its actually a function and stuff
-		if ident, ok := identMap[lookAheadNext.Value.String]; ok {
-			fmt.Println("woah i found the var", ident)
-		} else {
-			fmt.Println("wtf mom the var isnt there")
-			return token.Token{}, errors.New("undefined variable reference")
-		}
-
-		fmt.Println("Found an ident")
-		endTokens = append(endTokens, lookAheadNext)
-		parseIndex = parseIndex + i
-		// lookAhead.Expected = ""
-	} else if lookAheadNext.Type == "L_PAREN" {
-		fmt.Println("Found a paren")
-		endTokens = append(endTokens, lookAheadNext)
-		parseIndex = parseIndex + i
-		expr, err := getExpr(parseIndex, tokens)
-		if err != nil {
-			fmt.Println("woah bro an error", expr, err)
-		}
-		rParen, i := getNextNonWSToken(parseIndex)
-		fmt.Println(rParen, i)
-		if rParen.Type != "R_PAREN" {
-			// throw up a fuckin err or something, idk 2 lazy rn brah
-		}
-		endTokens = append(endTokens, rParen)
-		parseIndex = parseIndex + i
-
-	} else if lookAheadNext.Type == "L_BRACE" {
-		blockTok, err := getBlock()
-		if err != nil {
-			fmt.Println("something when wrong in the block", blockTok, err)
-		}
-		return blockTok, nil
-
-	} else {
-		return lookAheadNext, errors.New("Didn't find a factor")
-	}
-
-	return lookAheadNext, nil
-}
-
-// func getTerm(i int, tokens []token.Token) (token.Token, error) {
-// 	fmt.Println("getting term")
-
-// 	return getFactor(i, tokens)
-// }
-
-// FIXME: fix this guys return later
-func getTerm(i int, tokens []token.Token) (token.Token, error) {
-	fmt.Println("getting term")
-
-	// FIXME: need to look at how this will effect negative mult/div statements
-	factor, err := getFactor(i, tokens)
-	if err != nil {
-		return factor, err
-	}
-	fmt.Println("factor", factor)
-
-	for {
-		opTerm, err := getPriOp()
-		if err != nil {
-			// FIXME: fix this shoehorned EOF
-			if opTerm.Type == "EOF" {
-				fmt.Println("APPENDING TO EOF", opTerm)
-				endTokens = append(endTokens, opTerm)
-				return opTerm, nil
-			}
-			fmt.Println("ERROR:", err)
-			return opTerm, nil
-		}
-		fmt.Println("opTerm", opTerm)
-
-		factor, err := getFactor(i, tokens)
-		if err != nil {
-			fmt.Println("ERROR:", err)
-			return factor, err
-		}
-		fmt.Println("factor", factor)
-	}
-
-	// TODO: this needs to check EOS
-	// its fine now since we only have one statement
-	return token.Token{
-		Type: "IDK WTD TD",
-	}, errors.New("how 2 even get here")
-}
-
-func getPriOp() (token.Token, error) {
-	fmt.Println("getPriOp")
-
-	op, i := getNextNonWSToken(parseIndex)
-	if op.Type == "PRI_OP" {
-		endTokens = append(endTokens, op)
-		parseIndex = parseIndex + i
-		return op, nil
-	}
-
-	fmt.Println("pri op, i", op, i)
-
-	return op, errors.New("Did not find ze pri op")
-}
-
-func getBlock() (token.Token, error) {
-	fmt.Println("getBlock")
-
-	lBrace, i := getNextNonWSToken(parseIndex)
-	fmt.Println("lBrace, i", lBrace, i)
-	endTokens = append(endTokens, lBrace)
-	// need to do a get statements thing
-	// savedParseIndex = parseIndex+1
-	// TODO: we should also make this return an error
-	Parse(tokensGlobal[parseIndex+1:], "namerino")
-
-	// rBrace, i := getNextNonWSToken(parseIndex)
-	rBrace, i, err := getLastParsedToken() //parseIndex)
-	fmt.Println("rBrace, i, err", rBrace, i, err)
-	// endTokens = append(endTokens, rBrace)
-	if rBrace.Type == "R_BRACE" {
-		fmt.Println("found an r brace again")
-	}
-
-	return rBrace, nil
-}
-
-func getSecOp() (token.Token, error) {
-	fmt.Println("getSecOp")
-
-	op, i := getNextNonWSToken(parseIndex)
-	if op.Type == "SEC_OP" {
-		endTokens = append(endTokens, op)
-		parseIndex = parseIndex + i
-		return op, nil
-	}
-
-	fmt.Println("sec op, i", op, i)
-
-	return op, errors.New("Did not find ze op")
-}
-
-// FIXME: fix this guys return later
-func getExpr(i int, tokens []token.Token) (token.Token, error) {
-	fmt.Println("getting expr")
-
-	// Find a negative or positive
-	// TODO: should check the error later
-	_, err := getSecOp()
-	if err == nil {
-		fmt.Println("no error...? what to do")
-	}
-
-	// // TODO: idk need to solve this later, 3 lazy 5 u
-	// if err != nil {
-
-	// }
-
-	for {
-		termToken, err := getTerm(i, tokens)
-		if err != nil {
-			// FIXME: fix this shoehorned EOF
-			// FIXME: switch on the token type instead
-			if termToken.Type == "EOF" {
-				fmt.Println("APPENDING TO EOF", termToken)
-				endTokens = append(endTokens, termToken)
-				return termToken, nil
-			} else if termToken.Type == "NEWLINE" {
-				fmt.Println("YEAH BAYBEE YEAH")
-			}
-			fmt.Println("ERROR:", err)
-			return termToken, err
-		}
-		fmt.Println("termToken", termToken)
-
-		opTerm, err := getSecOp()
-		if err != nil {
-			fmt.Println("ERROR:", err)
-			return opTerm, nil
-		}
-		fmt.Println("opTerm", opTerm)
-	}
-
-	// TODO: this needs to check EOS
-	// its fine now since we only have one statement
-	return token.Token{
-		Type: "IDK WTD TD",
-	}, errors.New("how 2 even get here")
-}
-
 // Meta ...
 type Meta struct {
-	Expected  string // TODO: this should change to an int later after we properly assign IDs
-	LastToken token.Token
+	IgnoreWS        bool
+	ParseIndex      int
+	Length          int
+	Tokens          []token.Token
+	SemanticTokens  []token.Token
+	SyntacticTokens []token.Token
+	EndTokens       []token.Token
+
+	LastToken    token.Token
+	CurrentToken token.Token
+	NextToken    token.Token
+
+	LastCollectedToken token.Token
+	//TokenLock sync.Mutex
 }
 
-// func equals(t token.Token, meta Meta, i int, tokens []token.Token) bool {
-// 	fmt.Println("New token:", t, meta, i)
-// 	// TODO: this is whats not working
-// 	tok := token.TokenMap[meta.LastToken.Value.String+t.Value.String]
-// 	fmt.Println(tok)
-// 	meta.Expected = "EXPR"
-// 	meta.LastToken = tok
-// 	endTokens[len(endTokens)-1] = tok
+// CollectToken ...
+func (m *Meta) CollectToken(token token.Token) {
+	m.LastCollectedToken = token
+	m.EndTokens = append(m.EndTokens, token)
+}
 
-// 	ge := getExpr(i, tokens)
-// 	fmt.Println()
-// 	fmt.Println("ge", ge)
-// 	fmt.Println()
+// CollectCurrentToken ...
+func (m *Meta) CollectCurrentToken() {
+	m.CollectToken(m.CurrentToken)
+}
 
-// 	if ge {
-// 		i = i + 1
-// 		meta.Expected = "EOS"
-// 		meta.LastToken = tokens[i]
-// 		endTokens = append(endTokens, tokens[i])
-// 		// FIXME: clean this shit up
-// 		return true
-// 	}
-// 	// TODO: this would be an error
-// 	fmt.Println()
-// 	fmt.Println("Syntax ERROR")
-// 	fmt.Println()
-// 	// TODO: need to put actual error codes here
-// 	// FIXME: we shouldn't os.exit here, instead return an error, handle it, probably should have some kind of map lookup for the specific error shit
-// 	// FIXME: we also need to print out debuf information about the current parse information
-// 	os.Exit(666)
+// CollectLastToken ...
+func (m *Meta) CollectLastToken() {
+	m.CollectToken(m.LastToken)
+}
 
-// 	return false
-// }
-
-// // Parse ...
-// func Parse(lexTokens []token.Token, name string) []token.Token {
-
-// 	fmt.Println()
-// 	fmt.Println("Outtputting")
-
-// 	meta := Meta{}
-
-// 	// FIXME: Need to make this not a range over
-// 	for i := 0; i < len(lexTokens); i++ {
-// 		t := lexTokens[i]
-// 		// strip out WS tokens for now
-// 		if t.Type == "WS" || t.Type == "EOF" {
-// 			continue
-// 		}
-
-// 		// FIXME: this should be an int after the change
-// 		if meta.Expected != "" {
-// 			if t.Type == meta.Expected {
-// 				fmt.Println("Wow we were actually expected")
-// 				fmt.Println(t)
-// 				// TODO: run some function, do stuff
-// 				meta.Expected = t.Expected
-// 				meta.LastToken = t
-// 				endTokens = append(endTokens, t)
-// 				continue
-// 			} else {
-// 				fmt.Println("wtf why mom")
-// 				// TODO: need to handle this
-
-// 				// TODO: why are we doing this based on the last token?
-// 				// TODO: it might be more useful if we compare the current types of the token and the meta.LastToken
-// 				// TODO: this is where we could have functions already plug and play defined that have the token check the 'nextToken' and then return the token that should be used
-// 				switch meta.LastToken.Value.String {
-// 				case ":":
-// 					// TODO: this could be recursive
-// 					switch t.Value.String {
-// 					case "=":
-// 						// FIXME: these are very hacky right now because the function actually os.Exits out
-// 						// FIXME: WS assumption here
-// 						if equals(t, meta, i+2, lexTokens) {
-// 							i++
-// 							continue
-// 						}
-// 					}
-// 				case "=":
-// 					if equals(t, meta, i, lexTokens) {
-// 						i++
-// 						continue
-// 					}
-// 				case ";":
-// 					endTokens = append(endTokens, t)
-// 				default:
-// 					fmt.Println()
-// 					fmt.Printf("Syntax ERROR: default case hit %+v %+v %d\n", t, meta, i)
-// 					fmt.Println()
-// 					// TODO: need to put actual error codes here
-// 					// FIXME: we shouldn't os.exit here, instead return an error, handle it, probably should have some kind of map lookup for the specific error shit
-// 					// FIXME: we also need to print out debuf information about the current parse information
-// 					os.Exit(666)
-// 				}
-// 			}
-// 		}
-// 		fmt.Println(t)
-// 		meta.Expected = t.Expected
-// 		meta.LastToken = t
-// 		fmt.Println(t)
-// 		endTokens = append(endTokens, t)
-// 	}
-
-// 	tokenFilename := name + ".tokens"
-
-// 	// For more granular writes, open a file for writing.
-// 	tokenFile, err := os.Create(tokenFilename)
-// 	defer func() {
-// 		if err = tokenFile.Close(); err != nil {
-// 			fmt.Println("ERROR: Could not close file:", tokenFilename)
-// 		}
-// 	}()
-// 	if err != nil {
-// 		fmt.Println("ERROR: Could not open token output file:", tokenFilename)
-// 		os.Exit(9)
-// 	}
-// 	tokenWriter := bufio.NewWriter(tokenFile)
-
-// 	// TODO: this needs to be outputted as program.expr.parse
-// 	fmt.Println()
-// 	fmt.Println("End Tokens:")
-// 	for i := 0; i < len(endTokens); i++ {
-// 		t := endTokens[i]
-// 		fmt.Println(t)
-
-// 		// TODO: should make a function specifically for writing the tokens
-// 		tokenJSON, jerr := json.Marshal(t)
-// 		if jerr != nil {
-// 			fmt.Println("ERROR: Could not marshal token JSON: ", t)
-// 		}
-
-// 		_, err = tokenWriter.WriteString(string(tokenJSON) + "\n")
-// 		if err != nil || jerr != nil {
-// 			fmt.Println("ERROR: Could not write token data: ", tokenJSON)
-// 		}
-// 	}
-
-// 	err = tokenWriter.Flush()
-// 	if err != nil {
-// 		fmt.Println("ERROR: Could not flush writer, data may be missing:", tokenFilename)
-// 	}
-
-// 	return endTokens
-// }
-
-// TODO: we will need this later
-func getNextNonWSToken(i int) (token.Token, int) {
-	tokens := tokensGlobal[i+1:]
-
-	for i = 0; i < len(tokens); i++ {
-		if i >= parseLen-1 {
-			return token.Token{}, i
+// GetNextNonWSToken ...
+func (m *Meta) GetNextNonWSToken() (token.Token, error) {
+	for {
+		t, err := m.GetNextToken()
+		if err != nil {
+			werr := errors.Wrap(err, "m.GetNextToken()")
+			fmt.Println("ERROR:", werr)
+			return token.Token{}, werr
 		}
 
-		if tokens[i].Type != "WS" {
-			return tokens[i], i + 1
+		if t.Type == "WS" {
+			continue
 		}
+
+		return t, nil
+	}
+}
+
+// GetLastNonWSToken ...
+func (m *Meta) GetLastNonWSToken() (token.Token, error) {
+	for {
+		t, err := m.GetLastToken()
+		if err != nil {
+			werr := errors.Wrap(err, "m.GetLastToken()")
+			fmt.Println("ERROR:", werr)
+			return token.Token{}, werr
+		}
+
+		if t.Type == "WS" {
+			continue
+		}
+
+		return t, nil
+	}
+}
+
+// PeekNextNonWSToken ...
+func (m *Meta) PeekNextNonWSToken() (token.Token, error) {
+	index := m.ParseIndex
+	for {
+		if index > -1 && index < m.Length {
+			t, err := m.PeekTokenAtIndex(index)
+			if err != nil {
+				werr := errors.Wrap(err, "m.PeekNextNonWSToken()")
+				fmt.Println("ERROR:", werr)
+				return token.Token{}, werr
+			}
+
+			if t.Type == "WS" {
+				continue
+			}
+
+			return t, nil
+		}
+
+		return token.Token{}, errors.New("Out of tokens")
+	}
+}
+
+// PeekLastNonWSToken ...
+func (m *Meta) PeekLastNonWSToken() (token.Token, error) {
+	for {
+		// t, err := m.PeekLastToken()
+		// if err != nil {
+		// 	werr := errors.Wrap(err, "m.PeekLastNonWSToken()")
+		// 	fmt.Println("ERROR:", werr)
+		// 	return token.Token{}, werr
+		// }
+
+		// if t.Type == "WS" {
+		// 	continue
+		// }
+
+		return token.Token{}, nil
+	}
+}
+
+// Create these if we need them
+// GetNextNonWSTokenFromIndex ...
+// GetLastNonWSTokenFromIndex ...
+
+// GetNextToken ...
+func (m *Meta) GetNextToken() (token.Token, error) {
+	fmt.Println("get index", m.ParseIndex)
+	if m.ParseIndex < m.Length {
+		m.ParseIndex++
+		return m.Tokens[m.ParseIndex], nil
 	}
 
-	return token.Token{}, -1
+	return token.Token{}, errors.New("Out of tokens")
 }
 
-// func getNextToken(i int) token.Token {
-// 	if i < parseLen-1 {
-// 		return tokensGlobal[i+1]
-// 	}
-// 	return token.Token{}
-// }
+// PeekNextToken ...
+func (m *Meta) PeekNextToken() token.Token {
+	return m.NextToken
+}
 
-// FIXME: we need to clean up all errors
+// GetLastToken ...
+func (m *Meta) GetLastToken() (token.Token, error) {
+	switch {
+	case m.ParseIndex > 0:
+		m.ParseIndex--
+		fallthrough
+	case m.ParseIndex == 0:
+		return m.Tokens[m.ParseIndex], nil
+	default:
+		return token.Token{}, errors.New("Already at last token")
+	}
+}
 
-// TODO: think of a different name
-// For now just return the token like this
-func getType(t token.Token) (token.Token, error) {
-	nextToken, i := getNextNonWSToken(parseIndex)
+// PeekLastToken ...
+func (m *Meta) PeekLastToken() token.Token {
+	return m.LastToken
+}
 
-	switch nextToken.Type {
-	case "IDENT":
-		// TODO: this needs to have some logic to say if it is already there then wtf to do
-		// TODO: this needs to do keywords too
-		if _, ok := identMap[nextToken.Value.String]; !ok {
-			fmt.Println("DID NOT FOUND THE VARIABLE")
-			identMap[nextToken.Value.String] = token.Value{
-				Type: t.Value.String,
-				True: "",
-				// String: "",
+// PeekLastToken ...
+func (m *Meta) PeekLastCollectedToken() token.Token {
+	return m.LastCollectedToken
+}
+
+// GetCurrentToken ...
+func (m *Meta) GetCurrentToken() (token.Token, error) {
+	if m.ParseIndex > -1 && m.ParseIndex < m.Length {
+		return m.Tokens[m.ParseIndex], nil
+	}
+
+	return token.Token{}, errors.New("Current parseIndex outside of token range")
+}
+
+// GetTokenAtIndex ...
+func (m *Meta) PeekTokenAtIndex(index int) (token.Token, error) {
+	if index > -1 && index < m.Length {
+		return m.Tokens[index], nil
+	}
+
+	return token.Token{}, errors.New("Current parseIndex outside of token range")
+}
+
+// Shift ...
+func (m *Meta) Shift() {
+	m.LastToken = m.CurrentToken
+
+	m.CurrentToken = m.Tokens[m.ParseIndex]
+
+	for {
+		fmt.Println("m.ParseIndex", m.ParseIndex+1, "m.Length", m.Length)
+		if m.ParseIndex+1 < m.Length {
+			m.ParseIndex++
+			if m.Tokens[m.ParseIndex].Type == "WS" {
+				continue
+			}
+
+			m.NextToken = m.Tokens[m.ParseIndex]
+			return
+		}
+
+		m.NextToken = token.Token{}
+		return
+	}
+}
+
+// ParseType ...
+func (m *Meta) ParseType(token token.Token, index int) error {
+	m.Shift()
+
+	switch m.CurrentToken.Type {
+	case "LITERAL":
+		m.CurrentToken.Type = "IDENT"
+
+		// TODO: this will prevent us from doing var declarations
+		m.CurrentToken.Expected = "ASSIGN"
+
+		m.CollectToken(m.CurrentToken)
+	}
+
+	return nil
+}
+
+// GetFactor ...
+func (m *Meta) GetFactor() {
+	fmt.Println("getting ze factor", m.CurrentToken)
+
+	switch m.CurrentToken.Type {
+	case "LITERAL":
+		m.CollectToken(m.CurrentToken)
+	default:
+		fmt.Println("got something other than LITERAL at GetExpr")
+	}
+}
+
+// GetTerm ...
+func (m *Meta) GetTerm() {
+	fmt.Println("getting ze term", m.CurrentToken)
+
+	switch m.CurrentToken.Type {
+	case "LITERAL":
+		m.GetFactor()
+	default:
+		fmt.Println("got something other than LITERAL at GetExpr")
+	}
+}
+
+// GetExpr ...
+func (m *Meta) GetExpr() {
+	fmt.Println("getting ze expr", m.CurrentToken)
+
+	switch m.CurrentToken.Type {
+	case "LITERAL":
+		m.GetTerm()
+	default:
+		fmt.Println("got something other than LITERAL at GetExpr")
+	}
+}
+
+// GetStatement ...
+func (m *Meta) GetStatement() {
+	fmt.Println("getting ze statement", m.CurrentToken)
+
+	switch m.CurrentToken.Type {
+	case "TYPE":
+		m.CollectCurrentToken()
+		m.Shift()
+		m.GetExpr()
+	case "LITERAL":
+		m.GetExpr()
+	default:
+		fmt.Println("got something other than LITERAL at GetStatement")
+	}
+
+	m.Shift()
+
+	if m.CurrentToken.Type == "EOS" {
+		m.CollectToken(m.CurrentToken)
+	}
+}
+
+// TokenToString ...
+func TokenToString(t token.Token) string {
+	jsonToken, err := json.Marshal(t)
+	if err != nil {
+		return err.Error()
+	}
+
+	return string(jsonToken)
+}
+
+// ParseBlock ..
+func (m *Meta) ParseBlock() token.Token {
+	meta := m
+
+	// for {
+	meta.SemanticPressure()
+
+	// FIXME: This should throw an error
+	if m.NextToken == (token.Token{}) {
+		return token.Token{}
+	}
+	// }
+
+	return token.Token{}
+}
+
+// ParseArray ...
+// TODO: we could make an array a BLOCK of statements using a separator ",", thus we wouldn't have to do anything special for an array
+func (m *Meta) ParseArray() token.Token {
+	// arrayToken := token.Token{
+	// 	ID:   1,
+	// 	Type: "ARRAY",
+	// 	// Expected: TODO: calc this later
+	// 	Value: token.Value{
+	// 		Type: "ARRAY",
+	// 		True: ,
+	// 	},
+	// }
+
+	arrayTokens := []token.Token{}
+
+	for {
+		m.Shift()
+
+		switch m.CurrentToken.Type {
+		case "SEPARATOR":
+			continue
+
+		case "D_QUOTE":
+			arrayTokens = append(arrayTokens, m.ParseString())
+		// case "LITERAL":
+
+		case "LITERAL":
+			fmt.Println("hi", m.CurrentToken)
+			arrayTokens = append(arrayTokens, m.CurrentToken)
+
+		case "R_BRACKET":
+			return token.Token{
+				ID:   1,
+				Type: "ARRAY",
+				// Expected: TODO: calc this later
+				Value: token.Value{
+					Type: "ARRAY",
+					True: arrayTokens,
+					// String: func() (arrayTokensString string) {
+					// 	for _, t := range arrayTokens {
+					// 		arrayTokensString += TokenToString(t)
+					// 	}
+
+					// 	return
+					// }(),
+				},
+			}
+
+		default:
+			fmt.Println("ERROR: Unrecognized array token\n", m)
+			os.Exit(8)
+		}
+
+		// FIXME: This should throw an error
+		if m.NextToken == (token.Token{}) {
+			return token.Token{}
+		}
+	}
+}
+
+// ParseString ...
+func (m *Meta) ParseString() token.Token {
+	stringLiteral := ""
+	for {
+		stringLiteral += m.CurrentToken.Value.String
+		m.Shift()
+
+		if m.NextToken.Value.String == "\"" {
+			stringLiteral += m.CurrentToken.Value.String
+			m.Shift()
+			stringLiteral += m.CurrentToken.Value.String
+
+			return token.Token{
+				Type: "LITERAL",
+				// Expected: func() string {
+				// 	switch m.PeekLastCollectedToken().Type {
+				// 	case "SET":
+				// 		fallthrough
+				// 	case "ASSIGN":
+				// 		fallthrough
+				// 	case "INIT":
+				// 		return "EOS" // it would be cool if we could make expected an array
+				// 	default:
+				// 		fmt.Println("WTF TO DO", m)
+				// 		os.Exit(9)
+				// 	}
+
+				// 	return ""
+				// }(),
+				Value: token.Value{
+					Type:   "string",
+					True:   stringLiteral[1 : len(stringLiteral)-1],
+					String: stringLiteral,
+				},
+				// Expected TODO: maybe do this later based on the last one
 			}
 		}
-		endTokens = append(endTokens, nextToken)
-		parseIndex = parseIndex + i
-		return nextToken, nil
-	default:
-		return nextToken, errors.New("Didn't find a valid token")
 	}
 }
 
-// func getEOS() (token.Token, error) {
-// 	nextToken, i := getNextNonWSToken(parseIndex)
+// ApplyPressure ...
+func (m *Meta) ApplyPressure() {
+	current := m.CurrentToken
 
-// 	switch nextToken.Type {
-// 	case "EOF":
-// 		endTokens = append(endTokens, nextToken)
-// 		parseIndex = parseIndex + i
-// 		return nextToken, nil
-// 	default:
-// 		return nextToken, errors.New("Didn't find a valid token")
-// 	}
-// }
+	switch current.Type {
+	case "SEPARATOR":
+		fallthrough
+	case "EOS":
+		// TODO: this will need to check the last and next token type later to determine wtf to do
+		m.CollectCurrentToken()
 
-func getAssign() (token.Token, error) {
-	nextToken, i := getNextNonWSToken(parseIndex)
+	case "WS":
+		return
 
-	// FIXME: this should necessarily expect a LITERAL, should expect probably another EXPR or atleast something that can be evaluated
-	switch nextToken.Type {
+	case "TYPE":
+		fmt.Println("GETTING TYPE", m.CurrentToken)
+		switch m.PeekNextToken().Type {
+		case "LITERAL":
+			m.CollectCurrentToken()
+
+			m.Shift()
+			m.CurrentToken.Type = "IDENT"
+			m.CollectCurrentToken()
+		default:
+			fmt.Println("wtf", m)
+			os.Exit(7)
+		}
+
+	case "ASSIGN":
+		m.CollectCurrentToken()
+
+	case "SET":
+		peek := m.PeekNextToken()
+		switch peek.Type {
+		case "ASSIGN":
+			if t, ok := token.TokenMap[current.Value.String+peek.Value.String]; ok {
+				m.CollectToken(t)
+				m.Shift()
+			}
+		}
+
+		// TODO: this case might need to move to the Syntactic part of the parser
 	case "LITERAL":
-		endTokens = append(endTokens, nextToken)
-		parseIndex = parseIndex + i + 1
-		return nextToken, nil
+		// TODO: this may cause some problems
+		switch m.PeekLastCollectedToken().Type {
+		case "SET":
+			fallthrough
+		case "ASSIGN":
+			fallthrough
+		case "INIT":
+			m.CollectCurrentToken()
+		}
+
+	case "L_BRACKET":
+		m.CollectToken(m.ParseArray())
+
+	case "L_BRACE":
+		m.CollectToken(m.CurrentToken)
+		m.ParseBlock()
+
+	case "R_BRACE":
+		m.CollectToken(m.CurrentToken)
+		return
+
+	case "D_QUOTE":
+		m.CollectToken(m.ParseString())
+
 	default:
-		return nextToken, errors.New("Didn't find a valid token")
+		fmt.Println("IDK WTF TO DO with this token", m.CurrentToken)
+		os.Exit(6)
 	}
 }
 
-var parseIndex = 0
-var parseLen = 0
-var tokensGlobal []token.Token
+// SemanticPressure ...
+func (m *Meta) SemanticPressure() {
+	for {
+		m.Shift()
+
+		m.ApplyPressure()
+
+		if m.NextToken == (token.Token{}) {
+			return
+		}
+
+	}
+}
 
 // Parse ...
 func Parse(tokens []token.Token, name string) ([]token.Token, error) {
-	tokensGlobal = tokens
-	parseLen = len(tokens) - 1
+	fmt.Println("parsing")
 
-	if len(tokens) < 1 {
-		return endTokens, errors.New("No tokens to parse")
+	meta := Meta{
+		IgnoreWS: true,
+		// ParseIndex: -1,
+		Tokens: tokens,
+		Length: len(tokens),
 	}
 
-	// FIXME: we should start off with things like GetStatement(), GetExpr(), GetTerm(), etc
-	for {
-		t := tokens[parseIndex]
+	meta.SemanticPressure()
+	// meta.SyntacticParse()
 
-		if t.Type != "WS" {
-			// TODO: would be more efficient to just make a 'stripWSTokens()' function
-			switch t.Type {
-			case "TYPE":
-				endTokens = append(endTokens, t)
-				token, err := getType(t)
-				if err != nil {
-					fmt.Printf("ERROR: %s\nFound: %#v\n", err, token)
-					os.Exit(666)
-				}
+	// meta.Shift()
+	// meta.GetStatement()
+	// fmt.Println("meta", meta)
 
-			case "IDENT":
-				endTokens = append(endTokens, t)
-				fmt.Println("found an ident")
+	// for {
+	// 	meta.Shift()
 
-			// TODO: in the case for ":" (SET), there n$eeds to be some checking for the assign/equals/set tokens
-			case "ASSIGN":
-				endTokens = append(endTokens, t)
-				fmt.Println("found an equals")
-				// token, err := getAssign()
-				// if err != nil {
-				// 	fmt.Printf("ERROR: %s\nFound: %#v\n", err, token)
-				// 	os.Exit(666)
-				// }
+	// 	switch meta.CurrentToken.Type {
+	// 	case "EOS":
+	// 		// TODO: meta.GetStatement() here
+	// 	case "TYPE":
+	// 		meta.CollectToken(meta.CurrentToken)
+	// 		meta.ParseType(meta.CurrentToken, 0)
+	// 	default:
+	// 	}
 
-				fmt.Println("getExpression")
-				exprToken, err := getExpr(parseIndex+1, tokens[parseIndex+1:])
-				if err != nil {
-					fmt.Println("got a fucking error dude")
-					return endTokens, err
-				}
-				fmt.Println("exprToken", exprToken)
+	// 	if meta.NextToken == (token.Token{}) {
+	// 		return meta.EndTokens, nil
+	// 	}
+	// 	// if err != nil {
+	// 	// 	werr := errors.Wrap(err, "meta.GetNextToken()")
+	// 	// 	fmt.Println("ERROR:", werr)
 
-			case "NEWLINE":
-				// endTokens = append(endTokens, t)
-				// fmt.Println("found newline")
+	// 	// 	break
+	// 	// }
 
-			case "L_BRACE":
-				fmt.Println("left found a thingerooni", t)
+	// 	// fmt.Println(t)
 
-			case "R_BRACE":
-				// This should not be hit for a standard object definition
-				fmt.Println("right found a thingerooni", t)
-				endTokens = append(endTokens, t)
-				return endTokens, nil
+	// 	// switch t.Type {
+	// 	// case "WS":
+	// 	// 	continue
+	// 	// case "TYPE":
+	// 	// 	fmt.Println("found a type")
+	// 	// 	err := meta.ParseType(t, meta.ParseIndex)
+	// 	// 	if err != nil {
+	// 	// 		fmt.Println("ERROR:", err)
+	// 	// 	}
+	// 	// }
+	// }
 
-			// TODO: using this for comma rn, but this might fuck something up later
-			case "SEPARATOR":
-				fmt.Println("found a separator", t)
-				endTokens = append(endTokens, t)
-				// return
-
-			case "EOS":
-				endTokens = append(endTokens, t)
-				fmt.Println("found an EOS")
-			// We might need this later for something else if we reuse the semicolon
-			// token, err := getEOS()
-			// if err != nil {
-			// 	fmt.Printf("ERROR: %s\nFound: %#v\n", err, token)
-			// 	os.Exit(666)
-			// }
-
-			case "EOF":
-				endTokens = append(endTokens, t)
-				fmt.Println("found EOF")
-				// TODO: FIXME: might need to make something to check enclosing, variable mappings, shit, etc
-
-			default:
-				fmt.Println("I did not recognize this token")
-				fmt.Println(t)
-				return endTokens, nil
-			}
-
-			fmt.Println(t)
-			fmt.Println()
-		}
-
-		if parseIndex >= parseLen {
-			break
-		}
-		parseIndex++
-	}
-
-	fmt.Println("identMap", identMap)
-
-	return endTokens, nil
+	return meta.EndTokens, nil
 }
-
-// TODO: FIXME: we need to implement something that will track the statement and origanize the data in such a away that will make it easy to to build the variable map

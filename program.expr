@@ -1,2 +1,4 @@
-int thing = "5";
-var dyn = {};
+var something := {
+  var hey = [ "its", "me" ],
+  var wtf = "mom",
+};

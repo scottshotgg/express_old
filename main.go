@@ -131,8 +131,6 @@ func main() {
 
 	p.PrintTokens("lex")
 
-	return
-
 	// TODO: always output tokens right now
 	// TODO: change the name of this to accurately reflect lex vs parse tokens
 	// outputTokens()

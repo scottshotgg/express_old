@@ -26,6 +26,7 @@ import (
 var Lexemes = []string{
 	"var",
 	"int",
+	":",
 	"=",
 	"+",
 	"-",
@@ -39,6 +40,7 @@ var Lexemes = []string{
 	"]",
 	"\"",
 	";",
+	",",
 }
 
 // LexemeMap ...
