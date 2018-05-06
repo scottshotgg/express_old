@@ -488,7 +488,6 @@ func (m *Meta) SemanticPressure() {
 		if m.NextToken == (token.Token{}) {
 			return
 		}
-
 	}
 }
 
