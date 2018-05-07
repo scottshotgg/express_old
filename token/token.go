@@ -268,21 +268,31 @@ var TokenMap = map[string]Token{
 		},
 	},
 
-	// LITERALS
-	"true": Token{
-		Type: "LITERAL",
+	// // LITERALS
+	// "true": Token{
+	// 	Type: "LITERAL",
+	// 	Value: Value{
+	// 		Type:   "bool",
+	// 		True:   true,
+	// 		String: "true",
+	// 	},
+	// },
+	// "false": Token{
+	// 	Type: "LITERAL",
+	// 	Value: Value{
+	// 		Type:   "bool",
+	// 		True:   false,
+	// 		String: "false",
+	// 	},
+	// },
+
+	// IDK
+	".": Token{
+		Type:     "ACCESSOR",
+		Expected: "EXPR",
 		Value: Value{
-			Type:   "bool",
-			True:   true,
-			String: "true",
-		},
-	},
-	"false": Token{
-		Type: "LITERAL",
-		Value: Value{
-			Type:   "bool",
-			True:   false,
-			String: "false",
+			Type:   "period",
+			String: ".",
 		},
 	},
 

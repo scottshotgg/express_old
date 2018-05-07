@@ -65,24 +65,41 @@ func NewProgram(programName string) (Program, error) {
 
 // TODO: make this take a compile stage
 func (p *Program) PrintTokens(stage string) {
-	if jsonIndent != "" {
-		for _, token := range p.Tokens[stage] {
-			tokenJSON, err := json.MarshalIndent(token, "", jsonIndent)
-			if err != nil {
-				fmt.Printf("\nERROR: Could not marshal JSON from token: %#v\n", token)
-				os.Exit(9)
+	for _, t := range p.Tokens[stage] {
+		if t.Type == "BLOCK" || t.Type == "ARRAY" {
+			jsonIndent += "\t"
+
+			po := Program{
+				Tokens: map[string][]token.Token{
+					// "parse": p.Tokens[stage][i:],
+					"parse": t.Value.True.([]token.Token),
+				},
 			}
-			fmt.Println(string(tokenJSON))
+
+			// fmt.Println("po", po)
+
+			po.PrintTokens("parse")
+
+			jsonIndent = jsonIndent[0 : len(jsonIndent)-1]
+			continue
 		}
-	} else {
-		for _, token := range p.Tokens[stage] {
-			tokenJSON, err := json.Marshal(token)
-			if err != nil {
-				fmt.Printf("\nERROR: Could not marshal JSON from token: %#v\n", token)
-				os.Exit(9)
-			}
-			fmt.Println(string(tokenJSON))
+
+		// if jsonIndent != "" {
+		// tokenJSON, err := json.MarshalIndent(token, "", jsonIndent)
+		tokenJSON, err := json.Marshal(t)
+		if err != nil {
+			fmt.Printf("\nERROR: Could not marshal JSON from token: %#v\n", t)
+			os.Exit(9)
 		}
+		fmt.Println(jsonIndent + string(tokenJSON))
+		// 	} else {
+		// 		tokenJSON, err := json.Marshal(token)
+		// 		if err != nil {
+		// 			fmt.Printf("\nERROR: Could not marshal JSON from token: %#v\n", token)
+		// 			os.Exit(9)
+		// 		}
+		// 		fmt.Println(string(tokenJSON) + "\n")
+		// 	}
 	}
 }
 
@@ -141,7 +158,7 @@ func main() {
 	if err != nil {
 		fmt.Println("ERROR:", err)
 	}
-	fmt.Println("Endtokens:")
+	fmt.Println("\nEndtokens:")
 
 	p.PrintTokens("parse")
 }
