@@ -150,17 +150,31 @@ func Lex(input string) ([]token.Token, error) {
 				fmt.Println("Found char2", meta.Accumulator)
 
 				// String out the comments
-				if lexemeToken.Type == "DIV" {
-					if index < len(input)-1 && input[index] == '/' {
-						for {
-							index++
-							if index == len(input) || input[index] == '\n' {
-								break
+				switch lexemeToken.Type {
+				case "DIV":
+					if index < len(input)-1 {
+						index++
+						switch input[index] {
+						case '/':
+							for {
+								index++
+								if index == len(input) || input[index] == '\n' {
+									break
+								}
+							}
+
+						case '*':
+							for {
+								index++
+								fmt.Println(input[index], input[index+1])
+								if index == len(input) || (input[index] == '*' && input[index+1] == '/') {
+									break
+								}
 							}
 						}
-					}
 
-					continue
+						continue
+					}
 				}
 
 				if meta.Accumulator != "" {
