@@ -152,8 +152,8 @@ func Lex(input string) ([]token.Token, error) {
 				// String out the comments
 				switch lexemeToken.Type {
 				case "DIV":
+					index++
 					if index < len(input)-1 {
-						index++
 						switch input[index] {
 						case '/':
 							for {
@@ -172,9 +172,8 @@ func Lex(input string) ([]token.Token, error) {
 								}
 							}
 						}
-
-						continue
 					}
+					continue
 				}
 
 				if meta.Accumulator != "" {
