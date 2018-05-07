@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sgg7269/tokenizer/token"
@@ -215,7 +216,7 @@ func (m *Meta) ParseType(token token.Token, index int) error {
 		// TODO: this will prevent us from doing var declarations
 		m.CurrentToken.Expected = "ASSIGN"
 
-		m.CollectToken(m.CurrentToken)
+		m.CollectCurrentToken()
 	}
 
 	return nil
@@ -227,7 +228,7 @@ func (m *Meta) GetFactor() {
 
 	switch m.CurrentToken.Type {
 	case "LITERAL":
-		m.CollectToken(m.CurrentToken)
+		m.CollectCurrentToken()
 	default:
 		fmt.Println("got something other than LITERAL at GetExpr")
 	}
@@ -275,7 +276,34 @@ func (m *Meta) GetStatement() {
 	m.Shift()
 
 	if m.CurrentToken.Type == "EOS" {
-		m.CollectToken(m.CurrentToken)
+		m.CollectCurrentToken()
+	}
+}
+
+// ParseIdent ...
+func (m *Meta) ParseIdent(blockTokens *[]token.Token, peek token.Token) {
+	if blockTokens == nil {
+		fmt.Println("ERROR: blockTokens is nil")
+		os.Exit(5)
+	}
+
+	identSplit := strings.Split(peek.Value.String, ".")
+	for i, ident := range identSplit {
+		fmt.Println("IDENTSPLITFOR", ident)
+		*blockTokens = append(*blockTokens, token.Token{
+			ID:   0,
+			Type: "IDENT",
+			// Expected:
+			Value: token.Value{
+				// Type: ,
+				// True: ,
+				String: ident,
+			},
+		})
+
+		if i < len(identSplit)-1 {
+			*blockTokens = append(*blockTokens, token.TokenMap["."])
+		}
 	}
 }
 
@@ -291,19 +319,113 @@ func TokenToString(t token.Token) string {
 
 // ParseBlock ..
 func (m *Meta) ParseBlock() token.Token {
-	meta := m
+	// FIXME: could do something fancy with another meta and then use that but w/e
+	blockTokens := []token.Token{}
 
-	// for {
-	meta.SemanticPressure()
+	for {
+		m.Shift()
 
-	// FIXME: This should throw an error
-	if m.NextToken == (token.Token{}) {
-		return token.Token{}
+		current := m.CurrentToken
+
+		switch current.Type {
+		case "SEPARATOR":
+			fallthrough
+		case "EOS":
+			// TODO: this will need to check the last and next token type later to determine wtf to do
+			blockTokens = append(blockTokens, m.CurrentToken)
+
+		case "WS":
+			continue
+
+		case "TYPE":
+			peek := m.PeekNextToken()
+			switch peek.Type {
+			case "IDENT":
+				m.ParseIdent(&blockTokens, m.CurrentToken)
+
+			case "LITERAL":
+				blockTokens = append(blockTokens, m.CurrentToken)
+
+				m.Shift()
+				m.CurrentToken.Type = "IDENT"
+				blockTokens = append(blockTokens, m.CurrentToken)
+			default:
+				fmt.Println("wtf", m)
+				os.Exit(7)
+			}
+
+		case "ASSIGN":
+			blockTokens = append(blockTokens, m.CurrentToken)
+
+		case "SET":
+			peek := m.PeekNextToken()
+			switch peek.Type {
+			case "ASSIGN":
+				if t, ok := token.TokenMap[current.Value.String+peek.Value.String]; ok {
+					blockTokens = append(blockTokens, t)
+					m.Shift()
+				}
+			// TODO: AHA! we need to make a parse expr and stuff here
+			// FIXME: we need to make something to take care of "SET", just check the next token for now
+			// case "IDENT":
+
+			// 	// FIXME: this is a hacked in thing; REALLY need to get blocks bootstrapped
+			// 	m.ParseIdent(&blockTokens, m.CurrentToken)
+			// 	// for _, t := range blockTokens {
+			// 	// 	m.CollectToken(t)
+			// 	// }
+			default:
+				blockTokens = append(blockTokens, current)
+				fmt.Println("WTF", peek)
+				continue
+			}
+
+		case "IDENT":
+			m.ParseIdent(&blockTokens, m.CurrentToken)
+			// TODO: this case might need to move to the Syntactic part of the parser
+		case "LITERAL":
+			// TODO: this may cause some problems
+			switch m.PeekLastCollectedToken().Type {
+			case "SET":
+				fallthrough
+			case "ASSIGN":
+				fallthrough
+			case "INIT":
+				blockTokens = append(blockTokens, m.CurrentToken)
+			}
+
+		case "L_BRACKET":
+			blockTokens = append(blockTokens, m.ParseArray())
+
+		case "L_BRACE":
+			// blockTokens = append(blockTokens, m.CurrentToken)
+			blockTokens = append(blockTokens, m.ParseBlock())
+
+		case "R_BRACE":
+			// blockTokens = append(blockTokens, m.CurrentToken)
+			return token.Token{
+				ID:   0,
+				Type: "BLOCK",
+				// Expected: TODO: do the same thing that we did on the array but use the meta tokens
+				Value: token.Value{
+					Type: "block",
+					True: blockTokens,
+					// String: TODO: do the same thing that we did on array
+				},
+			}
+
+		case "D_QUOTE":
+			blockTokens = append(blockTokens, m.ParseString())
+
+		default:
+			fmt.Println("IDK WTF TO DO with this token", m.CurrentToken)
+			os.Exit(6)
+		}
 	}
-	// }
-
-	return token.Token{}
 }
+
+// // TODO: I don't think we'll need this
+// func (m *Meta) ParseMap() token.Token {}
 
 // ParseArray ...
 // TODO: we could make an array a BLOCK of statements using a separator ",", thus we wouldn't have to do anything special for an array
@@ -335,13 +457,19 @@ func (m *Meta) ParseArray() token.Token {
 			fmt.Println("hi", m.CurrentToken)
 			arrayTokens = append(arrayTokens, m.CurrentToken)
 
+		case "L_BRACE":
+			arrayTokens = append(arrayTokens, m.ParseBlock())
+
+		case "L_BRACKET":
+			arrayTokens = append(arrayTokens, m.ParseArray())
+
 		case "R_BRACKET":
 			return token.Token{
 				ID:   1,
 				Type: "ARRAY",
 				// Expected: TODO: calc this later
 				Value: token.Value{
-					Type: "ARRAY",
+					Type: "array",
 					True: arrayTokens,
 					// String: func() (arrayTokensString string) {
 					// 	for _, t := range arrayTokens {
@@ -421,13 +549,27 @@ func (m *Meta) ApplyPressure() {
 
 	case "TYPE":
 		fmt.Println("GETTING TYPE", m.CurrentToken)
+
 		switch m.PeekNextToken().Type {
+		case "IDENT":
+			m.CollectCurrentToken()
+
+			m.Shift()
+
+			// FIXME: this is a hacked in thing; REALLY need to get blocks bootstrapped
+			var blockTokens []token.Token
+			m.ParseIdent(&blockTokens, m.CurrentToken)
+			for _, t := range blockTokens {
+				m.CollectToken(t)
+			}
+
 		case "LITERAL":
 			m.CollectCurrentToken()
 
 			m.Shift()
 			m.CurrentToken.Type = "IDENT"
 			m.CollectCurrentToken()
+
 		default:
 			fmt.Println("wtf", m)
 			os.Exit(7)
@@ -444,6 +586,10 @@ func (m *Meta) ApplyPressure() {
 				m.CollectToken(t)
 				m.Shift()
 			}
+		// TODO: AHA! we need to make a parse expr and stuff here
+		// FIXME: we need to make something to take care of "SET", just check the next token for now
+		default:
+			m.CollectCurrentToken()
 		}
 
 		// TODO: this case might need to move to the Syntactic part of the parser
@@ -458,15 +604,24 @@ func (m *Meta) ApplyPressure() {
 			m.CollectCurrentToken()
 		}
 
+	case "IDENT":
+		fmt.Println("IDENT", m.CurrentToken)
+		// FIXME: this is a hacked in thing; REALLY need to get blocks bootstrapped
+		var blockTokens []token.Token
+		m.ParseIdent(&blockTokens, m.CurrentToken)
+		for _, t := range blockTokens {
+			m.CollectToken(t)
+		}
+
 	case "L_BRACKET":
 		m.CollectToken(m.ParseArray())
 
 	case "L_BRACE":
-		m.CollectToken(m.CurrentToken)
-		m.ParseBlock()
+		// m.CollectCurrentToken()
+		m.CollectToken(m.ParseBlock())
 
 	case "R_BRACE":
-		m.CollectToken(m.CurrentToken)
+		// m.CollectCurrentToken()
 		return
 
 	case "D_QUOTE":

@@ -1,4 +1,20 @@
-var something := {
-  var hey = [ "its", "me" ],
-  var wtf = "mom",
+var hey := {
+  sup: {
+
+    // show off le numbers comrade
+    numbers: {
+      binary:  0b10101010,
+      octal:   0o252,
+      hex:     0xAA,
+      decimal: 170
+    },
+
+    pizza: [
+      "is",
+      "the",
+      "best"
+    ],
+    
+    ay: "girl", // u wan c my inline comment
+  },
 };
