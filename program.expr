@@ -1,7 +1,7 @@
 var hey := {
   sup: {
 
-    // show off le numbers comrade
+    /* show off le numbers comrade */
     numbers: {
       binary:  0b10101010,
       octal:   0o252,
@@ -14,7 +14,18 @@ var hey := {
       "the",
       "best"
     ],
-    
+
+/*  
+    var fn = (p)*{
+      var x = 5
+      var y = 10
+      var z = x + y
+      var q = 15 * z
+    }
+
+    var { y, q } = fn(pizza[0] + pizza[1]);
+*/
+
     ay: "girl", // u wan c my inline comment
   },
 };
