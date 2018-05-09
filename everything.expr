@@ -1,0 +1,41 @@
+{
+  var hey := {
+    //#[allow(var)]
+
+    sup: {
+
+      /* show off le numbers comrade */
+      numbers: {
+        binary:  0b10101010,
+        octal:   0o252,
+        hex:     0xAA,
+        decimal: 170
+      },
+
+      pizza.Somethign: [
+        "is",
+        "the",
+        "best"
+      ],
+
+      var thing = () {
+        var x = 666
+      }
+
+      Thing(arg1, arg2)
+
+  /*  
+      var fn = (p)*{
+        var x = 5
+        var y = 10
+        var z = x + y
+        var q = 15 * z
+      }
+
+      var { y, q } = fn(pizza[0] + pizza[1]);
+  */
+
+      ay: "girl", // u wan c my inline comment
+    },
+  };
+}
