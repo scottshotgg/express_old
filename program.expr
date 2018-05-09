@@ -1,4 +1,6 @@
 var hey := {
+  //#[allow(var)]
+
   sup: {
 
     /* show off le numbers comrade */
@@ -9,11 +11,17 @@ var hey := {
       decimal: 170
     },
 
-    pizza: [
+    pizza.Somethign: [
       "is",
       "the",
       "best"
     ],
+
+    var thing = () {
+      var x = 666
+    }
+
+    thing(arg1, arg2)
 
 /*  
     var fn = (p)*{

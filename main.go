@@ -63,10 +63,11 @@ func NewProgram(programName string) (Program, error) {
 	// }(),
 }
 
-// TODO: make this take a compile stage
+// PrintTokens ...
 func (p *Program) PrintTokens(stage string) {
 	for _, t := range p.Tokens[stage] {
-		if t.Type == "BLOCK" || t.Type == "ARRAY" {
+		if t.Type == "BLOCK" || t.Type == "ARRAY" || t.Type == "GROUP" || t.Type == "FUNCTION" {
+			fmt.Println()
 			jsonIndent += "\t"
 
 			po := Program{
@@ -79,6 +80,7 @@ func (p *Program) PrintTokens(stage string) {
 			// fmt.Println("po", po)
 
 			po.PrintTokens("parse")
+			fmt.Println()
 
 			jsonIndent = jsonIndent[0 : len(jsonIndent)-1]
 			continue
