@@ -1,7 +1,1 @@
-var Hey := ["5", {
-    woah: "bro",
-    sup: "brah",
-  },
-  {
-    its: me,
-  }];
+var Hey := {ident:5}

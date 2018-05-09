@@ -634,18 +634,11 @@ func (m *Meta) ParseString() token.Token {
 
 // Parse ...
 func Parse(tokens []token.Token) ([]token.Token, error) {
-	// Auto inject the brackets if they don't have them
-	if tokens[0].Type != "L_BRACE" {
-		tokens = append([]token.Token{token.TokenMap["{"]}, tokens...)
-	}
-	if tokens[len(tokens)-1].Type != "R_BRACE" {
-		tokens = append(tokens, token.TokenMap["}"])
-	}
-
+	// Auto inject the brackets to ensure that they are there
 	meta := Meta{
 		IgnoreWS:         true,
-		Tokens:           tokens,
-		Length:           len(tokens),
+		Tokens:           append(append([]token.Token{token.TokenMap["{"]}, tokens...), token.TokenMap["}"]),
+		Length:           len(tokens) + 2,
 		CheckOptmization: true,
 	}
 
