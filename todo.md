@@ -2,9 +2,10 @@
 
 ## MAIN SHIT: <br>
 
-- BOOTSTRAP the `ParseBlock()` program flow 
+- try making a single mega switch that we can use in group, array, and block
+- ~~BOOTSTRAP the `ParseBlock()` program flow~~ - **DONE**
 - rebuild data/program flow - **ALMOST**
-- rearch the entire lexing process - **NEED TO BOOTSTRAP**
+- rearch the entire lexing process - **NEED TO BOOTSTRAP FIRST**
 - ~~rearch the parsing process and use the `Parsemeta` object~~ - **FINISHED**
 - make a `lex_test.go` and a `parse_test.go` file for individualized tests - **AFTER BOOTSTRAPPING**
 - ~~fix all other `TODO:` and `FIXME:` tags before starting any more feature~~ - **DONE FOR NOW**

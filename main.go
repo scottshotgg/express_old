@@ -67,18 +67,15 @@ func NewProgram(programName string) (Program, error) {
 func (p *Program) PrintTokens(stage string) {
 	for _, t := range p.Tokens[stage] {
 		if t.Type == "BLOCK" || t.Type == "ARRAY" || t.Type == "GROUP" || t.Type == "FUNCTION" {
-			fmt.Println()
 			jsonIndent += "\t"
 
 			po := Program{
 				Tokens: map[string][]token.Token{
-					// "parse": p.Tokens[stage][i:],
 					"parse": t.Value.True.([]token.Token),
 				},
 			}
 
-			// fmt.Println("po", po)
-
+			fmt.Println()
 			po.PrintTokens("parse")
 			fmt.Println()
 
@@ -86,22 +83,12 @@ func (p *Program) PrintTokens(stage string) {
 			continue
 		}
 
-		// if jsonIndent != "" {
-		// tokenJSON, err := json.MarshalIndent(token, "", jsonIndent)
 		tokenJSON, err := json.Marshal(t)
 		if err != nil {
 			fmt.Printf("\nERROR: Could not marshal JSON from token: %#v\n", t)
 			os.Exit(9)
 		}
 		fmt.Println(jsonIndent + string(tokenJSON))
-		// 	} else {
-		// 		tokenJSON, err := json.Marshal(token)
-		// 		if err != nil {
-		// 			fmt.Printf("\nERROR: Could not marshal JSON from token: %#v\n", token)
-		// 			os.Exit(9)
-		// 		}
-		// 		fmt.Println(string(tokenJSON) + "\n")
-		// 	}
 	}
 }
 
@@ -156,7 +143,7 @@ func main() {
 
 	// TODO: fix this to return an err
 	fmt.Println()
-	p.Tokens["parse"], err = parse.Parse(p.Tokens["lex"], p.Name)
+	p.Tokens["parse"], err = parse.Parse(p.Tokens["lex"])
 	if err != nil {
 		fmt.Println("ERROR:", err)
 	}

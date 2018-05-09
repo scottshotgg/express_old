@@ -26,8 +26,8 @@ type Meta struct {
 
 	LastCollectedToken token.Token
 
-	CheckOptmization bool
-	//TokenLock sync.Mutex
+	CheckOptmization     bool
+	OptimizationAttempts int
 }
 
 // CollectTokens ...
@@ -135,7 +135,6 @@ func (m *Meta) PeekLastNonWSToken() (token.Token, error) {
 
 // GetNextToken ...
 func (m *Meta) GetNextToken() (token.Token, error) {
-	fmt.Println("get index", m.ParseIndex)
 	if m.ParseIndex < m.Length {
 		m.ParseIndex++
 		return m.Tokens[m.ParseIndex], nil
@@ -197,7 +196,6 @@ func (m *Meta) Shift() {
 	m.CurrentToken = m.Tokens[m.ParseIndex]
 
 	for {
-		fmt.Println("m.ParseIndex", m.ParseIndex+1, "m.Length", m.Length)
 		if m.ParseIndex+1 < m.Length {
 			m.ParseIndex++
 			if m.Tokens[m.ParseIndex].Type == "WS" {
@@ -303,7 +301,6 @@ func (m *Meta) ParseFunction(blockTokens *[]token.Token, current token.Token) to
 	m.Shift()
 	groupTokens := m.ParseGroup()
 	// add these tokens to the function tokens and return that token
-	fmt.Println("group tokens", groupTokens.Value.True.([]token.Token))
 	// return append(functionTokens, groupToken.Value.True.([]token.Token)...)
 	functionTokens = append(functionTokens, groupTokens.Value.True.([]token.Token)...)
 	return token.Token{
@@ -329,13 +326,18 @@ func (m *Meta) ParseIdent(blockTokens *[]token.Token, peek token.Token) {
 
 	identSplit := strings.Split(peek.Value.String, ".")
 	for i, ident := range identSplit {
-		fmt.Println("IDENTSPLITFOR", ident)
 		*blockTokens = append(*blockTokens, token.Token{
 			ID:   0,
 			Type: "IDENT",
 			// Expected:
 			Value: token.Value{
-				// Type: ,
+				Type: func() string {
+					if ident[0] > 64 && ident[0] < 90 {
+						return "public"
+					}
+
+					return "private"
+				}(),
 				// True: ,
 				String: ident,
 			},
@@ -380,9 +382,11 @@ func (m *Meta) ParseBlock() token.Token {
 			continue
 
 		case "TYPE":
+			blockTokens = append(blockTokens, m.CurrentToken)
 			peek := m.PeekNextToken()
 			switch peek.Type {
 			case "IDENT":
+				m.Shift()
 				m.ParseIdent(&blockTokens, m.CurrentToken)
 
 			case "LITERAL":
@@ -392,7 +396,6 @@ func (m *Meta) ParseBlock() token.Token {
 				m.CurrentToken.Type = "IDENT"
 				blockTokens = append(blockTokens, m.CurrentToken)
 			default:
-				fmt.Println("wtf", m)
 				os.Exit(7)
 			}
 
@@ -446,17 +449,14 @@ func (m *Meta) ParseBlock() token.Token {
 			blockTokens = append(blockTokens, m.ParseGroup())
 
 		case "R_PAREN":
-			fmt.Println("got a right paren")
 
 		case "L_BRACKET":
 			blockTokens = append(blockTokens, m.ParseArray())
 
 		case "L_BRACE":
-			// blockTokens = append(blockTokens, m.CurrentToken)
 			blockTokens = append(blockTokens, m.ParseBlock())
 
 		case "R_BRACE":
-			// blockTokens = append(blockTokens, m.CurrentToken)
 			return token.Token{
 				ID:   0,
 				Type: "BLOCK",
@@ -478,9 +478,6 @@ func (m *Meta) ParseBlock() token.Token {
 	}
 }
 
-// // TODO: I don't think we'll need this
-// func (m *Meta) ParseMap() token.Token {}
-
 // ParseGroup ...
 func (m *Meta) ParseGroup() token.Token {
 	m.CheckOptmization = true
@@ -494,7 +491,6 @@ func (m *Meta) ParseGroup() token.Token {
 
 		switch current.Type {
 		case "R_PAREN":
-			fmt.Println("found an r paren boiiii")
 			return token.Token{
 				ID:   1,
 				Type: "GROUP",
@@ -528,7 +524,6 @@ func (m *Meta) ParseGroup() token.Token {
 				m.CurrentToken.Type = "IDENT"
 				groupTokens = append(groupTokens, m.CurrentToken)
 			default:
-				fmt.Println("wtf", m)
 				os.Exit(7)
 			}
 
@@ -559,16 +554,6 @@ func (m *Meta) ParseGroup() token.Token {
 func (m *Meta) ParseArray() token.Token {
 	m.CheckOptmization = true
 
-	// arrayToken := token.Token{
-	// 	ID:   1,
-	// 	Type: "ARRAY",
-	// 	// Expected: TODO: calc this later
-	// 	Value: token.Value{
-	// 		Type: "ARRAY",
-	// 		True: ,
-	// 	},
-	// }
-
 	arrayTokens := []token.Token{}
 
 	for {
@@ -583,7 +568,6 @@ func (m *Meta) ParseArray() token.Token {
 		// case "LITERAL":
 
 		case "LITERAL":
-			fmt.Println("hi", m.CurrentToken)
 			arrayTokens = append(arrayTokens, m.CurrentToken)
 
 		case "L_PAREN":
@@ -631,168 +615,32 @@ func (m *Meta) ParseString() token.Token {
 
 	stringLiteral := ""
 	for {
-		stringLiteral += m.CurrentToken.Value.String
 		m.Shift()
 
 		if m.NextToken.Value.String == "\"" {
 			stringLiteral += m.CurrentToken.Value.String
 			m.Shift()
-			stringLiteral += m.CurrentToken.Value.String
 
 			return token.Token{
 				Type: "LITERAL",
-				// Expected: func() string {
-				// 	switch m.PeekLastCollectedToken().Type {
-				// 	case "SET":
-				// 		fallthrough
-				// 	case "ASSIGN":
-				// 		fallthrough
-				// 	case "INIT":
-				// 		return "EOS" // it would be cool if we could make expected an array
-				// 	default:
-				// 		fmt.Println("WTF TO DO", m)
-				// 		os.Exit(9)
-				// 	}
-
-				// 	return ""
-				// }(),
 				Value: token.Value{
 					Type:   "string",
-					True:   stringLiteral[1 : len(stringLiteral)-1],
 					String: stringLiteral,
 				},
-				// Expected TODO: maybe do this later based on the last one
 			}
-		}
-	}
-}
-
-// ApplyPressure ...
-func (m *Meta) ApplyPressure() {
-	current := m.CurrentToken
-
-	switch current.Type {
-	case "SEPARATOR":
-		fallthrough
-	case "EOS":
-		// TODO: this will need to check the last and next token type later to determine wtf to do
-		m.CollectCurrentToken()
-
-	case "WS":
-		return
-
-	case "TYPE":
-		fmt.Println("GETTING TYPE", m.CurrentToken)
-
-		switch m.PeekNextToken().Type {
-		case "IDENT":
-			m.CollectCurrentToken()
-
-			m.Shift()
-
-			// FIXME: this is a hacked in thing; REALLY need to get blocks bootstrapped
-			var blockTokens []token.Token
-			m.ParseIdent(&blockTokens, m.CurrentToken)
-			m.CollectTokens(blockTokens)
-
-		case "LITERAL":
-			m.CollectCurrentToken()
-
-			m.Shift()
-			m.CurrentToken.Type = "IDENT"
-			m.CollectCurrentToken()
-
-		default:
-			fmt.Println("wtf", m)
-			os.Exit(7)
-		}
-
-	case "ASSIGN":
-		m.CollectCurrentToken()
-
-	case "SET":
-		peek := m.PeekNextToken()
-		switch peek.Type {
-		case "ASSIGN":
-			if t, ok := token.TokenMap[current.Value.String+peek.Value.String]; ok {
-				m.CollectToken(t)
-				m.Shift()
-			}
-		// TODO: AHA! we need to make a parse expr and stuff here
-		// FIXME: we need to make something to take care of "SET", just check the next token for now
-		default:
-			m.CollectCurrentToken()
-		}
-
-		// TODO: this case might need to move to the Syntactic part of the parser
-	case "LITERAL":
-		// TODO: this may cause some problems
-		switch m.PeekLastCollectedToken().Type {
-		case "SET":
-			fallthrough
-		case "ASSIGN":
-			fallthrough
-		case "INIT":
-			m.CollectCurrentToken()
-		}
-
-	case "IDENT":
-		peek := m.PeekNextToken()
-
-		/*
-			{"ID":0,"Type":"IDENT","Expected":"","Value":{"Type":"","True":null,"String":"thing"}}
-			{"ID":0,"Type":"L_PAREN","Expected":"EXPR","Value":{"Type":"op_3","True":null,"String":"("}}
-			{"ID":0,"Type":"R_PAREN","Expected":"EXPR","Value":{"Type":"op_3","True":null,"String":")"}}
-		*/
-
-		if peek.Type == "L_PAREN" {
-			fmt.Println("WOAH there was an ident with an l paren")
-		}
-
-		os.Exit(5)
-
-		fmt.Println("IDENT", m.CurrentToken)
-		// FIXME: this is a hacked in thing; REALLY need to get blocks bootstrapped
-		var blockTokens []token.Token
-		m.ParseIdent(&blockTokens, m.CurrentToken)
-		m.CollectTokens(blockTokens)
-
-	case "L_BRACKET":
-		m.CollectToken(m.ParseArray())
-
-	case "L_BRACE":
-		// m.CollectCurrentToken()
-		m.CollectToken(m.ParseBlock())
-
-	case "R_BRACE":
-		// m.CollectCurrentToken()
-		return
-
-	case "D_QUOTE":
-		m.CollectToken(m.ParseString())
-
-	default:
-		fmt.Println("IDK WTF TO DO with this token", m.CurrentToken)
-		os.Exit(6)
-	}
-}
-
-// SemanticPressure ...
-func (m *Meta) SemanticPressure() {
-	for {
-		m.Shift()
-
-		m.ApplyPressure()
-
-		if m.NextToken == (token.Token{}) {
-			return
 		}
 	}
 }
 
 // Parse ...
-func Parse(tokens []token.Token, name string) ([]token.Token, error) {
-	fmt.Println("parsing")
+func Parse(tokens []token.Token) ([]token.Token, error) {
+	// Auto inject the brackets if they don't have them
+	if tokens[0].Type != "L_BRACE" {
+		tokens = append([]token.Token{token.TokenMap["{"]}, tokens...)
+	}
+	if tokens[len(tokens)-1].Type != "R_BRACE" {
+		tokens = append(tokens, token.TokenMap["}"])
+	}
 
 	meta := Meta{
 		IgnoreWS:         true,
@@ -803,64 +651,20 @@ func Parse(tokens []token.Token, name string) ([]token.Token, error) {
 
 	// Here we are continuously applying semantic pressure to squash the tokens and furthur
 	// simplify the tokens generated
-	var index int
 	for meta.CheckOptmization {
-		fmt.Println("Optimizing", index)
-		meta.SemanticPressure()
+		fmt.Println("Optimizing", meta.OptimizationAttempts)
+		meta.CollectTokens(meta.ParseBlock().Value.True.([]token.Token))
 
 		// Only apply SemanticPressure once for now until we figure out the recursion more
 		break
 
 		meta = Meta{
-			IgnoreWS:         true,
-			Tokens:           meta.EndTokens,
-			Length:           len(meta.Tokens),
-			CheckOptmization: meta.CheckOptmization,
+			Tokens:               meta.EndTokens,
+			Length:               len(meta.Tokens),
+			CheckOptmization:     meta.CheckOptmization,
+			OptimizationAttempts: meta.OptimizationAttempts + 1,
 		}
-		index++
 	}
 
 	return meta.EndTokens, nil
 }
-
-// meta.SyntacticParse()
-
-// meta.Shift()
-// meta.GetStatement()
-// fmt.Println("meta", meta)
-
-// for {
-// 	meta.Shift()
-
-// 	switch meta.CurrentToken.Type {
-// 	case "EOS":
-// 		// TODO: meta.GetStatement() here
-// 	case "TYPE":
-// 		meta.CollectToken(meta.CurrentToken)
-// 		meta.ParseType(meta.CurrentToken, 0)
-// 	default:
-// 	}
-
-// 	if meta.NextToken == (token.Token{}) {
-// 		return meta.EndTokens, nil
-// 	}
-// 	// if err != nil {
-// 	// 	werr := errors.Wrap(err, "meta.GetNextToken()")
-// 	// 	fmt.Println("ERROR:", werr)
-
-// 	// 	break
-// 	// }
-
-// 	// fmt.Println(t)
-
-// 	// switch t.Type {
-// 	// case "WS":
-// 	// 	continue
-// 	// case "TYPE":
-// 	// 	fmt.Println("found a type")
-// 	// 	err := meta.ParseType(t, meta.ParseIndex)
-// 	// 	if err != nil {
-// 	// 		fmt.Println("ERROR:", err)
-// 	// 	}
-// 	// }
-// }
