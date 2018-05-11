@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/sgg7269/tokenizer/token"
+	"github.com/scottshotgg/Express/token"
 )
 
 // Meta ...
@@ -154,8 +154,10 @@ func (m *Meta) GetLastToken() (token.Token, error) {
 	case m.ParseIndex > 0:
 		m.ParseIndex--
 		fallthrough
+
 	case m.ParseIndex == 0:
 		return m.Tokens[m.ParseIndex], nil
+
 	default:
 		return token.Token{}, errors.New("Already at last token")
 	}
@@ -235,6 +237,7 @@ func (m *Meta) GetFactor() {
 	switch m.CurrentToken.Type {
 	case "LITERAL":
 		m.CollectCurrentToken()
+
 	default:
 		fmt.Println("got something other than LITERAL at GetExpr")
 	}
@@ -247,6 +250,7 @@ func (m *Meta) GetTerm() {
 	switch m.CurrentToken.Type {
 	case "LITERAL":
 		m.GetFactor()
+
 	default:
 		fmt.Println("got something other than LITERAL at GetExpr")
 	}
@@ -259,6 +263,7 @@ func (m *Meta) GetExpr() {
 	switch m.CurrentToken.Type {
 	case "LITERAL":
 		m.GetTerm()
+
 	default:
 		fmt.Println("got something other than LITERAL at GetExpr")
 	}
@@ -273,8 +278,10 @@ func (m *Meta) GetStatement() {
 		m.CollectCurrentToken()
 		m.Shift()
 		m.GetExpr()
+
 	case "LITERAL":
 		m.GetExpr()
+
 	default:
 		fmt.Println("got something other than LITERAL at GetStatement")
 	}
@@ -286,30 +293,62 @@ func (m *Meta) GetStatement() {
 	}
 }
 
-// ParseFunction ...
-func (m *Meta) ParseFunction(blockTokens *[]token.Token, current token.Token) token.Token {
+// ParseFunctionDef ...
+func (m *Meta) ParseFunctionDef(current token.Token) token.Token {
 	m.CheckOptmization = true
-
-	if blockTokens == nil {
-		fmt.Println("ERROR: blockTokens is nil")
-		os.Exit(5)
-	}
 
 	// var functionTokens [][]token.Token
 	var functionTokens []token.Token
+	// var returnTokens []token.Token
+
 	m.ParseIdent(&functionTokens, current)
 	m.Shift()
-	groupTokens := m.ParseGroup()
+	argumentTokens := m.ParseGroup()
+	functionTokens = append(functionTokens, argumentTokens.Value.True.([]token.Token)...)
+
+	if m.PeekNextToken().Type == "L_PAREN" {
+		fmt.Println("Found return tokens")
+		argumentTokens = m.ParseGroup()
+		functionTokens = append(functionTokens, argumentTokens.Value.True.([]token.Token)...)
+	}
+
 	// add these tokens to the function tokens and return that token
 	// return append(functionTokens, groupToken.Value.True.([]token.Token)...)
-	functionTokens = append(functionTokens, groupTokens.Value.True.([]token.Token)...)
+	// functionTokens = append(functionTokens, argumentTokens.Value.True.([]token.Token)...)
 	return token.Token{
 		ID:   4,
 		Type: "FUNCTION",
 		// Expected: //TODO:
 		Value: token.Value{
-			Type: "function",
+			Type: "def",
 			True: functionTokens,
+			// String: //TODO:
+		},
+	}
+}
+
+// ParseFunctionCall ...
+func (m *Meta) ParseFunctionCall(current token.Token) token.Token {
+	m.CheckOptmization = true
+
+	// var functionTokens [][]token.Token
+	var functionTokens []token.Token
+	// var returnTokens []token.Token
+
+	m.ParseIdent(&functionTokens, current)
+	m.Shift()
+	// FIXME: TODO: these should all return errors
+	argumentTokens := m.ParseGroup()
+
+	// add these tokens to the function tokens and return that token
+	// return append(functionTokens, groupToken.Value.True.([]token.Token)...)
+	return token.Token{
+		ID:   4,
+		Type: "FUNCTION",
+		// Expected: //TODO:
+		Value: token.Value{
+			Type: "call",
+			True: append(functionTokens, argumentTokens.Value.True.([]token.Token)...),
 			// String: //TODO:
 		},
 	}
@@ -332,7 +371,7 @@ func (m *Meta) ParseIdent(blockTokens *[]token.Token, peek token.Token) {
 			// Expected:
 			Value: token.Value{
 				Type: func() string {
-					if ident[0] > 64 && ident[0] < 90 {
+					if len(ident) > 0 && ident[0] > 64 && ident[0] < 90 {
 						return "public"
 					}
 
@@ -359,12 +398,26 @@ func TokenToString(t token.Token) string {
 	return string(jsonToken)
 }
 
-// ParseBlock ..
-func (m *Meta) ParseBlock() token.Token {
-	m.CheckOptmization = true
+// ParseAttribute ...
+// TODO: full ecma335 implementation will go here when i feel like it
+func (m *Meta) ParseAttribute() token.Token {
+	var ecmaTokens []token.Token
+	ecmaToken := token.Token{
+		ID:   6,
+		Type: "ATTRIBUTE",
+		// Expected:
+		Value: token.Value{
+			Type: "statement",
+			// String:
+		},
+	}
 
-	// FIXME: could do something fancy with another meta and then use that but w/e
-	blockTokens := []token.Token{}
+	if m.PeekNextToken().Type == "NOT" {
+		fmt.Println("applied to scope")
+		ecmaToken.Value.Type = "scope"
+		// ecmaTokens = append(ecmaTokens, m.CurrentToken)
+		m.Shift()
+	}
 
 	for {
 		m.Shift()
@@ -372,8 +425,119 @@ func (m *Meta) ParseBlock() token.Token {
 		current := m.CurrentToken
 
 		switch current.Type {
+
+		// attribute of next item down
+		case "L_BRACKET":
+			// TODO: should this just be an array of statements that get parsed like anything else?
+			// TODO: programmatic compiler directives/attributes?
+			// TODO: at this point we could just call an entirely separate ECMA-335 parser
+
+		case "IDENT":
+			ecmaTokens = append(ecmaTokens, current)
+
+		case "R_BRACKET":
+			ecmaToken.Value.True = ecmaTokens
+			return ecmaToken
+
+		default:
+			fmt.Println("idk wtf to do", m)
+			os.Exit(9)
+		}
+	}
+}
+
+// ParseBlock ..
+func (m *Meta) ParseBlock() token.Token {
+
+	// FIXME: could do something fancy with another meta and then use that but w/e
+	blockTokens := []token.Token{}
+
+	// a hack, but a good one
+	defer func() {
+		if m.OptimizationAttempts > 0 && len(blockTokens) < len(m.EndTokens) {
+			m.CheckOptmization = true
+		}
+		m.CheckOptmization = false
+	}()
+
+	for {
+		m.Shift()
+
+		current := m.CurrentToken
+
+		switch current.Type {
+		case "MULT":
+			fmt.Println("found a mult")
+			blockTokens = append(blockTokens, current)
+
+		case "KEYWORD":
+			switch current.Value.Type {
+			case "SQL":
+				fmt.Println("found a sql keyword")
+				blockTokens = append(blockTokens, current)
+			}
+			// os.Exit(9)
+
+		case "G_THAN":
+			fmt.Println("found a greater than")
+			blockTokens = append(blockTokens, current)
+
+		case "L_THAN":
+			fmt.Println("found a greater than")
+			blockTokens = append(blockTokens, current)
+
+		case "AT":
+			fmt.Println("found an at")
+			blockTokens = append(blockTokens, current)
+
+		// TODO: put all of these at the bottom
+		// Don't do anything with these for now except append them
+		// FIXME: hack to fix the repitition
+		case "INIT":
+			fallthrough
+		case "ATTRIBUTE":
+			fallthrough
+		case "FUNCTION":
+			blockTokens = append(blockTokens, current)
+			// fmt.Println("function")
+
+		case "GROUP":
+			var functionTokens []token.Token
+
+			functionTokens = append(functionTokens, current)
+
+			peek := m.PeekNextToken()
+			// TODO: FIXME: for now we are going to assume that two groups only appear in sequence for a function
+			switch peek.Type {
+			case "GROUP":
+				// blockTokens = append(blockTokens, m.ParseFunctionDef(current))
+				m.Shift()
+				functionTokens = append(functionTokens, m.CurrentToken)
+
+				if m.PeekNextToken().Type == "BLOCK" {
+					m.Shift()
+					blockTokens = append(blockTokens, token.Token{
+						ID:   4,
+						Type: "FUNCTION",
+						// Expected: //TODO:
+						Value: token.Value{
+							Type: "def",
+							True: append(functionTokens, m.CurrentToken),
+							// String: //TODO:
+						},
+					})
+				}
+
+			default:
+				fmt.Println("wtf peek following group", peek, m)
+			}
+
+		case "HASH":
+			blockTokens = append(blockTokens, m.ParseAttribute())
+
 		case "SEPARATOR":
 			fallthrough
+
 		case "EOS":
 			// TODO: this will need to check the last and next token type later to determine wtf to do
 			blockTokens = append(blockTokens, m.CurrentToken)
@@ -391,12 +555,12 @@ func (m *Meta) ParseBlock() token.Token {
 
 			case "LITERAL":
 				blockTokens = append(blockTokens, m.CurrentToken)
-
 				m.Shift()
 				m.CurrentToken.Type = "IDENT"
 				blockTokens = append(blockTokens, m.CurrentToken)
+
 			default:
-				os.Exit(7)
+				os.Exit(77)
 			}
 
 		case "ASSIGN":
@@ -410,15 +574,7 @@ func (m *Meta) ParseBlock() token.Token {
 					blockTokens = append(blockTokens, t)
 					m.Shift()
 				}
-			// TODO: AHA! we need to make a parse expr and stuff here
-			// FIXME: we need to make something to take care of "SET", just check the next token for now
-			// case "IDENT":
 
-			// 	// FIXME: this is a hacked in thing; REALLY need to get blocks bootstrapped
-			// 	m.ParseIdent(&blockTokens, m.CurrentToken)
-			// 	// for _, t := range blockTokens {
-			// 	// 	m.CollectToken(t)
-			// 	// }
 			default:
 				blockTokens = append(blockTokens, current)
 				continue
@@ -428,7 +584,7 @@ func (m *Meta) ParseBlock() token.Token {
 			peek := m.PeekNextToken()
 
 			if peek.Type == "L_PAREN" {
-				blockTokens = append(blockTokens, m.ParseFunction(&blockTokens, m.CurrentToken))
+				blockTokens = append(blockTokens, m.ParseFunctionCall(m.CurrentToken))
 			} else {
 				m.ParseIdent(&blockTokens, m.CurrentToken)
 			}
@@ -439,8 +595,10 @@ func (m *Meta) ParseBlock() token.Token {
 			switch m.PeekLastCollectedToken().Type {
 			case "SET":
 				fallthrough
+
 			case "ASSIGN":
 				fallthrough
+
 			case "INIT":
 				blockTokens = append(blockTokens, m.CurrentToken)
 			}
@@ -449,6 +607,7 @@ func (m *Meta) ParseBlock() token.Token {
 			blockTokens = append(blockTokens, m.ParseGroup())
 
 		case "R_PAREN":
+			// FIXME: why
 
 		case "L_BRACKET":
 			blockTokens = append(blockTokens, m.ParseArray())
@@ -471,9 +630,30 @@ func (m *Meta) ParseBlock() token.Token {
 		case "D_QUOTE":
 			blockTokens = append(blockTokens, m.ParseString())
 
+		case "":
+			fmt.Println("got nothing")
+
 		default:
 			fmt.Println("IDK WTF TO DO with this token", m.CurrentToken)
 			os.Exit(6)
+		}
+		fmt.Println(current, m.NextToken)
+
+		if m.NextToken == (token.Token{}) {
+			fmt.Println()
+			fmt.Println("nextToken block", blockTokens)
+			fmt.Println()
+			// fmt.Println("blockTokens", blockTokens)
+			return token.Token{
+				ID:   0,
+				Type: "BLOCK",
+				// Expected: TODO: do the same thing that we did on the array but use the meta tokens
+				Value: token.Value{
+					Type: "block",
+					True: blockTokens,
+					// String: TODO: do the same thing that we did on array
+				},
+			}
 		}
 	}
 }
@@ -563,6 +743,9 @@ func (m *Meta) ParseArray() token.Token {
 		case "SEPARATOR":
 			continue
 
+		case "IDENT":
+			m.ParseIdent(&arrayTokens, m.CurrentToken)
+
 		case "D_QUOTE":
 			arrayTokens = append(arrayTokens, m.ParseString())
 		// case "LITERAL":
@@ -597,15 +780,19 @@ func (m *Meta) ParseArray() token.Token {
 				},
 			}
 
+		case "":
+			fmt.Println("we got nothing")
+
 		default:
-			fmt.Println("ERROR: Unrecognized array token\n", m)
+			fmt.Println("ERROR: Unrecognized array token\n", m.CurrentToken, m)
 			os.Exit(8)
 		}
 
-		// FIXME: This should throw an error
-		if m.NextToken == (token.Token{}) {
-			return token.Token{}
-		}
+		// // FIXME: This should throw an error
+		// if m.NextToken == (token.Token{}) {
+		// 	fmt.Println("nextToken array", arrayTokens)
+		// 	return token.Token{}
+		// }
 	}
 }
 
@@ -642,22 +829,40 @@ func Parse(tokens []token.Token) ([]token.Token, error) {
 		CheckOptmization: true,
 	}
 
+	var endTokens []token.Token
+
 	// Here we are continuously applying semantic pressure to squash the tokens and furthur
 	// simplify the tokens generated
 	for meta.CheckOptmization {
 		fmt.Println("Optimizing", meta.OptimizationAttempts)
 		meta.CollectTokens(meta.ParseBlock().Value.True.([]token.Token))
+		fmt.Println("endTokens", meta.EndTokens)
+		endTokens = meta.EndTokens
+
+		// this is a hack rn because the redeclaration of meta fucks the endTokens up
+		// if meta.CheckOptmization {
+		// 	break
+		// }
 
 		// Only apply SemanticPressure once for now until we figure out the recursion more
-		break
+		// if meta.OptimizationAttempts > 0 {
+		// 	break
+		// }
+
+		fmt.Println(meta.EndTokens)
+		metaTokens := meta.EndTokens[0].Value.True.([]token.Token)
+		tokens := append(append([]token.Token{token.TokenMap["{"]}, metaTokens...), token.TokenMap["}"])
+		fmt.Println("metaTokens", metaTokens, len(meta.EndTokens), len(metaTokens))
 
 		meta = Meta{
-			Tokens:               meta.EndTokens,
-			Length:               len(meta.Tokens),
+			// FIXME: do we need to fix this hack?
+			Tokens: tokens,
+			// Tokens:               metaTokens,
+			Length:               len(tokens),
 			CheckOptmization:     meta.CheckOptmization,
 			OptimizationAttempts: meta.OptimizationAttempts + 1,
 		}
 	}
 
-	return meta.EndTokens, nil
+	return endTokens, nil
 }

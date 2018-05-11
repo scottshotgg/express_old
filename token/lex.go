@@ -26,6 +26,10 @@ import (
 var Lexemes = []string{
 	"var",
 	"int",
+	"select",
+	"SELECT",
+	"FROM",
+	"WHERE",
 	":",
 	"=",
 	"+",
@@ -41,9 +45,11 @@ var Lexemes = []string{
 	"\"",
 	";",
 	",",
-	// "<",
-	// ">",
-	// "#",
+	"#",
+	"!",
+	"<",
+	">",
+	"@",
 }
 
 // LexemeMap ...
@@ -59,4 +65,7 @@ func init() {
 			LexemeMap[lexeme] = lexToken
 		}
 	}
+
+	// ADDITIONS
+	// LexemeMap["SELECT"] = LexemeMap["select"]
 }

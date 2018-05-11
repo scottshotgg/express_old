@@ -1,3 +1,13 @@
-var Hey := {
-  ident: 5
+#![nogc]
+
+var Hey := (arg1, arg2) (ret1, ret2) {
+  ident: [5]
 }
+
+Hey("a", "b")
+
+#[sql]
+SELECT * FROM products WHERE price > 5
+
+// TODO: fix the thing where 
+// it cuts off the last character

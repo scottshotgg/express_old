@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/sgg7269/tokenizer/token"
+	"github.com/scottshotgg/Express/token"
 )
 
 type lexMeta struct {

@@ -23,12 +23,52 @@ type Token struct {
 
 // TokenMap ...
 var TokenMap = map[string]Token{
-	"TYPE": Token{
-		Type:     "TYPE",
-		Expected: "IDENT",
+	// "TYPE": Token{
+	// 	Type:     "TYPE",
+	// 	Expected: "IDENT",
+	// 	Value: Value{
+	// 		Type:   "var",
+	// 		String: "let",
+	// 	},
+	// },
+
+	// KEYWORDS
+	"select": Token{
+		ID:       9,
+		Type:     "KEYWORD",
+		Expected: "BLOCK",
 		Value: Value{
-			Type:   "var",
-			String: "let",
+			Type:   "keyword", // TODO: what to put here?
+			String: "select",
+		},
+	},
+
+	// SQL
+	"SELECT": Token{
+		ID:       9,
+		Type:     "KEYWORD",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "SQL", // TODO: what to put here?
+			String: "SELECT",
+		},
+	},
+	"FROM": Token{
+		ID:       9,
+		Type:     "KEYWORD",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "SQL", // TODO: what to put here?
+			String: "FROM",
+		},
+	},
+	"WHERE": Token{
+		ID:       9,
+		Type:     "KEYWORD",
+		Expected: "EXPR",
+		Value: Value{
+			Type:   "SQL", // TODO: what to put here?
+			String: "WHERE",
 		},
 	},
 

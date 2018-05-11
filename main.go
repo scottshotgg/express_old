@@ -6,9 +6,9 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/sgg7269/tokenizer/lex"
-	"github.com/sgg7269/tokenizer/parse"
-	"github.com/sgg7269/tokenizer/token"
+	"github.com/scottshotgg/Express/lex"
+	"github.com/scottshotgg/Express/parse"
+	"github.com/scottshotgg/Express/token"
 	//"llvm.org/llvm/bindings/go/llvm"
 )
 
@@ -27,8 +27,8 @@ type Program struct {
 }
 
 var (
-	jsonIndent string
-	endTokens  = []token.Token{}
+	jsonIndent = "\t"
+	// endTokens  = []token.Token{}
 	// llvmStart  = "define i32 @main() #0 {\n"
 	// llvmEnd    = "ret i32 0\n}"
 	// compileStages = "lex", "sytactic", "semantic"
@@ -66,7 +66,7 @@ func NewProgram(programName string) (Program, error) {
 // PrintTokens ...
 func (p *Program) PrintTokens(stage string) {
 	for _, t := range p.Tokens[stage] {
-		if t.Type == "BLOCK" || t.Type == "ARRAY" || t.Type == "GROUP" || t.Type == "FUNCTION" {
+		if t.Type == "BLOCK" || t.Type == "ARRAY" || t.Type == "GROUP" || t.Type == "FUNCTION" || t.Type == "ATTRIBUTE" {
 			jsonIndent += "\t"
 
 			po := Program{
@@ -76,8 +76,8 @@ func (p *Program) PrintTokens(stage string) {
 			}
 
 			fmt.Println()
+			fmt.Println(jsonIndent[0:len(jsonIndent)-1] + t.Type)
 			po.PrintTokens("parse")
-			fmt.Println()
 
 			jsonIndent = jsonIndent[0 : len(jsonIndent)-1]
 			continue
@@ -150,4 +150,5 @@ func main() {
 	fmt.Println("\nEndtokens:")
 
 	p.PrintTokens("parse")
+	fmt.Println("")
 }

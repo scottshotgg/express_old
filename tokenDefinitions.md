@@ -1,21 +1,21 @@
 # Semantic definitions in Express:
 
   ## Number:
-  Binary: `0b (0 | 1)+`
+  Binary: `0b(0 | 1)+`
 
-  Octal: `0o [0-7]+`
+  Octal: `0o[0-7]+`
 
-  Hex: `0x [0-9A-za-z]+`
+  Hex: `0x[0-9A-za-z]+`
 
   Int: `[0-9]+`
 
-  Float: `[0-9]+.[0-9]+`
+  Float: `[0-9]*.[0-9]+`
 
   <br />
 
   ## Group:
   `(` _variables_ `)`
-
+  
   <br />
 
   ## Block:
