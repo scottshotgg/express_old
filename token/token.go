@@ -136,6 +136,10 @@ var TokenMap = map[string]Token{
 		},
 	},
 
+	// FIXME: we should really have two token types
+	// or these should all be under the "ASSIGN" type
+	// and then whoever is checking it can also check
+	// the value type to see specifically what it is
 	// ASSIGN
 	"=": Token{
 		Type:     "ASSIGN",

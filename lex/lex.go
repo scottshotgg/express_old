@@ -29,14 +29,6 @@ func (meta *lexMeta) LexLiteral() token.Token {
 	}
 
 	fmt.Println("acc", meta.Accumulator)
-	if len(meta.Accumulator) < 3 {
-		t.Type = "IDENT"
-		t.Value = token.Value{
-			String: meta.Accumulator,
-		}
-
-		return t
-	}
 
 	switch meta.Accumulator {
 	// Check if its false, we dont have to set anything for that
@@ -49,34 +41,65 @@ func (meta *lexMeta) LexLiteral() token.Token {
 	// Else move on and figure out what kind of number it is (or an ident)
 	default:
 		// Figure out from the two starting characters
-		t.Value.String = meta.Accumulator[2:]
-		switch meta.Accumulator[:2] {
-		// Binary
-		case "0b":
-			t.Value.True, err = strconv.ParseInt(t.Value.String, 2, 64)
-			if err != nil {
-				fmt.Println("ERROR", err)
-			}
-			t.Value.Type = "binary"
+		if len(meta.Accumulator) > 2 {
+			t.Value.String = meta.Accumulator[2:]
+			switch meta.Accumulator[:2] {
+			// Binary
+			case "0b":
+				t.Value.True, err = strconv.ParseInt(t.Value.String, 2, 64)
+				if err != nil {
+					fmt.Println("ERROR", err)
+				}
+				t.Value.Type = "binary"
 
-		// Octal
-		case "0o":
-			t.Value.True, err = strconv.ParseInt(t.Value.String, 8, 64)
-			if err != nil {
-				fmt.Println("ERROR", err)
-			}
-			t.Value.Type = "octal"
+			// Octal
+			case "0o":
+				t.Value.True, err = strconv.ParseInt(t.Value.String, 8, 64)
+				if err != nil {
+					fmt.Println("ERROR", err)
+				}
+				t.Value.Type = "octal"
 
-		// Hexadecimal
-		case "0x":
-			t.Value.True, err = strconv.ParseInt(t.Value.String, 16, 64)
-			if err != nil {
-				fmt.Println("ERROR", err)
-			}
-			t.Value.Type = "hexadecimal"
+			// Hexadecimal
+			case "0x":
+				t.Value.True, err = strconv.ParseInt(t.Value.String, 16, 64)
+				if err != nil {
+					fmt.Println("ERROR", err)
+				}
+				t.Value.Type = "hexadecimal"
 
-		// Else it must be either an int, float, or an ident
-		default:
+			// Else it must be either an int, float, or an ident
+			default:
+				// Clear the string value
+				t.Value.String = ""
+
+				// Attempt to parse an int from the accumulator
+				t.Value.True, err = strconv.ParseInt(meta.Accumulator, 0, 0)
+				t.Value.Type = "int"
+
+				// If it errors, check to see if it is an int
+				if err != nil {
+					// Attempt to parse a float from the accumulator
+					t.Value.True, err = strconv.ParseFloat(meta.Accumulator, 0)
+					t.Value.Type = "float"
+					if err != nil {
+						// leave this checking for the semantic
+						// 	identSplit := strings.Split(meta.Accumulator, ".")
+						// 	if len(identSplit) > 1 {
+						// 		for _, ident := range identSplit {
+
+						// 		}
+						// 	}
+
+						// If it errors, assume that it is an ident (for now)
+						t.Type = "IDENT"
+						t.Value = token.Value{
+							String: meta.Accumulator,
+						}
+					}
+				}
+			}
+		} else {
 			// Clear the string value
 			t.Value.String = ""
 

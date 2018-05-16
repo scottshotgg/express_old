@@ -109,6 +109,7 @@ func main() {
 		return
 	}
 
+	// too lazy to do a cool print out right now
 	// TODO: this should go in the actual stage
 	fmt.Println("=======================")
 	fmt.Println()
@@ -143,12 +144,20 @@ func main() {
 
 	// TODO: fix this to return an err
 	fmt.Println()
+
+	// Syntactic parse time
 	p.Tokens["parse"], err = parse.Parse(p.Tokens["lex"])
 	if err != nil {
 		fmt.Println("ERROR:", err)
 	}
-	fmt.Println("\nEndtokens:")
-
+	fmt.Println("\nSemantic tokens:")
 	p.PrintTokens("parse")
-	fmt.Println("")
+	fmt.Println()
+
+	// Semantic parse time
+	p.Tokens["semantic"], err = parse.Semantic(p.Tokens["parse"])
+	if err != nil {
+		fmt.Println("wat dat err do brah", err)
+		os.Exit(1)
+	}
 }

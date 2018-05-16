@@ -1,13 +1,18 @@
 #![nogc]
 
-var Hey := (arg1, arg2) (ret1, ret2) {
+var Obj = (arg1, arg2) (ret1, ret2, ou) {
   ident: [5]
+  Shit = 5
+  Thing: 0
 }
 
-Hey("a", "b")
+//Hey("a", "b")
+
 
 #[sql]
-SELECT * FROM products WHERE price > 5
+result := SELECT * FROM products WHERE price > 5
 
 // TODO: fix the thing where 
 // it cuts off the last character
+
+//stuff = { Thing, Shit } = Obj()

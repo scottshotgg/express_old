@@ -449,16 +449,17 @@ func (m *Meta) ParseAttribute() token.Token {
 // ParseBlock ..
 func (m *Meta) ParseBlock() token.Token {
 
+	m.CheckOptmization = true
+
 	// FIXME: could do something fancy with another meta and then use that but w/e
 	blockTokens := []token.Token{}
 
-	// a hack, but a good one
-	defer func() {
-		if m.OptimizationAttempts > 0 && len(blockTokens) < len(m.EndTokens) {
-			m.CheckOptmization = true
-		}
-		m.CheckOptmization = false
-	}()
+	// defer func() {
+	// 	fmt.Println("lengths", len(blockTokens), len(m.Tokens))
+	// 	fmt.Println(len(blockTokens) < len(m.Tokens)-2)
+
+	// 	m.CheckOptmization = len(blockTokens) < len(m.Tokens)-2
+	// }()
 
 	for {
 		m.Shift()
@@ -493,6 +494,9 @@ func (m *Meta) ParseBlock() token.Token {
 		// TODO: put all of these at the bottom
 		// Don't do anything with these for now except append them
 		// FIXME: hack to fix the repitition
+		case "BLOCK":
+			// blockTokens = append(blockTokens, m.ParseBlock())
+			blockTokens = append(blockTokens, current)
 		case "INIT":
 			fallthrough
 		case "ATTRIBUTE":
@@ -502,6 +506,7 @@ func (m *Meta) ParseBlock() token.Token {
 			// fmt.Println("function")
 
 		case "GROUP":
+			fmt.Println("\nGOTAGROUP\n")
 			var functionTokens []token.Token
 
 			functionTokens = append(functionTokens, current)
@@ -592,16 +597,18 @@ func (m *Meta) ParseBlock() token.Token {
 			// TODO: this case might need to move to the Syntactic part of the parser
 		case "LITERAL":
 			// TODO: this may cause some problems
-			switch m.PeekLastCollectedToken().Type {
-			case "SET":
-				fallthrough
+			// TODO: this is causing some problems
+			// switch m.PeekLastCollectedToken().Type {
+			// case "SET":
+			// 	fallthrough
 
-			case "ASSIGN":
-				fallthrough
+			// case "ASSIGN":
+			// 	fallthrough
 
-			case "INIT":
-				blockTokens = append(blockTokens, m.CurrentToken)
-			}
+			// case "INIT":
+			// 	blockTokens = append(blockTokens, m.CurrentToken)
+			// }
+			blockTokens = append(blockTokens, m.CurrentToken)
 
 		case "L_PAREN":
 			blockTokens = append(blockTokens, m.ParseGroup())
@@ -829,40 +836,46 @@ func Parse(tokens []token.Token) ([]token.Token, error) {
 		CheckOptmization: true,
 	}
 
-	var endTokens []token.Token
-
 	// Here we are continuously applying semantic pressure to squash the tokens and furthur
 	// simplify the tokens generated
 	for meta.CheckOptmization {
 		fmt.Println("Optimizing", meta.OptimizationAttempts)
 		meta.CollectTokens(meta.ParseBlock().Value.True.([]token.Token))
 		fmt.Println("endTokens", meta.EndTokens)
-		endTokens = meta.EndTokens
-
-		// this is a hack rn because the redeclaration of meta fucks the endTokens up
-		// if meta.CheckOptmization {
-		// 	break
-		// }
-
-		// Only apply SemanticPressure once for now until we figure out the recursion more
-		// if meta.OptimizationAttempts > 0 {
-		// 	break
-		// }
 
 		fmt.Println(meta.EndTokens)
 		metaTokens := meta.EndTokens[0].Value.True.([]token.Token)
-		tokens := append(append([]token.Token{token.TokenMap["{"]}, metaTokens...), token.TokenMap["}"])
-		fmt.Println("metaTokens", metaTokens, len(meta.EndTokens), len(metaTokens))
+		metaTokens = append(append([]token.Token{token.TokenMap["{"]}, metaTokens...), token.TokenMap["}"])
+		fmt.Println("metaTokens", len(metaTokens), len(meta.EndTokens))
+
+		// endTokens = meta.EndTokens
+
+		// TODO: FIXME: w/e this works for now
+		// Fix this from pulling off only the top one
+		// Only apply SemanticPressure once for now until we figure out the recursion more
+		if meta.OptimizationAttempts > 0 {
+			break
+		}
+
+		// fmt.Println("meta.CheckOptimization", meta.CheckOptmization)
+
+		// if !meta.CheckOptmization {
+		// 	break
+		// }
+
+		// if len(meta.EndTokens) < len(meta.Tokens) {
+		// 	break
+		// }
 
 		meta = Meta{
 			// FIXME: do we need to fix this hack?
-			Tokens: tokens,
-			// Tokens:               metaTokens,
-			Length:               len(tokens),
+			// Tokens: ,
+			Tokens:               metaTokens,
+			Length:               len(metaTokens),
 			CheckOptmization:     meta.CheckOptmization,
 			OptimizationAttempts: meta.OptimizationAttempts + 1,
 		}
 	}
 
-	return endTokens, nil
+	return meta.EndTokens, nil
 }
