@@ -3,7 +3,7 @@
 ## Status: `tick`
 Code is pretty dirty right now; it is due for a "garbage collection" since a lot of the code is hacky garbage right now anyways. Will have to fix all of the FIXME and TODO stamps and clean up some of the workarounds later in the next phase.
 
-The status of `tick` refers to the tick-tock status;
+The status follows a tick-tock style:
 - `tick` : push out code to ensure that features are implemented
 - `tock` : sweep, optimize, reform
 
@@ -11,7 +11,7 @@ The status of `tick` refers to the tick-tock status;
 <br>
 
 ## TODO: `todo.md`
-I will try to update the todo file as much as possible and keep it up to date as to what is current needing support/work and what is currently being worked on
+I will try to update the todo file as much as possible and keep it up to date as to what is currently needing support/work and what is currently being worked on
 
 <br>
 <br>
