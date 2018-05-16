@@ -1,14 +1,37 @@
-# Stages:
-### - Lexer:   Tokenize the file
-### - Parsing: Parse the tokens, squash tokens together
-### - Check:   Check the tokens syntactically
-Parse until you don't have to make any changes to any tokens
+# Express:
+
+## Status: `tick`
+Code is pretty dirty right now; it is due for a "garbage collection" since a lot of the code is hacky garbage right now anyways. Will have to fix all of the FIXME and TODO stamps and clean up some of the workarounds later in the next phase.
+
+The status of `tick` refers to the tick-tock status;
+- `tick` : push out code to ensure that features are implemented
+- `tock` : sweep, optimize, reform
+
 <br>
 <br>
 
-## Tokenizer
-Tokenizer for Express written in Go
+## TODO: `todo.md`
+I will try to update the todo file as much as possible and keep it up to date as to what is current needing support/work and what is currently being worked on
 
+<br>
+<br>
+
+## Stages:
+### - `lex`:   Tokenize the file into raw lex tokens
+### - `parse`: Squash and combine lex tokens into higher structures
+### - `check`:   Check the tokens syntactically
+### - `llvm`:    Generate LLVM tokens/code and output the binary  
+
+Not all stages are started/implemented fully yet. 
+- `lex` is 99% done
+- `parse` is mostly finished
+- `check` is just being started
+- `llvm` will be worked on intermittently in a back-and-forth style with the `check` for a bit while I find the best route for token generation within Go.
+
+<br>
+<br>
+
+## Grammar:
 ```bnf
 program : stmt+ ;
 
