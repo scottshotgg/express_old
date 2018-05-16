@@ -26,12 +26,13 @@ Not all stages are started/implemented fully yet.
 - `lex` is 99% done
 - `parse` is mostly finished
 - `check` is just being started
-- `llvm` will be worked on intermittently in a back-and-forth style with the `check` for a bit while I find the best route for token generation within Go.
+- `llvm` will be worked on intermittently in a back-and-forth style with `check` for a bit while I find the best route for token generation within Go.
 
 <br>
 <br>
 
 ## Grammar:
+This is mostly correct but needsto be updated
 ```bnf
 program : stmt+ ;
 
