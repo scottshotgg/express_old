@@ -5,7 +5,7 @@ Code is pretty dirty right now; it is due for a "garbage collection" since a lot
 
 The status follows a tick-tock style:
 - `tick` : push out code to ensure that features are implemented
-- `tock` : sweep, optimize, reform
+- `tock` : purge hacky workarounds, optimize, rearch
 
 <br>
 <br>

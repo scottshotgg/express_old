@@ -1,3 +1,5 @@
 // simple assignment program
 
 int a = 66
+
+a = 50

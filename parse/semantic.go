@@ -46,6 +46,31 @@ func (m *Meta) CheckType() {
 	}
 }
 
+// CheckIdent ...
+func (m *Meta) CheckIdent() {
+	fmt.Println("ident")
+
+	m.CollectCurrentToken()
+
+	switch m.NextToken.Type {
+	case "INIT":
+		fallthrough
+	case "SET":
+		fallthrough
+	case "ASSIGN":
+		fmt.Println("found an ASSIGN type")
+		m.Shift()
+		m.CollectCurrentToken()
+
+		// if the form is [ident] [= | : | :=] then expect an expression
+		// m.GetExpr()
+
+	default:
+		fmt.Println("vert da ferk")
+		os.Exit(9)
+	}
+}
+
 // CheckBlock ...
 func (m *Meta) CheckBlock() {
 	fmt.Println("hi")
@@ -61,13 +86,15 @@ func (m *Meta) CheckBlock() {
 			// int name = 6 : next simplest
 			// name int = 6 : would be taken care of by a random ident
 			// we would probably also have other ones for function params and stuff
-
 			m.CheckType()
 
-			if m.NextToken == (token.Token{}) {
-				fmt.Println("returning")
-				return
-			}
+		case "IDENT":
+			m.CheckIdent()
+		}
+
+		if m.NextToken == (token.Token{}) {
+			fmt.Println("returning")
+			return
 		}
 	}
 }
