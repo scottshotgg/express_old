@@ -26,6 +26,7 @@ import (
 var Lexemes = []string{
 	"var",
 	"int",
+	"string",
 	"select",
 	"SELECT",
 	"FROM",

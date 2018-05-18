@@ -32,12 +32,14 @@ Not all stages are started/implemented fully yet.
 <br>
 
 ## Grammar:
-This is mostly correct but needsto be updated
+This is mostly correct but needs to be updated
 ```bnf
 program : stmt+ ;
 
-stmt    : var expr <EOS> |
-          expr <EOS>            ;
+stmt    : assignment_stmt |
+          expr <EOS>      ;
+
+assignment_stmt:  var assign_op expr <EOS>
 
 expr    : term sec_op term |
           term             ;

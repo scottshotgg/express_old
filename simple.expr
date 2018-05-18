@@ -1,5 +1,5 @@
 // simple assignment program
 
-int a = 66
-
-a = 50
+string b = " you"
+//b = "gee"
+string a = b + "you"

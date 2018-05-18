@@ -42,6 +42,11 @@ func (m *Meta) CollectToken(token token.Token) {
 	m.EndTokens = append(m.EndTokens, token)
 }
 
+func (m *Meta) RemoveLastCollectedToken() {
+	m.LastCollectedToken = m.EndTokens[len(m.EndTokens)-1]
+	m.EndTokens = m.EndTokens[:len(m.EndTokens)-1]
+}
+
 // CollectCurrentToken ...
 func (m *Meta) CollectCurrentToken() {
 	m.CollectToken(m.CurrentToken)
@@ -168,7 +173,7 @@ func (m *Meta) PeekLastToken() token.Token {
 	return m.LastToken
 }
 
-// PeekLastToken ...
+// PeekLastCollectedToken ...
 func (m *Meta) PeekLastCollectedToken() token.Token {
 	return m.LastCollectedToken
 }
@@ -182,7 +187,7 @@ func (m *Meta) GetCurrentToken() (token.Token, error) {
 	return token.Token{}, errors.New("Current parseIndex outside of token range")
 }
 
-// GetTokenAtIndex ...
+// PeekTokenAtIndex ...
 func (m *Meta) PeekTokenAtIndex(index int) (token.Token, error) {
 	if index > -1 && index < m.Length {
 		return m.Tokens[index], nil
@@ -194,7 +199,6 @@ func (m *Meta) PeekTokenAtIndex(index int) (token.Token, error) {
 // Shift ...
 func (m *Meta) Shift() {
 	m.LastToken = m.CurrentToken
-
 	m.CurrentToken = m.Tokens[m.ParseIndex]
 
 	for {
@@ -214,7 +218,7 @@ func (m *Meta) Shift() {
 }
 
 // ParseType ...
-func (m *Meta) ParseType(token token.Token, index int) error {
+func (m *Meta) ParseType(token token.Token) error {
 	m.Shift()
 
 	switch m.CurrentToken.Type {
@@ -230,68 +234,68 @@ func (m *Meta) ParseType(token token.Token, index int) error {
 	return nil
 }
 
-// GetFactor ...
-func (m *Meta) GetFactor() {
-	fmt.Println("getting ze factor", m.CurrentToken)
+// // GetFactor ...
+// func (m *Meta) GetFactor() {
+// 	fmt.Println("getting ze factor", m.CurrentToken)
 
-	switch m.CurrentToken.Type {
-	case "LITERAL":
-		m.CollectCurrentToken()
+// 	switch m.CurrentToken.Type {
+// 	case "LITERAL":
+// 		m.CollectCurrentToken()
 
-	default:
-		fmt.Println("got something other than LITERAL at GetExpr")
-	}
-}
+// 	default:
+// 		fmt.Println("got something other than LITERAL at GetExpr")
+// 	}
+// }
 
-// GetTerm ...
-func (m *Meta) GetTerm() {
-	fmt.Println("getting ze term", m.CurrentToken)
+// // GetTerm ...
+// func (m *Meta) GetTerm() {
+// 	fmt.Println("getting ze term", m.CurrentToken)
 
-	switch m.CurrentToken.Type {
-	case "LITERAL":
-		m.GetFactor()
+// 	switch m.CurrentToken.Type {
+// 	case "LITERAL":
+// 		m.GetFactor()
 
-	default:
-		fmt.Println("got something other than LITERAL at GetExpr")
-	}
-}
+// 	default:
+// 		fmt.Println("got something other than LITERAL at GetExpr")
+// 	}
+// }
 
-// GetExpr ...
-func (m *Meta) GetExpr() {
-	fmt.Println("getting ze expr", m.CurrentToken)
+// // GetExpr ...
+// func (m *Meta) GetExpr() {
+// 	fmt.Println("getting ze expr", m.CurrentToken)
 
-	switch m.CurrentToken.Type {
-	case "LITERAL":
-		m.GetTerm()
+// 	switch m.CurrentToken.Type {
+// 	case "LITERAL":
+// 		m.GetTerm()
 
-	default:
-		fmt.Println("got something other than LITERAL at GetExpr")
-	}
-}
+// 	default:
+// 		fmt.Println("got something other than LITERAL at GetExpr")
+// 	}
+// }
 
-// GetStatement ...
-func (m *Meta) GetStatement() {
-	fmt.Println("getting ze statement", m.CurrentToken)
+// // GetStatement ...
+// func (m *Meta) GetStatement() {
+// 	fmt.Println("getting ze statement", m.CurrentToken)
 
-	switch m.CurrentToken.Type {
-	case "TYPE":
-		m.CollectCurrentToken()
-		m.Shift()
-		m.GetExpr()
+// 	switch m.CurrentToken.Type {
+// 	case "TYPE":
+// 		m.CollectCurrentToken()
+// 		m.Shift()
+// 		m.GetExpr()
 
-	case "LITERAL":
-		m.GetExpr()
+// 	case "LITERAL":
+// 		m.GetExpr()
 
-	default:
-		fmt.Println("got something other than LITERAL at GetStatement")
-	}
+// 	default:
+// 		fmt.Println("got something other than LITERAL at GetStatement")
+// 	}
 
-	m.Shift()
+// 	m.Shift()
 
-	if m.CurrentToken.Type == "EOS" {
-		m.CollectCurrentToken()
-	}
-}
+// 	if m.CurrentToken.Type == "EOS" {
+// 		m.CollectCurrentToken()
+// 	}
+// }
 
 // ParseFunctionDef ...
 func (m *Meta) ParseFunctionDef(current token.Token) token.Token {
@@ -467,8 +471,13 @@ func (m *Meta) ParseBlock() token.Token {
 		current := m.CurrentToken
 
 		switch current.Type {
+		// this needs to change to PRI_OP
 		case "MULT":
 			fmt.Println("found a mult")
+			blockTokens = append(blockTokens, current)
+
+		case "SEC_OP":
+			fmt.Println("found a sec_op")
 			blockTokens = append(blockTokens, current)
 
 		case "KEYWORD":
@@ -811,18 +820,23 @@ func (m *Meta) ParseString() token.Token {
 	for {
 		m.Shift()
 
+		// FIXME: stop doing hacky shit, purge this shit, need to preserve whitespaces in the lexer
+		stringLiteral += m.CurrentToken.Value.String
+
 		if m.NextToken.Value.String == "\"" {
-			stringLiteral += m.CurrentToken.Value.String
+
 			m.Shift()
 
 			return token.Token{
 				Type: "LITERAL",
 				Value: token.Value{
 					Type:   "string",
+					True:   stringLiteral,
 					String: stringLiteral,
 				},
 			}
 		}
+		// Getting the last 'separating' character; aka a whitespace that was separating the tokens
 	}
 }
 
