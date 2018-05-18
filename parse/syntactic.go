@@ -10,7 +10,7 @@ import (
 	"github.com/scottshotgg/Express/token"
 )
 
-// Meta ...
+// Meta holds information about the current parse
 type Meta struct {
 	IgnoreWS        bool
 	ParseIndex      int
@@ -30,164 +30,58 @@ type Meta struct {
 	OptimizationAttempts int
 }
 
-// CollectTokens ...
+// CollectTokens appends an array of tokens passed in to the EndTokens attribute of Meta
 func (m *Meta) CollectTokens(tokens []token.Token) {
 	m.LastCollectedToken = tokens[len(tokens)-1]
 	m.EndTokens = append(m.EndTokens, tokens...)
 }
 
-// CollectToken ...
+// CollectToken appends a single token to the EndTokens attribute of Meta
 func (m *Meta) CollectToken(token token.Token) {
 	m.LastCollectedToken = token
 	m.EndTokens = append(m.EndTokens, token)
 }
 
+// RemoveLastCollectedToken removes the last token put into EndTokens
 func (m *Meta) RemoveLastCollectedToken() {
 	m.LastCollectedToken = m.EndTokens[len(m.EndTokens)-1]
 	m.EndTokens = m.EndTokens[:len(m.EndTokens)-1]
 }
 
-// CollectCurrentToken ...
+// PopLastCollectedToken removes the last token put into EndTokens
+func (m *Meta) PopLastCollectedToken() token.Token {
+	m.LastCollectedToken = m.EndTokens[len(m.EndTokens)-2]
+	m.EndTokens = m.EndTokens[:len(m.EndTokens)-1]
+
+	return m.EndTokens[len(m.EndTokens)-1]
+}
+
+// CollectCurrentToken appends the token held in the CurrentToken attribute to the EndTokens array
 func (m *Meta) CollectCurrentToken() {
 	m.CollectToken(m.CurrentToken)
 }
 
-// CollectLastToken ...
+// CollectLastToken appends the token held in the LastToken attribute to the EndTokens array
 func (m *Meta) CollectLastToken() {
 	m.CollectToken(m.LastToken)
 }
 
-// GetNextNonWSToken ...
-func (m *Meta) GetNextNonWSToken() (token.Token, error) {
-	for {
-		t, err := m.GetNextToken()
-		if err != nil {
-			werr := errors.Wrap(err, "m.GetNextToken()")
-			fmt.Println("ERROR:", werr)
-			return token.Token{}, werr
-		}
-
-		if t.Type == "WS" {
-			continue
-		}
-
-		return t, nil
-	}
-}
-
-// GetLastNonWSToken ...
-func (m *Meta) GetLastNonWSToken() (token.Token, error) {
-	for {
-		t, err := m.GetLastToken()
-		if err != nil {
-			werr := errors.Wrap(err, "m.GetLastToken()")
-			fmt.Println("ERROR:", werr)
-			return token.Token{}, werr
-		}
-
-		if t.Type == "WS" {
-			continue
-		}
-
-		return t, nil
-	}
-}
-
-// PeekNextNonWSToken ...
-func (m *Meta) PeekNextNonWSToken() (token.Token, error) {
-	index := m.ParseIndex
-	for {
-		if index > -1 && index < m.Length {
-			t, err := m.PeekTokenAtIndex(index)
-			if err != nil {
-				werr := errors.Wrap(err, "m.PeekNextNonWSToken()")
-				fmt.Println("ERROR:", werr)
-				return token.Token{}, werr
-			}
-
-			if t.Type == "WS" {
-				continue
-			}
-
-			return t, nil
-		}
-
-		return token.Token{}, errors.New("Out of tokens")
-	}
-}
-
-// PeekLastNonWSToken ...
-func (m *Meta) PeekLastNonWSToken() (token.Token, error) {
-	for {
-		// t, err := m.PeekLastToken()
-		// if err != nil {
-		// 	werr := errors.Wrap(err, "m.PeekLastNonWSToken()")
-		// 	fmt.Println("ERROR:", werr)
-		// 	return token.Token{}, werr
-		// }
-
-		// if t.Type == "WS" {
-		// 	continue
-		// }
-
-		return token.Token{}, nil
-	}
-}
-
-// Create these if we need them
-// GetNextNonWSTokenFromIndex ...
-// GetLastNonWSTokenFromIndex ...
-
-// GetNextToken ...
-func (m *Meta) GetNextToken() (token.Token, error) {
-	if m.ParseIndex < m.Length {
-		m.ParseIndex++
-		return m.Tokens[m.ParseIndex], nil
-	}
-
-	return token.Token{}, errors.New("Out of tokens")
-}
-
-// PeekNextToken ...
-func (m *Meta) PeekNextToken() token.Token {
-	return m.NextToken
-}
-
-// GetLastToken ...
-func (m *Meta) GetLastToken() (token.Token, error) {
-	switch {
-	case m.ParseIndex > 0:
-		m.ParseIndex--
-		fallthrough
-
-	case m.ParseIndex == 0:
-		return m.Tokens[m.ParseIndex], nil
-
-	default:
-		return token.Token{}, errors.New("Already at last token")
-	}
-}
-
-// PeekLastToken ...
-func (m *Meta) PeekLastToken() token.Token {
+// GetLastToken returns the LastToken attribute
+func (m *Meta) GetLastToken() token.Token {
 	return m.LastToken
 }
 
-// PeekLastCollectedToken ...
+// PeekLastCollectedToken returns the last token appended to the EndTokens array
 func (m *Meta) PeekLastCollectedToken() token.Token {
 	return m.LastCollectedToken
 }
 
-// GetCurrentToken ...
-func (m *Meta) GetCurrentToken() (token.Token, error) {
-	if m.ParseIndex > -1 && m.ParseIndex < m.Length {
-		return m.Tokens[m.ParseIndex], nil
-	}
-
-	return token.Token{}, errors.New("Current parseIndex outside of token range")
+// GetCurrentToken returns the CurrentToken attribute
+func (m *Meta) GetCurrentToken() token.Token {
+	return m.CurrentToken
 }
 
-// PeekTokenAtIndex ...
+// PeekTokenAtIndex returns the token at that ParseIndex if valid
 func (m *Meta) PeekTokenAtIndex(index int) (token.Token, error) {
 	if index > -1 && index < m.Length {
 		return m.Tokens[index], nil
@@ -196,7 +90,7 @@ func (m *Meta) PeekTokenAtIndex(index int) (token.Token, error) {
 	return token.Token{}, errors.New("Current parseIndex outside of token range")
 }
 
-// Shift ...
+// Shift operates the parses like a 3-bit (3 token) SIPO shift register consuming the tokens until the end of the line
 func (m *Meta) Shift() {
 	m.LastToken = m.CurrentToken
 	m.CurrentToken = m.Tokens[m.ParseIndex]
@@ -217,15 +111,24 @@ func (m *Meta) Shift() {
 	}
 }
 
-// ParseType ...
-func (m *Meta) ParseType(token token.Token) error {
+// TokenToString marshals a token into it's JSON representation
+func TokenToString(t token.Token) string {
+	jsonToken, err := json.Marshal(t)
+	if err != nil {
+		return err.Error()
+	}
+
+	return string(jsonToken)
+}
+
+// ParseVar parses a variable declaration and other statements related to type later on. Anything in the form of <type><ident>
+func (m *Meta) ParseVar(token token.Token) error {
 	m.Shift()
 
 	switch m.CurrentToken.Type {
 	case "LITERAL":
 		m.CurrentToken.Type = "IDENT"
 
-		// TODO: this will prevent us from doing var declarations
 		m.CurrentToken.Expected = "ASSIGN"
 
 		m.CollectCurrentToken()
@@ -234,131 +137,7 @@ func (m *Meta) ParseType(token token.Token) error {
 	return nil
 }
 
-// // GetFactor ...
-// func (m *Meta) GetFactor() {
-// 	fmt.Println("getting ze factor", m.CurrentToken)
-
-// 	switch m.CurrentToken.Type {
-// 	case "LITERAL":
-// 		m.CollectCurrentToken()
-
-// 	default:
-// 		fmt.Println("got something other than LITERAL at GetExpr")
-// 	}
-// }
-
-// // GetTerm ...
-// func (m *Meta) GetTerm() {
-// 	fmt.Println("getting ze term", m.CurrentToken)
-
-// 	switch m.CurrentToken.Type {
-// 	case "LITERAL":
-// 		m.GetFactor()
-
-// 	default:
-// 		fmt.Println("got something other than LITERAL at GetExpr")
-// 	}
-// }
-
-// // GetExpr ...
-// func (m *Meta) GetExpr() {
-// 	fmt.Println("getting ze expr", m.CurrentToken)
-
-// 	switch m.CurrentToken.Type {
-// 	case "LITERAL":
-// 		m.GetTerm()
-
-// 	default:
-// 		fmt.Println("got something other than LITERAL at GetExpr")
-// 	}
-// }
-
-// // GetStatement ...
-// func (m *Meta) GetStatement() {
-// 	fmt.Println("getting ze statement", m.CurrentToken)
-
-// 	switch m.CurrentToken.Type {
-// 	case "TYPE":
-// 		m.CollectCurrentToken()
-// 		m.Shift()
-// 		m.GetExpr()
-
-// 	case "LITERAL":
-// 		m.GetExpr()
-
-// 	default:
-// 		fmt.Println("got something other than LITERAL at GetStatement")
-// 	}
-
-// 	m.Shift()
-
-// 	if m.CurrentToken.Type == "EOS" {
-// 		m.CollectCurrentToken()
-// 	}
-// }
-
-// ParseFunctionDef ...
-func (m *Meta) ParseFunctionDef(current token.Token) token.Token {
-	m.CheckOptmization = true
-
-	// var functionTokens [][]token.Token
-	var functionTokens []token.Token
-	// var returnTokens []token.Token
-
-	m.ParseIdent(&functionTokens, current)
-	m.Shift()
-	argumentTokens := m.ParseGroup()
-	functionTokens = append(functionTokens, argumentTokens.Value.True.([]token.Token)...)
-
-	if m.PeekNextToken().Type == "L_PAREN" {
-		fmt.Println("Found return tokens")
-		argumentTokens = m.ParseGroup()
-		functionTokens = append(functionTokens, argumentTokens.Value.True.([]token.Token)...)
-	}
-
-	// add these tokens to the function tokens and return that token
-	// return append(functionTokens, groupToken.Value.True.([]token.Token)...)
-	// functionTokens = append(functionTokens, argumentTokens.Value.True.([]token.Token)...)
-	return token.Token{
-		ID:   4,
-		Type: "FUNCTION",
-		// Expected: //TODO:
-		Value: token.Value{
-			Type: "def",
-			True: functionTokens,
-			// String: //TODO:
-		},
-	}
-}
-
-// ParseFunctionCall ...
-func (m *Meta) ParseFunctionCall(current token.Token) token.Token {
-	m.CheckOptmization = true
-
-	// var functionTokens [][]token.Token
-	var functionTokens []token.Token
-	// var returnTokens []token.Token
-
-	m.ParseIdent(&functionTokens, current)
-	m.Shift()
-	// FIXME: TODO: these should all return errors
-	argumentTokens := m.ParseGroup()
-
-	// add these tokens to the function tokens and return that token
-	// return append(functionTokens, groupToken.Value.True.([]token.Token)...)
-	return token.Token{
-		ID:   4,
-		Type: "FUNCTION",
-		// Expected: //TODO:
-		Value: token.Value{
-			Type: "call",
-			True: append(functionTokens, argumentTokens.Value.True.([]token.Token)...),
-			// String: //TODO:
-		},
-	}
-}
-
-// ParseIdent ...
+// ParseIdent parses an identifier
 func (m *Meta) ParseIdent(blockTokens *[]token.Token, peek token.Token) {
 	m.CheckOptmization = true
 
@@ -392,17 +171,7 @@ func (m *Meta) ParseIdent(blockTokens *[]token.Token, peek token.Token) {
 	}
 }
 
-// TokenToString ...
-func TokenToString(t token.Token) string {
-	jsonToken, err := json.Marshal(t)
-	if err != nil {
-		return err.Error()
-	}
-
-	return string(jsonToken)
-}
-
-// ParseAttribute ...
+// ParseAttribute parses an attribute as defined by ECMA-335 standards. Anything defined by ECMA-335; #[attribute]
 // TODO: full ecma335 implementation will go here when i feel like it
 func (m *Meta) ParseAttribute() token.Token {
 	var ecmaTokens []token.Token
@@ -416,7 +185,7 @@ func (m *Meta) ParseAttribute() token.Token {
 		},
 	}
 
-	if m.PeekNextToken().Type == "NOT" {
+	if m.NextToken.Type == "NOT" {
 		fmt.Println("applied to scope")
 		ecmaToken.Value.Type = "scope"
 		// ecmaTokens = append(ecmaTokens, m.CurrentToken)
@@ -450,7 +219,278 @@ func (m *Meta) ParseAttribute() token.Token {
 	}
 }
 
-// ParseBlock ..
+// ParseSQL will parse inline SQL statements
+func (m *Meta) ParseSQL() token.Token {
+	return token.Token{}
+}
+
+// ParseHTML will parse inline HTML
+func (m *Meta) ParseHTML() token.Token {
+	return token.Token{}
+}
+
+// ParseCSS will parse inline CSS
+func (m *Meta) ParseCSS() token.Token {
+	return token.Token{}
+}
+
+// ParseMarkup will parse inline Markup
+func (m *Meta) ParseMarkup() token.Token {
+	return token.Token{}
+}
+
+// ParseJSON will parse JSON
+func (m *Meta) ParseJSON() token.Token {
+	return token.Token{}
+}
+
+// ParseXML will parse XML
+func (m *Meta) ParseXML() token.Token {
+	return token.Token{}
+}
+
+// ParseNoSQl will parse NoSQL
+// this might use graphQL internally
+// idk how this is going to work if at all
+func (m *Meta) ParseNoSQL() token.Token {
+	return token.Token{}
+}
+
+// ParseFunctionDef parses a function definition. Anything in the form <ident><group><group><block> or <ident><group><block>
+func (m *Meta) ParseFunctionDef(current token.Token) token.Token {
+	m.CheckOptmization = true
+
+	var functionTokens []token.Token
+
+	m.ParseIdent(&functionTokens, current)
+	m.Shift()
+	argumentTokens := m.ParseGroup()
+	functionTokens = append(functionTokens, argumentTokens.Value.True.([]token.Token)...)
+
+	if m.NextToken.Type == "L_PAREN" {
+		fmt.Println("Found return tokens")
+		argumentTokens = m.ParseGroup()
+		functionTokens = append(functionTokens, argumentTokens.Value.True.([]token.Token)...)
+	}
+
+	// add these tokens to the function tokens and return that token
+	// return append(functionTokens, groupToken.Value.True.([]token.Token)...)
+	// functionTokens = append(functionTokens, argumentTokens.Value.True.([]token.Token)...)
+	return token.Token{
+		ID:   4,
+		Type: "FUNCTION",
+		// Expected: //TODO:
+		Value: token.Value{
+			Type: "def",
+			True: functionTokens,
+			// String: //TODO:
+		},
+	}
+}
+
+// ParseFunctionCall parses a function call. Anything in the form <ident><group>
+func (m *Meta) ParseFunctionCall(current token.Token) token.Token {
+	m.CheckOptmization = true
+
+	// var functionTokens [][]token.Token
+	var functionTokens []token.Token
+	// var returnTokens []token.Token
+
+	m.ParseIdent(&functionTokens, current)
+	m.Shift()
+	// FIXME: TODO: these should all return errors
+	argumentTokens := m.ParseGroup()
+
+	// add these tokens to the function tokens and return that token
+	// return append(functionTokens, groupToken.Value.True.([]token.Token)...)
+	return token.Token{
+		ID:   4,
+		Type: "FUNCTION",
+		// Expected: //TODO:
+		Value: token.Value{
+			Type: "call",
+			True: append(functionTokens, argumentTokens.Value.True.([]token.Token)...),
+			// String: //TODO:
+		},
+	}
+}
+
+// ParseGrave will parse the graves (backticks)
+func (m *Meta) ParseGrave() token.Token {
+	return token.Token{}
+}
+
+// ParseCharOrEscapedString will parse chars and escaped strings. Anything encapsulated in singular quotes.
+func (m *Meta) ParseCharOrEscapedString() token.Token {
+	return token.Token{}
+}
+
+// ParseString parses a string literal. Anything surrounded by quotes.
+func (m *Meta) ParseString() token.Token {
+	m.CheckOptmization = true
+
+	stringLiteral := ""
+	for {
+		m.Shift()
+
+		// FIXME: stop doing hacky shit, purge this shit, need to preserve whitespaces in the lexer
+		stringLiteral += m.CurrentToken.Value.String
+
+		if m.NextToken.Value.String == "\"" {
+
+			m.Shift()
+
+			return token.Token{
+				Type: "LITERAL",
+				Value: token.Value{
+					Type:   "string",
+					True:   stringLiteral,
+					String: stringLiteral,
+				},
+			}
+		}
+		// Getting the last 'separating' character; aka a whitespace that was separating the tokens
+	}
+}
+
+// ParseGroup parses a grouping of items; tuple, function arguments, function returns. Anything encapsulated in parenthesis.
+func (m *Meta) ParseGroup() token.Token {
+	m.CheckOptmization = true
+
+	groupTokens := []token.Token{}
+
+	for {
+		m.Shift()
+
+		current := m.CurrentToken
+
+		switch current.Type {
+		case "R_PAREN":
+			return token.Token{
+				ID:   1,
+				Type: "GROUP",
+				// Expected: TODO: calc this later
+				Value: token.Value{
+					Type: "group",
+					True: groupTokens,
+					// String: func() (arrayTokensString string) {
+					// 	for _, t := range arrayTokens {
+					// 		arrayTokensString += TokenToString(t)
+					// 	}
+
+					// 	return
+					// }(),
+				},
+			}
+
+		case "LITERAL":
+			groupTokens = append(groupTokens, current)
+
+		case "TYPE":
+			peek := m.NextToken
+			switch peek.Type {
+			case "IDENT":
+				m.ParseIdent(&groupTokens, m.CurrentToken)
+
+			case "LITERAL":
+				groupTokens = append(groupTokens, m.CurrentToken)
+
+				m.Shift()
+				m.CurrentToken.Type = "IDENT"
+				groupTokens = append(groupTokens, m.CurrentToken)
+			default:
+				os.Exit(7)
+			}
+
+		case "IDENT":
+			m.ParseIdent(&groupTokens, m.CurrentToken)
+
+		case "SEPARATOR":
+			continue
+
+		case "D_QUOTE":
+			groupTokens = append(groupTokens, m.ParseString())
+
+		case "L_BRACE":
+			groupTokens = append(groupTokens, m.ParseBlock())
+
+		case "L_BRACKET":
+			groupTokens = append(groupTokens, m.ParseArray())
+
+		default:
+			fmt.Println("ERROR: Unrecognized group token\n", current, m)
+			os.Exit(8)
+		}
+	}
+}
+
+// ParseArray parses an array of items. Anything encapulated in square brackets except for attributes.
+func (m *Meta) ParseArray() token.Token {
+	m.CheckOptmization = true
+
+	arrayTokens := []token.Token{}
+
+	for {
+		m.Shift()
+
+		switch m.CurrentToken.Type {
+		case "SEPARATOR":
+			continue
+
+		case "IDENT":
+			m.ParseIdent(&arrayTokens, m.CurrentToken)
+
+		case "D_QUOTE":
+			arrayTokens = append(arrayTokens, m.ParseString())
+		// case "LITERAL":
+
+		case "LITERAL":
+			arrayTokens = append(arrayTokens, m.CurrentToken)
+
+		case "L_PAREN":
+			arrayTokens = append(arrayTokens, m.ParseGroup())
+
+		case "L_BRACE":
+			arrayTokens = append(arrayTokens, m.ParseBlock())
+
+		case "L_BRACKET":
+			arrayTokens = append(arrayTokens, m.ParseArray())
+
+		case "R_BRACKET":
+			return token.Token{
+				ID:   1,
+				Type: "ARRAY",
+				// Expected: TODO: calc this later
+				Value: token.Value{
+					Type: "array",
+					True: arrayTokens,
+					// String: func() (arrayTokensString string) {
+					// 	for _, t := range arrayTokens {
+					// 		arrayTokensString += TokenToString(t)
+					// 	}
+
+					// 	return
+					// }(),
+				},
+			}
+
+		case "":
+			fmt.Println("we got nothing")
+
+		default:
+			fmt.Println("ERROR: Unrecognized array token\n", m.CurrentToken, m)
+			os.Exit(8)
+		}
+
+		// // FIXME: This should throw an error
+		// if m.NextToken == (token.Token{}) {
+		// 	fmt.Println("nextToken array", arrayTokens)
+		// 	return token.Token{}
+		// }
+	}
+}
+
+// ParseBlock parses the center piece of the language; the block. Anything encapulated in curly braces.
 func (m *Meta) ParseBlock() token.Token {
 
 	m.CheckOptmization = true
@@ -520,7 +560,7 @@ func (m *Meta) ParseBlock() token.Token {
 
 			functionTokens = append(functionTokens, current)
 
-			peek := m.PeekNextToken()
+			peek := m.NextToken
 			// TODO: FIXME: for now we are going to assume that two groups only appear in sequence for a function
 			switch peek.Type {
 			case "GROUP":
@@ -528,7 +568,7 @@ func (m *Meta) ParseBlock() token.Token {
 				m.Shift()
 				functionTokens = append(functionTokens, m.CurrentToken)
 
-				if m.PeekNextToken().Type == "BLOCK" {
+				if m.NextToken.Type == "BLOCK" {
 					m.Shift()
 					blockTokens = append(blockTokens, token.Token{
 						ID:   4,
@@ -561,7 +601,7 @@ func (m *Meta) ParseBlock() token.Token {
 
 		case "TYPE":
 			blockTokens = append(blockTokens, m.CurrentToken)
-			peek := m.PeekNextToken()
+			peek := m.NextToken
 			switch peek.Type {
 			case "IDENT":
 				m.Shift()
@@ -581,7 +621,7 @@ func (m *Meta) ParseBlock() token.Token {
 			blockTokens = append(blockTokens, m.CurrentToken)
 
 		case "SET":
-			peek := m.PeekNextToken()
+			peek := m.NextToken
 			switch peek.Type {
 			case "ASSIGN":
 				if t, ok := token.TokenMap[current.Value.String+peek.Value.String]; ok {
@@ -595,7 +635,7 @@ func (m *Meta) ParseBlock() token.Token {
 			}
 
 		case "IDENT":
-			peek := m.PeekNextToken()
+			peek := m.NextToken
 
 			if peek.Type == "L_PAREN" {
 				blockTokens = append(blockTokens, m.ParseFunctionCall(m.CurrentToken))
@@ -674,173 +714,7 @@ func (m *Meta) ParseBlock() token.Token {
 	}
 }
 
-// ParseGroup ...
-func (m *Meta) ParseGroup() token.Token {
-	m.CheckOptmization = true
-
-	groupTokens := []token.Token{}
-
-	for {
-		m.Shift()
-
-		current := m.CurrentToken
-
-		switch current.Type {
-		case "R_PAREN":
-			return token.Token{
-				ID:   1,
-				Type: "GROUP",
-				// Expected: TODO: calc this later
-				Value: token.Value{
-					Type: "group",
-					True: groupTokens,
-					// String: func() (arrayTokensString string) {
-					// 	for _, t := range arrayTokens {
-					// 		arrayTokensString += TokenToString(t)
-					// 	}
-
-					// 	return
-					// }(),
-				},
-			}
-
-		case "LITERAL":
-			groupTokens = append(groupTokens, current)
-
-		case "TYPE":
-			peek := m.PeekNextToken()
-			switch peek.Type {
-			case "IDENT":
-				m.ParseIdent(&groupTokens, m.CurrentToken)
-
-			case "LITERAL":
-				groupTokens = append(groupTokens, m.CurrentToken)
-
-				m.Shift()
-				m.CurrentToken.Type = "IDENT"
-				groupTokens = append(groupTokens, m.CurrentToken)
-			default:
-				os.Exit(7)
-			}
-
-		case "IDENT":
-			m.ParseIdent(&groupTokens, m.CurrentToken)
-
-		case "SEPARATOR":
-			continue
-
-		case "D_QUOTE":
-			groupTokens = append(groupTokens, m.ParseString())
-
-		case "L_BRACE":
-			groupTokens = append(groupTokens, m.ParseBlock())
-
-		case "L_BRACKET":
-			groupTokens = append(groupTokens, m.ParseArray())
-
-		default:
-			fmt.Println("ERROR: Unrecognized group token\n", current, m)
-			os.Exit(8)
-		}
-	}
-}
-
-// ParseArray ...
-// TODO: we could make an array a BLOCK of statements using a separator ",", thus we wouldn't have to do anything special for an array
-func (m *Meta) ParseArray() token.Token {
-	m.CheckOptmization = true
-
-	arrayTokens := []token.Token{}
-
-	for {
-		m.Shift()
-
-		switch m.CurrentToken.Type {
-		case "SEPARATOR":
-			continue
-
-		case "IDENT":
-			m.ParseIdent(&arrayTokens, m.CurrentToken)
-
-		case "D_QUOTE":
-			arrayTokens = append(arrayTokens, m.ParseString())
-		// case "LITERAL":
-
-		case "LITERAL":
-			arrayTokens = append(arrayTokens, m.CurrentToken)
-
-		case "L_PAREN":
-			arrayTokens = append(arrayTokens, m.ParseGroup())
-
-		case "L_BRACE":
-			arrayTokens = append(arrayTokens, m.ParseBlock())
-
-		case "L_BRACKET":
-			arrayTokens = append(arrayTokens, m.ParseArray())
-
-		case "R_BRACKET":
-			return token.Token{
-				ID:   1,
-				Type: "ARRAY",
-				// Expected: TODO: calc this later
-				Value: token.Value{
-					Type: "array",
-					True: arrayTokens,
-					// String: func() (arrayTokensString string) {
-					// 	for _, t := range arrayTokens {
-					// 		arrayTokensString += TokenToString(t)
-					// 	}
-
-					// 	return
-					// }(),
-				},
-			}
-
-		case "":
-			fmt.Println("we got nothing")
-
-		default:
-			fmt.Println("ERROR: Unrecognized array token\n", m.CurrentToken, m)
-			os.Exit(8)
-		}
-
-		// // FIXME: This should throw an error
-		// if m.NextToken == (token.Token{}) {
-		// 	fmt.Println("nextToken array", arrayTokens)
-		// 	return token.Token{}
-		// }
-	}
-}
-
-// ParseString ...
-func (m *Meta) ParseString() token.Token {
-	m.CheckOptmization = true
-
-	stringLiteral := ""
-	for {
-		m.Shift()
-
-		// FIXME: stop doing hacky shit, purge this shit, need to preserve whitespaces in the lexer
-		stringLiteral += m.CurrentToken.Value.String
-
-		if m.NextToken.Value.String == "\"" {
-
-			m.Shift()
-
-			return token.Token{
-				Type: "LITERAL",
-				Value: token.Value{
-					Type:   "string",
-					True:   stringLiteral,
-					String: stringLiteral,
-				},
-			}
-		}
-		// Getting the last 'separating' character; aka a whitespace that was separating the tokens
-	}
-}
-
-// Parse ...
+// Parse begins the parsing process for a passes set of tokens
 func Parse(tokens []token.Token) ([]token.Token, error) {
 	// Auto inject the brackets to ensure that they are there
 	meta := Meta{

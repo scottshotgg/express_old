@@ -17,23 +17,18 @@ var (
 	declarations  = map[string]token.Value{}
 )
 
-// CheckType ...
+// CheckType checks the usage of the type
 func (m *Meta) CheckType() {
 	fmt.Println("CheckType")
-	// previous := m.LastToken
-	// current := m.CurrentToken
-	// next := m.NextToken
 
 	switch m.NextToken.Type {
 	case "IDENT":
-		// append the current and next tokens
-		// check for init/set/assign
-		// check for value/ident
 
 		m.CollectCurrentToken()
 		m.Shift()
 		m.CollectCurrentToken()
 
+		//TODO: change all of these to be assign
 		switch m.NextToken.Type {
 		case "INIT":
 			fallthrough
@@ -56,7 +51,7 @@ func (m *Meta) CheckType() {
 	}
 }
 
-// CheckIdent ...
+// CheckIdent check the usage of the ident
 func (m *Meta) CheckIdent() {
 	fmt.Println("ident")
 
@@ -73,7 +68,7 @@ func (m *Meta) CheckIdent() {
 		m.CollectCurrentToken()
 
 		// if the form is [ident] [= | : | :=] then expect an expression
-		// m.GetExpr()
+		m.GetExpression()
 
 	default:
 		fmt.Println("vert da ferk")
@@ -81,7 +76,7 @@ func (m *Meta) CheckIdent() {
 	}
 }
 
-// GetFactor ...
+// GetFactor returns the next factor in the sequence
 func (m *Meta) GetFactor() {
 	m.Shift()
 	switch m.CurrentToken.Type {
@@ -117,7 +112,7 @@ func (m *Meta) GetFactor() {
 
 	case "L_PAREN":
 		fmt.Println("found an expr")
-		m.GetExpr()
+		m.GetExpression()
 
 	default:
 		fmt.Println("ERROR getting factor")
@@ -126,31 +121,21 @@ func (m *Meta) GetFactor() {
 	}
 }
 
-// GetTerm ...
+// GetTerm gets the next term in the sequence
 func (m *Meta) GetTerm() {
 	m.GetFactor()
 }
 
-// GetSecOp ...
+// GetSecOp gets a secondary operation; + and -
 func (m *Meta) GetSecOp() {
 	fmt.Println("current", m.CurrentToken)
 }
 
-// AddOperands ...
-func (m *Meta) AddOperands(op1, op2 interface{}) (token.Value, error) {
-	// total := int(left.Value.True.(int64) + right.Value.True.(int64))
-	// valueToken = token.Value{
-	// 	Type:   reflect.TypeOf(total).String(),
-	// 	True:   total,
-	// 	String: strconv.Itoa(total),
-	// }
-	fmt.Println(op1, op2)
-
-	rightType := reflect.TypeOf(op1)
-	leftType := reflect.TypeOf(op2)
-	fmt.Println("typeof", leftType, rightType)
-
+// AddOperands returns the addition of two operands based on their type
+func (m *Meta) AddOperands(left, right interface{}) (token.Value, error) {
 	var valueToken token.Value
+	leftType := reflect.TypeOf(left)
+	rightType := reflect.TypeOf(right)
 
 	if leftType == rightType {
 		switch leftType.Kind() {
@@ -163,18 +148,18 @@ func (m *Meta) AddOperands(op1, op2 interface{}) (token.Value, error) {
 		case reflect.Int32:
 			fallthrough
 		case reflect.Int64:
-			value := int(op1.(int64) + op2.(int64))
+			value := int(left.(int64) + right.(int64))
 			valueToken.Type = "int"
 			valueToken.True = value
 			valueToken.String = strconv.Itoa(value)
 
 		case reflect.String:
 			valueToken.Type = "string"
-			valueToken.True = op1.(string) + op2.(string)
+			valueToken.True = left.(string) + right.(string)
 			valueToken.String = valueToken.True.(string)
 
 		default:
-			fmt.Println("Type not declared for AddOperands", op1, op2, leftType, rightType)
+			fmt.Println("Type not declared for AddOperands", left, right, leftType, rightType)
 			os.Exit(9)
 		}
 
@@ -183,11 +168,11 @@ func (m *Meta) AddOperands(op1, op2 interface{}) (token.Value, error) {
 	}
 
 	err := errors.New("Could not perform AddOperand on operands")
-	fmt.Println(err, op1, op2, leftType, rightType)
+	fmt.Println(err, left, right, leftType, rightType)
 	return token.Value{}, err
 }
 
-// GetOperationValue ...
+// GetOperationValue returns the value of the operation being performed in the statement
 func (m *Meta) GetOperationValue(left token.Token, right token.Token, op token.Token) token.Value {
 	// token.Value {
 	// 	// Type: m.DetermineTypeFromOperation(), // TODO: save this until later when we want to support multi type operations
@@ -225,8 +210,8 @@ func (m *Meta) GetOperationValue(left token.Token, right token.Token, op token.T
 	return token.Value{}
 }
 
-// GetExpr ...
-func (m *Meta) GetExpr() {
+// GetExpression gets the next expression
+func (m *Meta) GetExpression() {
 	m.GetTerm()
 	value1 := m.LastCollectedToken
 	m.RemoveLastCollectedToken()
@@ -263,7 +248,7 @@ func (m *Meta) GetExpr() {
 	}
 }
 
-// GetAssignmentStatement ...
+// GetAssignmentStatement gets the next assignment statement in the sequence
 func (m *Meta) GetAssignmentStatement() {
 	m.Shift()
 	switch m.CurrentToken.Type {
@@ -301,7 +286,7 @@ func (m *Meta) GetAssignmentStatement() {
 		m.CollectCurrentToken()
 
 		// FIXME: this should return an error that we can check
-		m.GetExpr()
+		m.GetExpression()
 
 		declarations[declaredName] = declaredValue
 		declaredType = ""
@@ -315,15 +300,15 @@ func (m *Meta) GetAssignmentStatement() {
 		os.Exit(9)
 	}
 
-	// m.GetExpr()
+	// m.GetExpression()
 }
 
-// GetStatement ...
+// GetStatement gets the next statement in the sequence
 func (m *Meta) GetStatement() {
 	m.GetAssignmentStatement()
 }
 
-// CheckBlock ...
+// CheckBlock check the usage of the block
 func (m *Meta) CheckBlock() {
 	fmt.Println("hi")
 
@@ -352,7 +337,7 @@ func (m *Meta) CheckBlock() {
 
 }
 
-// Semantic ...
+// Semantic runs a semantic parse on the tokens
 func Semantic(tokens []token.Token) ([]token.Token, error) {
 	// Auto inject the brackets to ensure that they are there
 	meta := Meta{
