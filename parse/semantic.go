@@ -22,7 +22,7 @@ func (m *Meta) CheckType() {
 	fmt.Println("CheckType")
 
 	switch m.NextToken.Type {
-	case "IDENT":
+	case token.Ident:
 
 		m.CollectCurrentToken()
 		m.Shift()
@@ -30,17 +30,17 @@ func (m *Meta) CheckType() {
 
 		//TODO: change all of these to be assign
 		switch m.NextToken.Type {
-		case "INIT":
+		case token.Init:
 			fallthrough
-		case "SET":
+		case token.Set:
 			fallthrough
-		case "ASSIGN":
+		case token.Assign:
 			fmt.Println("found an ASSIGN type")
 			m.Shift()
 			m.CollectCurrentToken()
 
 			fmt.Println(m.NextToken)
-			if m.NextToken.Type != "LITERAL" && m.NextToken.Type != "IDENT" {
+			if m.NextToken.Type != token.Literal && m.NextToken.Type != token.Ident {
 				fmt.Println("did not find a literal")
 				os.Exit(0)
 			}
@@ -53,16 +53,16 @@ func (m *Meta) CheckType() {
 
 // CheckIdent check the usage of the ident
 func (m *Meta) CheckIdent() {
-	fmt.Println("ident")
+	fmt.Println(token.Ident)
 
 	m.CollectCurrentToken()
 
 	switch m.NextToken.Type {
-	case "INIT":
+	case token.Init:
 		fallthrough
-	case "SET":
+	case token.Set:
 		fallthrough
-	case "ASSIGN":
+	case token.Assign:
 		fmt.Println("found an ASSIGN type")
 		m.Shift()
 		m.CollectCurrentToken()
@@ -80,7 +80,7 @@ func (m *Meta) CheckIdent() {
 func (m *Meta) GetFactor() {
 	m.Shift()
 	switch m.CurrentToken.Type {
-	case "IDENT":
+	case token.Ident:
 		fmt.Println("found an ident")
 		tValue, ok := declarations[m.CurrentToken.Value.String]
 		if !ok {
@@ -100,7 +100,7 @@ func (m *Meta) GetFactor() {
 			Value: tValue,
 		})
 
-	case "LITERAL":
+	case token.Literal:
 		fmt.Println("found a literal")
 		if m.CurrentToken.Value.Type != declaredType {
 			fmt.Println("Variable type mismatch")
@@ -110,7 +110,7 @@ func (m *Meta) GetFactor() {
 		declaredValue = m.CurrentToken.Value
 		m.CollectCurrentToken()
 
-	case "L_PAREN":
+	case token.LParen:
 		fmt.Println("found an expr")
 		m.GetExpression()
 
@@ -233,7 +233,7 @@ func (m *Meta) GetExpression() {
 
 			valueToken := token.Token{
 				ID:   1,
-				Type: "LITERAL",
+				Type: token.Literal,
 				// Expected: "",
 				Value: m.GetOperationValue(value1, value2, op),
 			}
@@ -253,7 +253,7 @@ func (m *Meta) GetAssignmentStatement() {
 	m.Shift()
 	switch m.CurrentToken.Type {
 	// Get the TYPE
-	case "TYPE":
+	case token.Type:
 		fmt.Println("found a type")
 		// switch m.CurrentToken.Value.String {
 		// 	case "int"
@@ -263,7 +263,7 @@ func (m *Meta) GetAssignmentStatement() {
 
 		// Get the IDENT
 		m.Shift()
-		if m.CurrentToken.Type != "IDENT" {
+		if m.CurrentToken.Type != token.Ident {
 			fmt.Println("Syntax error getting assignment_stmt")
 			fmt.Println("Expected IDENT, got", m.CurrentToken)
 			os.Exit(9)
@@ -278,7 +278,7 @@ func (m *Meta) GetAssignmentStatement() {
 
 		// Get the assignemnt operator
 		m.Shift()
-		if m.CurrentToken.Type != "ASSIGN" && m.CurrentToken.Type != "INIT" && m.CurrentToken.Type != "SET" {
+		if m.CurrentToken.Type != token.Assign && m.CurrentToken.Type != token.Init && m.CurrentToken.Type != token.Set {
 			fmt.Println("Syntax error getting assignment_stmt")
 			fmt.Println("Expected assign_op, got", m.CurrentToken)
 			os.Exit(9)
@@ -317,7 +317,7 @@ func (m *Meta) CheckBlock() {
 
 		// current := m.CurrentToken
 		// switch current.Type {
-		// case "TYPE":
+		// case token.Type:
 		// 	// at this point we need to think about the different options
 		// 	// int name			: simplest
 		// 	// int name = 6 : next simplest
@@ -325,7 +325,7 @@ func (m *Meta) CheckBlock() {
 		// 	// we would probably also have other ones for function params and stuff
 		// 	m.CheckType()
 
-		// case "IDENT":
+		// case token.Ident:
 		// 	m.CheckIdent()
 		// }
 

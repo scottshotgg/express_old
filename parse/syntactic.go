@@ -249,7 +249,7 @@ func (m *Meta) ParseXML() token.Token {
 	return token.Token{}
 }
 
-// ParseNoSQl will parse NoSQL
+// ParseNoSQL will parse NoSQL
 // this might use graphQL internally
 // idk how this is going to work if at all
 func (m *Meta) ParseNoSQL() token.Token {
@@ -555,7 +555,8 @@ func (m *Meta) ParseBlock() token.Token {
 			// fmt.Println(token.Function)
 
 		case token.Group:
-			fmt.Println("\nGOTAGROUP\n")
+			fmt.Println("\nGOTAGROUP")
+			fmt.Println()
 			var functionTokens []token.Token
 
 			functionTokens = append(functionTokens, current)
