@@ -98,7 +98,7 @@ func (m *Meta) Shift() {
 	for {
 		if m.ParseIndex+1 < m.Length {
 			m.ParseIndex++
-			if m.Tokens[m.ParseIndex].Type == "WS" {
+			if m.Tokens[m.ParseIndex].Type == token.Whitespace {
 				continue
 			}
 
@@ -122,14 +122,14 @@ func TokenToString(t token.Token) string {
 }
 
 // ParseVar parses a variable declaration and other statements related to type later on. Anything in the form of <type><ident>
-func (m *Meta) ParseVar(token token.Token) error {
+func (m *Meta) ParseVar(t token.Token) error {
 	m.Shift()
 
 	switch m.CurrentToken.Type {
-	case "LITERAL":
-		m.CurrentToken.Type = "IDENT"
+	case token.Literal:
+		m.CurrentToken.Type = token.Ident
 
-		m.CurrentToken.Expected = "ASSIGN"
+		m.CurrentToken.Expected = token.Assign
 
 		m.CollectCurrentToken()
 	}
@@ -150,7 +150,7 @@ func (m *Meta) ParseIdent(blockTokens *[]token.Token, peek token.Token) {
 	for i, ident := range identSplit {
 		*blockTokens = append(*blockTokens, token.Token{
 			ID:   0,
-			Type: "IDENT",
+			Type: token.Ident,
 			// Expected:
 			Value: token.Value{
 				Type: func() string {
@@ -177,7 +177,7 @@ func (m *Meta) ParseAttribute() token.Token {
 	var ecmaTokens []token.Token
 	ecmaToken := token.Token{
 		ID:   6,
-		Type: "ATTRIBUTE",
+		Type: token.Attribute,
 		// Expected:
 		Value: token.Value{
 			Type: "statement",
@@ -185,7 +185,7 @@ func (m *Meta) ParseAttribute() token.Token {
 		},
 	}
 
-	if m.NextToken.Type == "NOT" {
+	if m.NextToken.Type == token.Bang {
 		fmt.Println("applied to scope")
 		ecmaToken.Value.Type = "scope"
 		// ecmaTokens = append(ecmaTokens, m.CurrentToken)
@@ -200,15 +200,15 @@ func (m *Meta) ParseAttribute() token.Token {
 		switch current.Type {
 
 		// attribute of next item down
-		case "L_BRACKET":
+		case token.LBracket:
 			// TODO: should this just be an array of statements that get parsed like anything else?
 			// TODO: programmatic compiler directives/attributes?
 			// TODO: at this point we could just call an entirely separate ECMA-335 parser
 
-		case "IDENT":
+		case token.Ident:
 			ecmaTokens = append(ecmaTokens, current)
 
-		case "R_BRACKET":
+		case token.RBracket:
 			ecmaToken.Value.True = ecmaTokens
 			return ecmaToken
 
@@ -267,7 +267,7 @@ func (m *Meta) ParseFunctionDef(current token.Token) token.Token {
 	argumentTokens := m.ParseGroup()
 	functionTokens = append(functionTokens, argumentTokens.Value.True.([]token.Token)...)
 
-	if m.NextToken.Type == "L_PAREN" {
+	if m.NextToken.Type == token.LParen {
 		fmt.Println("Found return tokens")
 		argumentTokens = m.ParseGroup()
 		functionTokens = append(functionTokens, argumentTokens.Value.True.([]token.Token)...)
@@ -278,7 +278,7 @@ func (m *Meta) ParseFunctionDef(current token.Token) token.Token {
 	// functionTokens = append(functionTokens, argumentTokens.Value.True.([]token.Token)...)
 	return token.Token{
 		ID:   4,
-		Type: "FUNCTION",
+		Type: token.Function,
 		// Expected: //TODO:
 		Value: token.Value{
 			Type: "def",
@@ -305,7 +305,7 @@ func (m *Meta) ParseFunctionCall(current token.Token) token.Token {
 	// return append(functionTokens, groupToken.Value.True.([]token.Token)...)
 	return token.Token{
 		ID:   4,
-		Type: "FUNCTION",
+		Type: token.Function,
 		// Expected: //TODO:
 		Value: token.Value{
 			Type: "call",
@@ -341,7 +341,7 @@ func (m *Meta) ParseString() token.Token {
 			m.Shift()
 
 			return token.Token{
-				Type: "LITERAL",
+				Type: token.Literal,
 				Value: token.Value{
 					Type:   "string",
 					True:   stringLiteral,
@@ -365,13 +365,13 @@ func (m *Meta) ParseGroup() token.Token {
 		current := m.CurrentToken
 
 		switch current.Type {
-		case "R_PAREN":
+		case token.RParen:
 			return token.Token{
 				ID:   1,
-				Type: "GROUP",
+				Type: token.Group,
 				// Expected: TODO: calc this later
 				Value: token.Value{
-					Type: "group",
+					Type: token.Group,
 					True: groupTokens,
 					// String: func() (arrayTokensString string) {
 					// 	for _, t := range arrayTokens {
@@ -383,38 +383,38 @@ func (m *Meta) ParseGroup() token.Token {
 				},
 			}
 
-		case "LITERAL":
+		case token.Literal:
 			groupTokens = append(groupTokens, current)
 
-		case "TYPE":
+		case token.Type:
 			peek := m.NextToken
 			switch peek.Type {
-			case "IDENT":
+			case token.Ident:
 				m.ParseIdent(&groupTokens, m.CurrentToken)
 
-			case "LITERAL":
+			case token.Literal:
 				groupTokens = append(groupTokens, m.CurrentToken)
 
 				m.Shift()
-				m.CurrentToken.Type = "IDENT"
+				m.CurrentToken.Type = token.Ident
 				groupTokens = append(groupTokens, m.CurrentToken)
 			default:
 				os.Exit(7)
 			}
 
-		case "IDENT":
+		case token.Ident:
 			m.ParseIdent(&groupTokens, m.CurrentToken)
 
-		case "SEPARATOR":
+		case token.Separator:
 			continue
 
-		case "D_QUOTE":
+		case token.DQuote:
 			groupTokens = append(groupTokens, m.ParseString())
 
-		case "L_BRACE":
+		case token.LBrace:
 			groupTokens = append(groupTokens, m.ParseBlock())
 
-		case "L_BRACKET":
+		case token.LBracket:
 			groupTokens = append(groupTokens, m.ParseArray())
 
 		default:
@@ -434,35 +434,35 @@ func (m *Meta) ParseArray() token.Token {
 		m.Shift()
 
 		switch m.CurrentToken.Type {
-		case "SEPARATOR":
+		case token.Separator:
 			continue
 
-		case "IDENT":
+		case token.Ident:
 			m.ParseIdent(&arrayTokens, m.CurrentToken)
 
-		case "D_QUOTE":
+		case token.DQuote:
 			arrayTokens = append(arrayTokens, m.ParseString())
-		// case "LITERAL":
+		// case token.Literal:
 
-		case "LITERAL":
+		case token.Literal:
 			arrayTokens = append(arrayTokens, m.CurrentToken)
 
-		case "L_PAREN":
+		case token.LParen:
 			arrayTokens = append(arrayTokens, m.ParseGroup())
 
-		case "L_BRACE":
+		case token.LBrace:
 			arrayTokens = append(arrayTokens, m.ParseBlock())
 
-		case "L_BRACKET":
+		case token.LBracket:
 			arrayTokens = append(arrayTokens, m.ParseArray())
 
-		case "R_BRACKET":
+		case token.RBracket:
 			return token.Token{
 				ID:   1,
-				Type: "ARRAY",
+				Type: token.Array,
 				// Expected: TODO: calc this later
 				Value: token.Value{
-					Type: "array",
+					Type: token.Array,
 					True: arrayTokens,
 					// String: func() (arrayTokensString string) {
 					// 	for _, t := range arrayTokens {
@@ -511,50 +511,50 @@ func (m *Meta) ParseBlock() token.Token {
 		current := m.CurrentToken
 
 		switch current.Type {
-		// this needs to change to PRI_OP
-		case "MULT":
+		// TODO: this needs to change to PRI_OP
+		case token.Mult:
 			fmt.Println("found a mult")
 			blockTokens = append(blockTokens, current)
 
-		case "SEC_OP":
+		case token.SecOp:
 			fmt.Println("found a sec_op")
 			blockTokens = append(blockTokens, current)
 
-		case "KEYWORD":
+		case token.Keyword:
 			switch current.Value.Type {
-			case "SQL":
+			case token.SQL:
 				fmt.Println("found a sql keyword")
 				blockTokens = append(blockTokens, current)
 			}
 			// os.Exit(9)
 
-		case "G_THAN":
+		case token.GThan:
 			fmt.Println("found a greater than")
 			blockTokens = append(blockTokens, current)
 
-		case "L_THAN":
+		case token.LThan:
 			fmt.Println("found a greater than")
 			blockTokens = append(blockTokens, current)
 
-		case "AT":
+		case token.At:
 			fmt.Println("found an at")
 			blockTokens = append(blockTokens, current)
 
 		// TODO: put all of these at the bottom
 		// Don't do anything with these for now except append them
 		// FIXME: hack to fix the repitition
-		case "BLOCK":
+		case token.Block:
 			// blockTokens = append(blockTokens, m.ParseBlock())
 			blockTokens = append(blockTokens, current)
-		case "INIT":
+		case token.Init:
 			fallthrough
-		case "ATTRIBUTE":
+		case token.Attribute:
 			fallthrough
-		case "FUNCTION":
+		case token.Function:
 			blockTokens = append(blockTokens, current)
-			// fmt.Println("function")
+			// fmt.Println(token.Function)
 
-		case "GROUP":
+		case token.Group:
 			fmt.Println("\nGOTAGROUP\n")
 			var functionTokens []token.Token
 
@@ -563,16 +563,16 @@ func (m *Meta) ParseBlock() token.Token {
 			peek := m.NextToken
 			// TODO: FIXME: for now we are going to assume that two groups only appear in sequence for a function
 			switch peek.Type {
-			case "GROUP":
+			case token.Group:
 				// blockTokens = append(blockTokens, m.ParseFunctionDef(current))
 				m.Shift()
 				functionTokens = append(functionTokens, m.CurrentToken)
 
-				if m.NextToken.Type == "BLOCK" {
+				if m.NextToken.Type == token.Block {
 					m.Shift()
 					blockTokens = append(blockTokens, token.Token{
 						ID:   4,
-						Type: "FUNCTION",
+						Type: token.Function,
 						// Expected: //TODO:
 						Value: token.Value{
 							Type: "def",
@@ -586,44 +586,44 @@ func (m *Meta) ParseBlock() token.Token {
 				fmt.Println("wtf peek following group", peek, m)
 			}
 
-		case "HASH":
+		case token.Hash:
 			blockTokens = append(blockTokens, m.ParseAttribute())
 
-		case "SEPARATOR":
+		case token.Separator:
 			fallthrough
 
-		case "EOS":
+		case token.EOS:
 			// TODO: this will need to check the last and next token type later to determine wtf to do
 			blockTokens = append(blockTokens, m.CurrentToken)
 
-		case "WS":
+		case token.Whitespace:
 			continue
 
-		case "TYPE":
+		case token.Type:
 			blockTokens = append(blockTokens, m.CurrentToken)
 			peek := m.NextToken
 			switch peek.Type {
-			case "IDENT":
+			case token.Ident:
 				m.Shift()
 				m.ParseIdent(&blockTokens, m.CurrentToken)
 
-			case "LITERAL":
+			case token.Literal:
 				blockTokens = append(blockTokens, m.CurrentToken)
 				m.Shift()
-				m.CurrentToken.Type = "IDENT"
+				m.CurrentToken.Type = token.Ident
 				blockTokens = append(blockTokens, m.CurrentToken)
 
 			default:
 				os.Exit(77)
 			}
 
-		case "ASSIGN":
+		case token.Assign:
 			blockTokens = append(blockTokens, m.CurrentToken)
 
-		case "SET":
+		case token.Set:
 			peek := m.NextToken
 			switch peek.Type {
-			case "ASSIGN":
+			case token.Assign:
 				if t, ok := token.TokenMap[current.Value.String+peek.Value.String]; ok {
 					blockTokens = append(blockTokens, t)
 					m.Shift()
@@ -634,56 +634,56 @@ func (m *Meta) ParseBlock() token.Token {
 				continue
 			}
 
-		case "IDENT":
+		case token.Ident:
 			peek := m.NextToken
 
-			if peek.Type == "L_PAREN" {
+			if peek.Type == token.LParen {
 				blockTokens = append(blockTokens, m.ParseFunctionCall(m.CurrentToken))
 			} else {
 				m.ParseIdent(&blockTokens, m.CurrentToken)
 			}
 
 			// TODO: this case might need to move to the Syntactic part of the parser
-		case "LITERAL":
+		case token.Literal:
 			// TODO: this may cause some problems
 			// TODO: this is causing some problems
 			// switch m.PeekLastCollectedToken().Type {
 			// case "SET":
 			// 	fallthrough
 
-			// case "ASSIGN":
+			// case token.Assign:
 			// 	fallthrough
 
-			// case "INIT":
+			// case token.Init:
 			// 	blockTokens = append(blockTokens, m.CurrentToken)
 			// }
 			blockTokens = append(blockTokens, m.CurrentToken)
 
-		case "L_PAREN":
+		case token.LParen:
 			blockTokens = append(blockTokens, m.ParseGroup())
 
-		case "R_PAREN":
+		case token.RParen:
 			// FIXME: why
 
-		case "L_BRACKET":
+		case token.LBracket:
 			blockTokens = append(blockTokens, m.ParseArray())
 
-		case "L_BRACE":
+		case token.LBrace:
 			blockTokens = append(blockTokens, m.ParseBlock())
 
-		case "R_BRACE":
+		case token.RBrace:
 			return token.Token{
 				ID:   0,
-				Type: "BLOCK",
+				Type: token.Block,
 				// Expected: TODO: do the same thing that we did on the array but use the meta tokens
 				Value: token.Value{
-					Type: "block",
+					Type: token.Block,
 					True: blockTokens,
 					// String: TODO: do the same thing that we did on array
 				},
 			}
 
-		case "D_QUOTE":
+		case token.DQuote:
 			blockTokens = append(blockTokens, m.ParseString())
 
 		case "":
@@ -702,10 +702,10 @@ func (m *Meta) ParseBlock() token.Token {
 			// fmt.Println("blockTokens", blockTokens)
 			return token.Token{
 				ID:   0,
-				Type: "BLOCK",
+				Type: token.Block,
 				// Expected: TODO: do the same thing that we did on the array but use the meta tokens
 				Value: token.Value{
-					Type: "block",
+					Type: token.Block,
 					True: blockTokens,
 					// String: TODO: do the same thing that we did on array
 				},

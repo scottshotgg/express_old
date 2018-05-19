@@ -1,39 +1,46 @@
-# Express:
+# Express
 
 ## Status: `tock`
+
 Code is pretty dirty right now; it is due for a "garbage collection" since a lot of the code is hacky garbage right now anyways. Will have to fix all of the FIXME and TODO stamps and clean up some of the workarounds later in the next phase.
 
 The status follows a tick-tock style:
+
 - `tick` : push out code to ensure that features are implemented
 - `tock` : purge hacky workarounds, optimize, rearch
 
 <br>
-<br>
 
 ## TODO: `todo.md`
+
 I will try to update the todo file as much as possible and keep it up to date as to what is currently needing support/work and what is currently being worked on
 
 <br>
-<br>
 
-## Stages:
+## Stages
+
 ### - `lex`:   Tokenize the file into raw lex tokens
-### - `parse`: Squash and combine lex tokens into higher structures
-### - `check`:   Check the tokens syntactically
-### - `llvm`:    Generate LLVM tokens/code and output the binary  
 
-Not all stages are started/implemented fully yet. 
+### - `parse`: Squash and combine lex tokens into higher structures
+
+### - `check`:   Check the tokens syntactically
+
+### - `llvm`:    Generate LLVM tokens/code and output the binary
+
+Not all stages are started/implemented fully yet.
+
 - `lex` is 99% done
 - `parse` is mostly finished
 - `check` is just being started
 - `llvm` will be worked on intermittently in a back-and-forth style with `check` for a bit while I find the best route for token generation within Go.
 
 <br>
-<br>
 
-## Grammar:
+## Grammar
+
 This is mostly correct but needs to be updated
-```bnf
+
+```ebnf
 program : stmt+ ;
 
 stmt    : assignment_stmt |
