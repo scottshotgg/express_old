@@ -3,26 +3,23 @@ package token
 // AssignMap holds every assignment operator
 var AssignMap = map[string]Token{
 	"=": Token{
-		Type:     "ASSIGN",
-		Expected: "EXPR",
+		Type: "ASSIGN",
 		Value: Value{
 			Type:   "assign",
 			String: "=",
 		},
 	},
 	":": Token{
-		Type:     "SET",
-		Expected: "EXPR",
+		Type: "ASSIGN",
 		Value: Value{
-			Type:   "set_assign",
+			Type:   "set",
 			String: ":",
 		},
 	},
 	":=": Token{
-		Type:     "INIT",
-		Expected: "EXPR",
+		Type: "ASSIGN",
 		Value: Value{
-			Type:   "init_assign",
+			Type:   "init",
 			String: ":=",
 		},
 	},

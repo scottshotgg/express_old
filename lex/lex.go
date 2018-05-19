@@ -21,7 +21,7 @@ func (meta *lexMeta) LexLiteral() token.Token {
 	// cleaner
 	t := token.Token{
 		ID:   0,
-		Type: "LITERAL",
+		Type: token.Literal,
 		Value: token.Value{
 			True: false,
 			Type: "bool",
@@ -92,7 +92,7 @@ func (meta *lexMeta) LexLiteral() token.Token {
 						// 	}
 
 						// If it errors, assume that it is an ident (for now)
-						t.Type = "IDENT"
+						t.Type = token.Ident
 						t.Value = token.Value{
 							String: meta.Accumulator,
 						}
@@ -122,7 +122,7 @@ func (meta *lexMeta) LexLiteral() token.Token {
 					// 	}
 
 					// If it errors, assume that it is an ident (for now)
-					t.Type = "IDENT"
+					t.Type = token.Ident
 					t.Value = token.Value{
 						String: meta.Accumulator,
 					}
@@ -173,8 +173,8 @@ func Lex(input string) ([]token.Token, error) {
 				fmt.Println("Found char2", meta.Accumulator)
 
 				// String out the comments
-				switch lexemeToken.Type {
-				case "DIV":
+				switch lexemeToken.Value.Type {
+				case "div":
 					index++
 					if index < len(input)-1 {
 						switch input[index] {

@@ -557,9 +557,8 @@ func (m *Meta) ParseBlock() token.Token {
 		case token.Group:
 			fmt.Println("\nGOTAGROUP")
 			fmt.Println()
-			var functionTokens []token.Token
 
-			functionTokens = append(functionTokens, current)
+			functionTokens := []token.Token{current}
 
 			peek := m.NextToken
 			// TODO: FIXME: for now we are going to assume that two groups only appear in sequence for a function
@@ -574,11 +573,9 @@ func (m *Meta) ParseBlock() token.Token {
 					blockTokens = append(blockTokens, token.Token{
 						ID:   4,
 						Type: token.Function,
-						// Expected: //TODO:
 						Value: token.Value{
 							Type: "def",
 							True: append(functionTokens, m.CurrentToken),
-							// String: //TODO:
 						},
 					})
 				}

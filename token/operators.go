@@ -3,152 +3,130 @@ package token
 // OperatorMap holds all defined operator tokens
 var OperatorMap = map[string]Token{
 	"+": Token{
-		Type:     "SEC_OP",
-		Expected: "EXPR",
+		Type: "SEC_OP",
 		Value: Value{
 			Type:   "add",
 			String: "+",
 		},
 	},
 	"-": Token{
-		Type:     "SEC_OP",
-		Expected: "EXPR",
+		Type: "SEC_OP",
 		Value: Value{
 			Type:   "sub",
 			String: "-",
 		},
 	},
 	"*": Token{
-		Type:     "MULT",
-		Expected: "EXPR",
+		Type: "PRI_OP",
 		Value: Value{
-			Type:   "op_3",
+			Type:   "mult",
 			String: "*",
 		},
 	},
 	"/": Token{
-		Type:     "DIV",
-		Expected: "EXPR",
+		Type: "PRI_OP",
 		Value: Value{
-			Type:   "op_3",
+			Type:   "div",
 			String: "/",
 		},
 	},
 	"%": Token{
-		Type:     "MOD",
-		Expected: "EXPR",
+		Type: "PRI_OP",
 		Value: Value{
-			Type:   "op_3",
+			Type:   "mod",
 			String: "%",
 		},
 	},
 	"^": Token{
-		Type:     "EXP",
-		Expected: "EXPR",
+		Type: "PRI_OP",
 		Value: Value{
-			Type:   "op_3",
+			Type:   "exp",
 			String: "^",
 		},
 	},
 	"!": Token{
-		Type:     "NOT",
-		Expected: "EXPR",
+		Type: "BANG",
 		Value: Value{
-			Type:   "op_3",
+			Type:   "bang",
 			String: "!",
 		},
 	},
-	// TODO: look up what this is called and shit
 	"?": Token{
-		Type:     "NOT",
-		Expected: "EXPR",
+		Type: "QM",
 		Value: Value{
-			Type:   "op_3",
+			Type:   "qm",
 			String: "!",
 		},
 	},
 	"_": Token{
-		Type:     "UNDERSCORE",
-		Expected: "EXPR",
+		Type: "UNDERSCORE",
 		Value: Value{
-			Type:   "op_3",
+			Type:   "underscore",
 			String: "_",
 		},
 	},
 	// FIXME: DOLLA DOLLA BILLS YALL: define this
 	"$": Token{
-		Type:     "DDBY",
-		Expected: "EXPR",
+		Type: "DDBY",
 		Value: Value{
-			Type:   "op_3",
+			Type:   "ddby",
 			String: "$",
 		},
 	},
-	// FIXME: AMP/AND - define this
 	"&": Token{
-		Type:     "AMP",
-		Expected: "EXPR",
+		Type: "AMP",
 		Value: Value{
 			Type:   "op_3",
 			String: "&",
 		},
 	},
-	// FIXME: PIPE/OR - define what a pipe is/does
 	"|": Token{
-		Type:     "PIPE",
-		Expected: "EXPR",
+		Type: "PIPE",
 		Value: Value{
 			Type:   "op_3",
 			String: "|",
 		},
 	},
-	// FIXME: still need to decide what to do with this one
 	"#": Token{
-		Type:     "HASH",
-		Expected: "EXPR",
+		Type: "HASH",
 		Value: Value{
 			Type:   "op_3",
 			String: "#",
 		},
 	},
 
-	// TODO: we should just make the parser look for "." and then "+"
+	// TODO: add the templated operators ability to the parser and remove the tokens completely
 	// VECTOR OPERANDS
 	".+": Token{
-		Type:     "VEC_ADD",
-		Expected: "EXPR",
+		Type: "VEC_ADD",
 		Value: Value{
 			Type:   "op_3",
 			String: ".+",
 		},
 	},
 	".-": Token{
-		Type:     "VEC_SUB",
-		Expected: "EXPR",
+		Type: "VEC_SUB",
 		Value: Value{
 			Type:   "op_4",
 			String: ".-",
 		},
 	},
 	".*": Token{
-		Type:     "VEC_MULT",
-		Expected: "EXPR",
+		Type: "VEC_MULT",
 		Value: Value{
 			Type:   "op_3",
 			String: ".*",
 		},
 	},
 	"./": Token{
-		Type:     "VEC_DIV",
-		Expected: "EXPR",
+		Type: "VEC_DIV",
 		Value: Value{
 			Type:   "op_3",
 			String: "./",
 		},
 	},
 	".": Token{
-		Type:     "ACCESSOR",
-		Expected: "EXPR",
+		Type: "ACCESSOR",
 		Value: Value{
 			Type:   "period",
 			String: ".",

@@ -60,6 +60,7 @@ var (
 	Set        = "SET"
 	Assign     = "ASSIGN"
 	Init       = "INIT"
+	PriOp      = "PRI_OP"
 	SecOp      = "SEC_OP"
 	Mult       = "MULT"
 	LBrace     = "L_BRACE"

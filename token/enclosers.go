@@ -3,105 +3,95 @@ package token
 // EncloserMap holds all valid encloser tokens
 var EncloserMap = map[string]Token{
 	"(": Token{
-		Type:     "L_PAREN",
-		Expected: "EXPR",
+		Type: "L_PAREN",
 		Value: Value{
-			Type:   "op_3", // TODO: check all these
+			Type:   "op_3",
 			String: "(",
 		},
 	},
 	")": Token{
-		Type:     "R_PAREN",
-		Expected: "EXPR",
+		Type: "R_PAREN",
 		Value: Value{
-			Type:   "op_3", // TODO: check all these
+			Type:   "op_3",
 			String: ")",
 		},
 	},
+
 	"{": Token{
-		Type:     "L_BRACE",
-		Expected: "EXPR",
+		Type: "L_BRACE",
 		Value: Value{
-			Type:   "op_3", // TODO: check all these
+			Type:   "op_3",
 			String: "{",
 		},
 	},
 	"}": Token{
-		Type:     "R_BRACE",
-		Expected: "EXPR",
+		Type: "R_BRACE",
 		Value: Value{
-			Type:   "op_3", // TODO: check all these
+			Type:   "op_3",
 			String: "}",
 		},
 	},
+
 	"[": Token{
-		Type:     "L_BRACKET",
-		Expected: "EXPR",
+		Type: "L_BRACKET",
 		Value: Value{
-			Type:   "op_3", // TODO: check all these
+			Type:   "op_3",
 			String: "[",
 		},
 	},
 	"]": Token{
-		Type:     "R_BRACKET",
-		Expected: "EXPR",
+		Type: "R_BRACKET",
 		Value: Value{
-			Type:   "op_3", // TODO: check all these
+			Type:   "op_3",
 			String: "]",
 		},
 	},
-	"`": Token{
-		Type:     "GRAVE",
-		Expected: "EXPR",
-		Value: Value{
-			Type:   "op_3",
-			String: "`",
-		},
-	},
-	"~": Token{
-		Type:     "TILDE",
-		Expected: "EXPR",
-		Value: Value{
-			Type:   "op_3",
-			String: "~",
-		},
-	},
-	"'": Token{
-		Type:     "S_QUOTE",
-		Expected: "EXPR",
-		Value: Value{
-			Type:   "op_3",
-			String: "'",
-		},
-	},
-	"\"": Token{
-		Type:     "D_QUOTE",
-		Expected: "EXPR",
-		Value: Value{
-			Type:   "op_3",
-			String: "\"",
-		},
-	},
+
 	"<": Token{
-		Type:     "L_THAN",
-		Expected: "EXPR",
+		Type: "L_THAN",
 		Value: Value{
 			Type:   "op_3",
 			String: "<",
 		},
 	},
 	">": Token{
-		Type:     "G_THAN",
-		Expected: "EXPR",
+		Type: "G_THAN",
 		Value: Value{
 			Type:   "op_3",
 			String: ">",
 		},
 	},
-	// TODO: not sure if this will be an encloser or not
+
+	"`": Token{
+		Type: "GRAVE",
+		Value: Value{
+			Type:   "op_3",
+			String: "`",
+		},
+	},
+	"~": Token{
+		Type: "TILDE",
+		Value: Value{
+			Type:   "op_3",
+			String: "~",
+		},
+	},
+	"'": Token{
+		Type: "S_QUOTE",
+		Value: Value{
+			Type:   "op_3",
+			String: "'",
+		},
+	},
+	"\"": Token{
+		Type: "D_QUOTE",
+		Value: Value{
+			Type:   "op_3",
+			String: "\"",
+		},
+	},
 	"@": Token{
-		Type:     "AT",
-		Expected: "EXPR",
+		Type: "AT",
 		Value: Value{
 			Type:   "op_3",
 			String: "@",
