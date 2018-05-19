@@ -3,21 +3,21 @@ package token
 // WhitespaceMap holds all defined Whitespace tokens
 var WhitespaceMap = map[string]Token{
 	" ": Token{
-		Type: "WS",
+		Type: Whitespace,
 		Value: Value{
 			Type:   "space",
 			String: " ",
 		},
 	},
 	"\t": Token{
-		Type: "WS",
+		Type: Whitespace,
 		Value: Value{
 			Type:   "tab",
 			String: "\t",
 		},
 	},
 	"\n": Token{
-		Type: "WS",
+		Type: Whitespace,
 		Value: Value{
 			Type:   "newline",
 			String: "\n",

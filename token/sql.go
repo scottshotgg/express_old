@@ -6,7 +6,7 @@ package token
 var SQLMap = map[string]Token{
 	"SELECT": Token{
 		ID:   9,
-		Type: "KEYWORD",
+		Type: Keyword,
 		Value: Value{
 			Type:   "SQL", // TODO: what to put here?
 			String: "SELECT",
@@ -14,7 +14,7 @@ var SQLMap = map[string]Token{
 	},
 	"FROM": Token{
 		ID:   9,
-		Type: "KEYWORD",
+		Type: Keyword,
 		Value: Value{
 			Type:   "SQL", // TODO: what to put here?
 			String: "FROM",
@@ -22,7 +22,7 @@ var SQLMap = map[string]Token{
 	},
 	"WHERE": Token{
 		ID:   9,
-		Type: "KEYWORD",
+		Type: Keyword,
 		Value: Value{
 			Type:   "SQL", // TODO: what to put here?
 			String: "WHERE",

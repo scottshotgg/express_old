@@ -77,21 +77,21 @@ var EncloserMap = map[string]Token{
 		},
 	},
 	"'": Token{
-		Type: "S_QUOTE",
+		Type: SQuote,
 		Value: Value{
-			Type:   "op_3",
+			Type:   "squote",
 			String: "'",
 		},
 	},
 	"\"": Token{
-		Type: "D_QUOTE",
+		Type: DQuote,
 		Value: Value{
-			Type:   "op_3",
+			Type:   "dquote",
 			String: "\"",
 		},
 	},
 	"@": Token{
-		Type: "AT",
+		Type: At,
 		Value: Value{
 			Type:   "op_3",
 			String: "@",

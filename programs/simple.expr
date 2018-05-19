@@ -1,5 +1,35 @@
 // simple assignment program
 
-string b = " you"
-//b = "gee"
-string a = b + "you"
+// declaring a few strings with concatenation
+string b = "hey its you"
+b = "gee"
+string a = b + " and i"
+
+// adding hex, binary, octal, and decimal ints
+int c = 0xA + 0b1010 + 0o12 + 10
+
+int me = 9
+
+// adding floats
+float d = 7.77 + 2.39
+
+// bool declaration
+bool notFun = false
+bool fun = true
+
+// bool addition (OR operation)
+bool maybeFun = notFun + fun
+
+// bytes are just single byte of data
+// byte a = 'a'
+
+// char is also a single byte of data but it has an implied unicode encoding
+char z = '1'
+
+z = z + z
+
+//char b = u'b'
+//char c = unicode'b'
+//char d = iso8559'd'
+//char e = utf8'e'
+

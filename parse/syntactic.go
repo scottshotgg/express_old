@@ -93,14 +93,33 @@ func (m *Meta) PeekTokenAtIndex(index int) (token.Token, error) {
 // Shift operates the parses like a 3-bit (3 token) SIPO shift register consuming the tokens until the end of the line
 func (m *Meta) Shift() {
 	m.LastToken = m.CurrentToken
+	m.CurrentToken = m.NextToken
+
+	for {
+		if m.ParseIndex < m.Length {
+			if m.Tokens[m.ParseIndex].Type == token.Whitespace {
+				m.ParseIndex++
+				continue
+			}
+
+			m.NextToken = m.Tokens[m.ParseIndex]
+			m.ParseIndex++
+			return
+		}
+
+		m.NextToken = token.Token{}
+		return
+	}
+}
+
+// ShiftWithWS operates the parses like a 3-bit (3 token) SIPO shift register consuming the tokens until the end of the line
+func (m *Meta) ShiftWithWS() {
+	m.LastToken = m.CurrentToken
 	m.CurrentToken = m.Tokens[m.ParseIndex]
 
 	for {
 		if m.ParseIndex+1 < m.Length {
 			m.ParseIndex++
-			if m.Tokens[m.ParseIndex].Type == token.Whitespace {
-				continue
-			}
 
 			m.NextToken = m.Tokens[m.ParseIndex]
 			return
@@ -331,14 +350,14 @@ func (m *Meta) ParseString() token.Token {
 
 	stringLiteral := ""
 	for {
-		m.Shift()
+		m.ShiftWithWS()
+		fmt.Println("current", m.CurrentToken)
 
 		// FIXME: stop doing hacky shit, purge this shit, need to preserve whitespaces in the lexer
 		stringLiteral += m.CurrentToken.Value.String
-
 		if m.NextToken.Value.String == "\"" {
 
-			m.Shift()
+			m.ShiftWithWS()
 
 			return token.Token{
 				Type: token.Literal,
@@ -369,17 +388,9 @@ func (m *Meta) ParseGroup() token.Token {
 			return token.Token{
 				ID:   1,
 				Type: token.Group,
-				// Expected: TODO: calc this later
 				Value: token.Value{
 					Type: token.Group,
 					True: groupTokens,
-					// String: func() (arrayTokensString string) {
-					// 	for _, t := range arrayTokens {
-					// 		arrayTokensString += TokenToString(t)
-					// 	}
-
-					// 	return
-					// }(),
 				},
 			}
 
@@ -442,7 +453,6 @@ func (m *Meta) ParseArray() token.Token {
 
 		case token.DQuote:
 			arrayTokens = append(arrayTokens, m.ParseString())
-		// case token.Literal:
 
 		case token.Literal:
 			arrayTokens = append(arrayTokens, m.CurrentToken)
@@ -460,17 +470,9 @@ func (m *Meta) ParseArray() token.Token {
 			return token.Token{
 				ID:   1,
 				Type: token.Array,
-				// Expected: TODO: calc this later
 				Value: token.Value{
 					Type: token.Array,
 					True: arrayTokens,
-					// String: func() (arrayTokensString string) {
-					// 	for _, t := range arrayTokens {
-					// 		arrayTokensString += TokenToString(t)
-					// 	}
-
-					// 	return
-					// }(),
 				},
 			}
 
@@ -498,13 +500,6 @@ func (m *Meta) ParseBlock() token.Token {
 	// FIXME: could do something fancy with another meta and then use that but w/e
 	blockTokens := []token.Token{}
 
-	// defer func() {
-	// 	fmt.Println("lengths", len(blockTokens), len(m.Tokens))
-	// 	fmt.Println(len(blockTokens) < len(m.Tokens)-2)
-
-	// 	m.CheckOptmization = len(blockTokens) < len(m.Tokens)-2
-	// }()
-
 	for {
 		m.Shift()
 
@@ -512,8 +507,8 @@ func (m *Meta) ParseBlock() token.Token {
 
 		switch current.Type {
 		// TODO: this needs to change to PRI_OP
-		case token.Mult:
-			fmt.Println("found a mult")
+		case token.PriOp:
+			fmt.Println("found a pri_op")
 			blockTokens = append(blockTokens, current)
 
 		case token.SecOp:
@@ -721,6 +716,7 @@ func Parse(tokens []token.Token) ([]token.Token, error) {
 		Length:           len(tokens) + 2,
 		CheckOptmization: true,
 	}
+	meta.Shift()
 
 	// Here we are continuously applying semantic pressure to squash the tokens and furthur
 	// simplify the tokens generated

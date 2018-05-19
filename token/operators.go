@@ -3,63 +3,63 @@ package token
 // OperatorMap holds all defined operator tokens
 var OperatorMap = map[string]Token{
 	"+": Token{
-		Type: "SEC_OP",
+		Type: SecOp,
 		Value: Value{
 			Type:   "add",
 			String: "+",
 		},
 	},
 	"-": Token{
-		Type: "SEC_OP",
+		Type: SecOp,
 		Value: Value{
 			Type:   "sub",
 			String: "-",
 		},
 	},
 	"*": Token{
-		Type: "PRI_OP",
+		Type: PriOp,
 		Value: Value{
 			Type:   "mult",
 			String: "*",
 		},
 	},
 	"/": Token{
-		Type: "PRI_OP",
+		Type: PriOp,
 		Value: Value{
 			Type:   "div",
 			String: "/",
 		},
 	},
 	"%": Token{
-		Type: "PRI_OP",
+		Type: PriOp,
 		Value: Value{
 			Type:   "mod",
 			String: "%",
 		},
 	},
 	"^": Token{
-		Type: "PRI_OP",
+		Type: PriOp,
 		Value: Value{
 			Type:   "exp",
 			String: "^",
 		},
 	},
 	"!": Token{
-		Type: "BANG",
+		Type: Bang,
 		Value: Value{
 			Type:   "bang",
 			String: "!",
 		},
 	},
 	"?": Token{
-		Type: "QM",
+		Type: QuestionMark,
 		Value: Value{
 			Type:   "qm",
 			String: "!",
 		},
 	},
 	"_": Token{
-		Type: "UNDERSCORE",
+		Type: Underscore,
 		Value: Value{
 			Type:   "underscore",
 			String: "_",
@@ -67,31 +67,38 @@ var OperatorMap = map[string]Token{
 	},
 	// FIXME: DOLLA DOLLA BILLS YALL: define this
 	"$": Token{
-		Type: "DDBY",
+		Type: DDBY,
 		Value: Value{
 			Type:   "ddby",
 			String: "$",
 		},
 	},
 	"&": Token{
-		Type: "AMP",
+		Type: Ampersand,
 		Value: Value{
 			Type:   "op_3",
 			String: "&",
 		},
 	},
 	"|": Token{
-		Type: "PIPE",
+		Type: Pipe,
 		Value: Value{
 			Type:   "op_3",
 			String: "|",
 		},
 	},
 	"#": Token{
-		Type: "HASH",
+		Type: Hash,
 		Value: Value{
 			Type:   "op_3",
 			String: "#",
+		},
+	},
+	".": Token{
+		Type: Accessor,
+		Value: Value{
+			Type:   "period",
+			String: ".",
 		},
 	},
 
@@ -123,13 +130,6 @@ var OperatorMap = map[string]Token{
 		Value: Value{
 			Type:   "op_3",
 			String: "./",
-		},
-	},
-	".": Token{
-		Type: "ACCESSOR",
-		Value: Value{
-			Type:   "period",
-			String: ".",
 		},
 	},
 }

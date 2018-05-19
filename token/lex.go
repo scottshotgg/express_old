@@ -5,7 +5,11 @@ var (
 	Lexemes = []string{
 		"var",
 		"int",
+		"float",
 		"string",
+		"bool",
+		"char",
+
 		"select",
 		"SELECT",
 		"FROM",
@@ -23,6 +27,7 @@ var (
 		"[",
 		"]",
 		"\"",
+		"'",
 		";",
 		",",
 		"#",
