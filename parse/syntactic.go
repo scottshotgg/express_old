@@ -505,20 +505,33 @@ func (m *Meta) ParseBlock() token.Token {
 			}
 
 		case token.Assign:
-			blockTokens = append(blockTokens, m.CurrentToken)
-
-		case token.Set:
-			peek := m.NextToken
-			switch peek.Type {
-			case token.Assign:
-				if t, ok := token.TokenMap[current.Value.String+peek.Value.String]; ok {
-					blockTokens = append(blockTokens, t)
-					m.Shift()
+			fmt.Println("ASSIGN", current)
+			fmt.Printf("CURRENTVALUETYPE %+v\n", current)
+			switch current.Value.Type {
+			case "set":
+				peek := m.NextToken
+				fmt.Println("PEEK", peek)
+				switch peek.Type {
+				case token.Assign:
+					fmt.Println("FOUND :=", current.Value.String+peek.Value.String)
+					if t, ok := token.TokenMap[current.Value.String+peek.Value.String]; ok {
+						blockTokens = append(blockTokens, t)
+						m.Shift()
+					}
+				default:
+					blockTokens = append(blockTokens, m.CurrentToken)
 				}
 
-			default:
+			case "assign":
+				fallthrough
+			case "init":
 				blockTokens = append(blockTokens, current)
-				continue
+
+			default:
+				// blockTokens = append(blockTokens, current)
+				// continue
+				fmt.Println("ERROR, how did we get in here without an assign type token", current)
+				os.Exit(9)
 			}
 
 		case token.Ident:

@@ -44,4 +44,11 @@ var TypeMap = map[string]Token{
 			String: BoolType,
 		},
 	},
+	ObjectType: Token{
+		Type: Type,
+		Value: Value{
+			Type:   ObjectType,
+			String: ObjectType,
+		},
+	},
 }

@@ -88,6 +88,7 @@ func (meta *lexMeta) LexLiteral() token.Token {
 		t.Value.True = int(value)
 		t.Value.Type = token.IntType
 
+		// TODO: need to make something for scientific notation with carrots and e
 		// If it errors, check to see if it is an int
 		if err != nil {
 			// Attempt to parse a float from the accumulator

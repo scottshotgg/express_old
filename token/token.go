@@ -92,6 +92,7 @@ const (
 	BoolType   = "bool"
 	CharType   = "char"
 	ObjectType = "object"
+	SetType    = "set"
 
 	PublicAccessType  = "public"
 	PrivateAccessType = "private"

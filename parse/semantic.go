@@ -79,7 +79,7 @@ func (m *Meta) GetFactor() {
 			fmt.Println("Undefined variable reference")
 			os.Exit(9)
 		}
-		if m.DeclaredType != token.VarType && tValue.Type != m.DeclaredType {
+		if m.DeclaredType != token.SetType && m.DeclaredType != token.VarType && tValue.Type != m.DeclaredType {
 			fmt.Println("Variable type mismatch")
 			fmt.Println("Expected", m.DeclaredType, "got", tValue.Type)
 			os.Exit(9)
@@ -96,7 +96,7 @@ func (m *Meta) GetFactor() {
 
 	case token.Literal:
 		fmt.Println("found a literal")
-		if m.DeclaredType != token.VarType && m.CurrentToken.Value.Type != m.DeclaredType {
+		if m.DeclaredType != token.SetType && m.DeclaredType != token.VarType && m.CurrentToken.Value.Type != m.DeclaredType {
 			fmt.Println("Variable type mismatch")
 			fmt.Println("Expected", m.DeclaredType, "got", m.CurrentToken.Value.Type)
 			os.Exit(9)
@@ -130,11 +130,12 @@ func (m *Meta) GetFactor() {
 		// TODO: this will probably need to change when start doing functions but this is fine for now
 		// Filter out all private declared entites
 		// Only publicly declared entities should be return from a scope/object
-		for key, value := range dMap {
-			if value.AccessType != token.PublicAccessType {
-				delete(dMap, key)
-			}
-		}
+		// FIXME: do not filter out yet
+		// for key, value := range dMap {
+		// 	if value.AccessType != token.PublicAccessType {
+		// 		delete(dMap, key)
+		// 	}
+		// }
 
 		m.DeclaredValue = token.Value{
 			Type: token.ObjectType,
@@ -271,6 +272,14 @@ func (m *Meta) GetAssignmentStatement() error {
 		// Get the assignment operator
 		m.Shift()
 		if m.CurrentToken.Type != token.Assign && m.CurrentToken.Type != token.Init && m.CurrentToken.Type != token.Set {
+			// switch m.CurrentToken.Value.Type {
+			// case "init":
+			// case "set":
+			// case "assign":
+			// default:
+			// 	fmt.Println("ERROR how did we get in here", m.CurrentToken)
+			// }
+
 			fmt.Println("Syntax error getting assignment_stmt")
 			fmt.Println("Expected assign_op, got", m.CurrentToken)
 			os.Exit(9)
@@ -299,18 +308,46 @@ func (m *Meta) GetAssignmentStatement() error {
 	case token.Ident:
 		fmt.Println("i spy an ident")
 		currentIdent := m.CurrentToken
-
-		if current, ok := m.DeclarationMap[currentIdent.Value.String]; ok {
-			m.DeclaredAccessType = current.AccessType
-			m.DeclaredName = currentIdent.Value.String
-			m.DeclaredType = current.Type
-		} else {
-			fmt.Println("Variable reference not found", currentIdent)
-			os.Exit(9)
-		}
+		fmt.Println(currentIdent)
 
 		m.Shift()
 		if m.CurrentToken.Type == token.Assign {
+
+			m.DeclaredAccessType = currentIdent.Value.Type
+			m.DeclaredName = currentIdent.Value.String
+			current, ok := m.DeclarationMap[currentIdent.Value.String]
+			if m.CurrentToken.Value.Type == "assign" {
+				if ok {
+					m.DeclaredAccessType = current.AccessType
+					m.DeclaredType = current.Type
+				} else {
+					fmt.Println("Variable reference not found", currentIdent)
+					os.Exit(9)
+				}
+			} else if m.CurrentToken.Value.Type == "set" {
+				// check that the var is NOT there already
+				if !ok {
+					m.DeclaredAccessType = current.AccessType
+					m.DeclaredType = token.SetType
+				} else {
+					fmt.Println("Variable reference already declared", currentIdent)
+					os.Exit(9)
+				}
+			} else if m.CurrentToken.Value.Type == "init" {
+				// if the var is there then set it to the value (check types)
+				// else make the var
+				if ok {
+					m.DeclaredAccessType = current.AccessType
+					m.DeclaredType = current.Type
+				} else {
+					// FIXME: will have to look at this
+					m.DeclaredAccessType = currentIdent.Type
+					m.DeclaredType = token.SetType
+				}
+			} else {
+				fmt.Println("something happened")
+				os.Exit(8)
+			}
 
 			fmt.Println(m.CurrentToken)
 

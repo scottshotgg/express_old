@@ -9,6 +9,7 @@ var (
 		"string",
 		"bool",
 		"char",
+		"object",
 
 		"select",
 		"SELECT",

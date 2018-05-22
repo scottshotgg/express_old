@@ -12,10 +12,10 @@ int c = 0xA + 0b1010 + 0o12 + 10
 
 // Declaring and changing the var to a different ActingType
 var me = true + false
+me = 5.5 + 5.0
+me = "this" + " is " + "dynamic!"
 me = 5
 me = me + me
-//me = 5.5 + 5.0
-//me = "this" + " is " + "dynamic!"
 
 // TODO: implement operations for 'var' types
 //me = me + 9
@@ -44,11 +44,32 @@ z = z + z
 //char d = iso8559'd'
 //char e = utf8'e'
 
-var dd = {
+object ProductA = {
   int c = 6
-  string Whatever = "something"
-
-  var Thing = {
-    string This = "some"
+  string name = "something"
+  float Price = 3.51
+  var thing = "thing"
+  object amount = {
+    instock: 6
+    backorder: 10
   }
 }
+
+object productB = {
+  string name = "else"
+  float Price = 6.50
+  var thing = "string"
+  object amount = {
+    /* 
+    TODO: need to make comma or semicolon 
+    end the current statement parsing immediately
+    and auto start parsing a new statement
+    */
+    instock: 60
+    backorder: 100
+  }
+}
+
+productTotal := ProductA + productB
+
+bbb := 3

@@ -55,6 +55,27 @@ func (m *Meta) AddOperands(left, right token.Value) (token.Value, error) {
 				fmt.Println("ERROR", err)
 			}
 
+		case token.ObjectType:
+			result := right.True.(map[string]token.Value)
+			// if ok := left.True.(map[string]token.Value)
+
+			for key, value1 := range left.True.(map[string]token.Value) {
+				if value2, ok := result[key]; ok {
+					resultValue, err := m.AddOperands(value1, value2)
+					// resultValue.AccessType = value1.AccessType
+					// TODO: for some reason we couldnt access the `.True` of the map result
+					value2.True = resultValue.True
+					result[key] = value2
+					if err != nil {
+						// TODO: this means we could not add the operands, do something here later on: ideally we shouldnt get this
+						fmt.Println("ERROR:", err)
+					}
+				} else {
+					result[key] = value1
+				}
+			}
+			valueToken.True = result
+
 		default:
 			fmt.Println("Type not declared for AddOperands", left, right, leftType, rightType)
 			os.Exit(9)
