@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -110,7 +111,6 @@ func (m *Meta) GetFactor() {
 
 	case token.Block:
 		// FIXME: remove this hack shit later
-		savedName := m.DeclaredName
 		fmt.Println("m.DeclaredName", m.DeclaredName)
 		fmt.Println("found ze bracket")
 		meta := Meta{
@@ -124,11 +124,20 @@ func (m *Meta) GetFactor() {
 		fmt.Println(len(meta.Tokens))
 		meta.Shift()
 		dMap := meta.CheckBlock()
-		fmt.Println(meta.DeclarationMap)
+		fmt.Println("dMap", dMap)
 		fmt.Println("m.DeclaredName", m.DeclaredName)
 
-		m.DeclarationMap[savedName] = token.Value{
-			Type: "object",
+		// TODO: this will probably need to change when start doing functions but this is fine for now
+		// Filter out all private declared entites
+		// Only publicly declared entities should be return from a scope/object
+		for key, value := range dMap {
+			if value.AccessType != token.PublicAccessType {
+				delete(dMap, key)
+			}
+		}
+
+		m.DeclaredValue = token.Value{
+			Type: token.ObjectType,
 			True: dMap,
 		}
 
@@ -214,7 +223,9 @@ func (m *Meta) GetExpression() {
 				// Expected: "",
 				Value: m.GetOperationValue(value1, value2, op),
 			}
-			fmt.Println(valueToken)
+			valueToken.Value.AccessType = m.DeclaredAccessType
+
+			fmt.Println("valueToken", valueToken)
 			m.CollectToken(valueToken)
 
 			m.DeclaredValue = valueToken.Value
@@ -238,6 +249,7 @@ func (m *Meta) GetAssignmentStatement() error {
 		// 	case "int"
 		// }
 		m.DeclaredType = m.CurrentToken.Value.String
+
 		m.CollectCurrentToken()
 
 		// Get the IDENT
@@ -247,15 +259,16 @@ func (m *Meta) GetAssignmentStatement() error {
 			fmt.Println("Expected IDENT, got", m.CurrentToken)
 			os.Exit(9)
 		}
-		_, ok := m.DeclarationMap[m.CurrentToken.Value.String]
-		if ok {
+		if _, ok := m.DeclarationMap[m.CurrentToken.Value.String]; ok {
 			fmt.Println("Variable already declared")
 			os.Exit(9)
 		}
+		fmt.Println("m.CurrentToken.Value.Type", m.CurrentToken.Value.Type)
+		m.DeclaredAccessType = m.CurrentToken.Value.Type
 		m.DeclaredName = m.CurrentToken.Value.String
 		m.CollectCurrentToken()
 
-		// Get the assignemnt operator
+		// Get the assignment operator
 		m.Shift()
 		if m.CurrentToken.Type != token.Assign && m.CurrentToken.Type != token.Init && m.CurrentToken.Type != token.Set {
 			fmt.Println("Syntax error getting assignment_stmt")
@@ -269,12 +282,17 @@ func (m *Meta) GetAssignmentStatement() error {
 
 		// FIXME: this is changing the variable type to 'var', should probably have a 'realType' and an 'actingType'
 		if m.DeclaredType == token.VarType {
+			m.DeclaredValue.Acting = m.DeclaredValue.Type
 			m.DeclaredValue.Type = token.VarType
+			fmt.Println("wtf", m.DeclaredValue)
 		}
+		m.DeclaredValue.AccessType = m.DeclaredAccessType
+		fmt.Printf("DECLARED %+v\n", m.DeclaredValue)
 
 		m.DeclarationMap[m.DeclaredName] = m.DeclaredValue
 		m.DeclaredType = ""
 		m.DeclaredName = ""
+		m.DeclaredAccessType = ""
 		m.DeclaredValue = token.Value{}
 		fmt.Println(m.DeclarationMap)
 
@@ -283,6 +301,7 @@ func (m *Meta) GetAssignmentStatement() error {
 		currentIdent := m.CurrentToken
 
 		if current, ok := m.DeclarationMap[currentIdent.Value.String]; ok {
+			m.DeclaredAccessType = current.AccessType
 			m.DeclaredName = currentIdent.Value.String
 			m.DeclaredType = current.Type
 		} else {
@@ -300,12 +319,16 @@ func (m *Meta) GetAssignmentStatement() error {
 
 			// FIXME: this is changing the variable type to 'var', should probably have a 'realType' and an 'actingType'
 			if m.DeclaredType == token.VarType {
+				m.DeclaredValue.Acting = m.DeclaredValue.Type
 				m.DeclaredValue.Type = token.VarType
 			}
+			m.DeclaredValue.AccessType = m.DeclaredAccessType
+			fmt.Printf("DECLARED %+v\n", m.DeclaredValue)
 
 			m.DeclarationMap[m.DeclaredName] = m.DeclaredValue
 			m.DeclaredType = ""
 			m.DeclaredName = ""
+			m.DeclaredAccessType = ""
 			m.DeclaredValue = token.Value{}
 			fmt.Println(m.DeclarationMap)
 		}
@@ -374,8 +397,13 @@ func Semantic(tokens []token.Token) ([]token.Token, error) {
 
 	meta.CheckBlock()
 	fmt.Println("tokens", meta.EndTokens)
-
-	fmt.Println(meta.DeclarationMap)
+	fmt.Println()
+	fmt.Println("DECLARATION MAP:")
+	declarationMapJSON, err := json.MarshalIndent(meta.DeclarationMap, "", "\t")
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+	fmt.Println(string(declarationMapJSON))
 
 	// Here we are continuously applying semantic pressure to squash the tokens and furthur
 	// simplify the tokens generated

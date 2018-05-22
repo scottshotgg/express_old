@@ -27,10 +27,11 @@ type Meta struct {
 	CheckOptmization     bool
 	OptimizationAttempts int
 
-	DeclarationMap map[string]token.Value
-	DeclaredType   string
-	DeclaredName   string
-	DeclaredValue  token.Value
+	DeclarationMap     map[string]token.Value
+	DeclaredType       string
+	DeclaredName       string
+	DeclaredValue      token.Value
+	DeclaredAccessType string
 }
 
 // ParseVar parses a variable declaration and other statements related to type later on. Anything in the form of <type><ident>
@@ -66,7 +67,7 @@ func (m *Meta) ParseIdent(blockTokens *[]token.Token, peek token.Token) {
 			// Expected:
 			Value: token.Value{
 				Type: func() string {
-					if len(ident) > 0 && ident[0] > 64 && ident[0] < 90 {
+					if len(ident) > 0 && ident[0] > 64 && ident[0] < 91 {
 						return "public"
 					}
 

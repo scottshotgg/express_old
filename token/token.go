@@ -8,9 +8,12 @@ import (
 // Value ...
 type (
 	Value struct {
-		Type   string
-		True   interface{}
-		String string
+		// FIXME: to maintain compatibility, just add an 'actingType' var for now, use a struct later
+		Type       string
+		Acting     string
+		True       interface{}
+		String     string
+		AccessType string
 	}
 
 	// Token ...
@@ -88,6 +91,10 @@ const (
 	StringType = "string"
 	BoolType   = "bool"
 	CharType   = "char"
+	ObjectType = "object"
+
+	PublicAccessType  = "public"
+	PrivateAccessType = "private"
 )
 
 func init() {

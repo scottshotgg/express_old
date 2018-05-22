@@ -5,14 +5,17 @@ string b = "hey its you"
 b = "gee"
 string a = b + " and i"
 
+int Zinger = 40
+
 // adding hex, binary, octal, and decimal ints
 int c = 0xA + 0b1010 + 0o12 + 10
 
 // Declaring and changing the var to a different ActingType
 var me = true + false
-me = 6 + 55
-me = 5.5 + 5.0
-me = "this" + " is " + "dynamic!"
+me = 5
+me = me + me
+//me = 5.5 + 5.0
+//me = "this" + " is " + "dynamic!"
 
 // TODO: implement operations for 'var' types
 //me = me + 9
@@ -43,9 +46,9 @@ z = z + z
 
 var dd = {
   int c = 6
-  string whatever = "something"
+  string Whatever = "something"
 
-  var thing = {
-    string this = "some"
+  var Thing = {
+    string This = "some"
   }
 }

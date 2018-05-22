@@ -45,6 +45,16 @@ func (m *Meta) AddOperands(left, right token.Value) (token.Value, error) {
 		// TODO: this will need some more thinking
 		// case token.Byte:
 
+		case token.VarType:
+			left.Type = left.Acting
+			right.Type = right.Acting
+
+			var err error
+			valueToken, err = m.AddOperands(left, right)
+			if err != nil {
+				fmt.Println("ERROR", err)
+			}
+
 		default:
 			fmt.Println("Type not declared for AddOperands", left, right, leftType, rightType)
 			os.Exit(9)
