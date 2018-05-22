@@ -36,9 +36,11 @@ var (
 	}
 
 	TokenMap = map[string]Token{}
+)
 
-	// These public vars are to make the entire compiler consistent without having to use
-	// string literals. These may be changed to ints in the future
+// These public consts are to make the entire compiler consistent without having to use
+// string literals. These may be changed to ints in the future
+const (
 	Var          = "VAR"
 	Ident        = "IDENT"
 	Type         = "TYPE"
@@ -80,6 +82,7 @@ var (
 	QuestionMark = "QM"
 	Accessor     = "Accessor"
 
+	VarType    = "var"
 	IntType    = "int"
 	FloatType  = "float"
 	StringType = "string"

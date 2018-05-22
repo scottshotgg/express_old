@@ -81,16 +81,17 @@ func (m *Meta) GetFactor() {
 	switch m.CurrentToken.Type {
 	case token.Ident:
 		fmt.Println("found an ident")
-		tValue, ok := declarations[m.CurrentToken.Value.String]
+		tValue, ok := m.DeclarationMap[m.CurrentToken.Value.String]
 		if !ok {
 			fmt.Println("Undefined variable reference")
 			os.Exit(9)
 		}
-		if tValue.Type != declaredType {
+		if declaredType != token.VarType && tValue.Type != declaredType {
 			fmt.Println("Variable type mismatch")
 			fmt.Println("Expected", declaredType, "got", tValue.Type)
 			os.Exit(9)
 		}
+
 		// TODO: we may actually want to say that this is in actuallality the variable and not the value so that it can do optimizations
 		declaredValue = tValue
 		fmt.Println("declareds", declaredName, declaredType, declaredValue)
@@ -102,17 +103,42 @@ func (m *Meta) GetFactor() {
 
 	case token.Literal:
 		fmt.Println("found a literal")
-		if m.CurrentToken.Value.Type != declaredType {
+		if declaredType != token.VarType && m.CurrentToken.Value.Type != declaredType {
 			fmt.Println("Variable type mismatch")
 			fmt.Println("Expected", declaredType, "got", m.CurrentToken.Value.Type)
 			os.Exit(9)
 		}
+
 		declaredValue = m.CurrentToken.Value
 		m.CollectCurrentToken()
 
 	case token.LParen:
 		fmt.Println("found an expr")
 		m.GetExpression()
+
+	case token.Block:
+		// FIXME: remove this hack shit later
+		savedName := declaredName
+		fmt.Println("declaredName", declaredName)
+		fmt.Println("found ze bracket")
+		meta := Meta{
+			IgnoreWS:         true,
+			Tokens:           m.CurrentToken.Value.True.([]token.Token),
+			Length:           len(m.CurrentToken.Value.True.([]token.Token)),
+			CheckOptmization: true,
+			DeclarationMap:   map[string]token.Value{},
+		}
+		fmt.Println(meta)
+		fmt.Println(len(meta.Tokens))
+		meta.Shift()
+		dMap := meta.CheckBlock()
+		fmt.Println(meta.DeclarationMap)
+		fmt.Println("declaredName", declaredName)
+
+		m.DeclarationMap[savedName] = token.Value{
+			Type: "object",
+			True: dMap,
+		}
 
 	default:
 		fmt.Println("ERROR getting factor")
@@ -282,7 +308,7 @@ func (m *Meta) GetAssignmentStatement() error {
 			fmt.Println("Expected IDENT, got", m.CurrentToken)
 			os.Exit(9)
 		}
-		_, ok := declarations[m.CurrentToken.Value.String]
+		_, ok := m.DeclarationMap[m.CurrentToken.Value.String]
 		if ok {
 			fmt.Println("Variable already declared")
 			os.Exit(9)
@@ -302,17 +328,22 @@ func (m *Meta) GetAssignmentStatement() error {
 		// FIXME: this should return an error that we can check
 		m.GetExpression()
 
-		declarations[declaredName] = declaredValue
+		// FIXME: this is changing the variable type to 'var', should probably have a 'realType' and an 'actingType'
+		if declaredType == token.VarType {
+			declaredValue.Type = token.VarType
+		}
+
+		m.DeclarationMap[declaredName] = declaredValue
 		declaredType = ""
 		declaredName = ""
 		declaredValue = token.Value{}
-		fmt.Println(declarations)
+		fmt.Println(m.DeclarationMap)
 
 	case token.Ident:
 		fmt.Println("i spy an ident")
 		currentIdent := m.CurrentToken
 
-		if current, ok := declarations[currentIdent.Value.String]; ok {
+		if current, ok := m.DeclarationMap[currentIdent.Value.String]; ok {
 			declaredName = currentIdent.Value.String
 			declaredType = current.Type
 		} else {
@@ -328,11 +359,16 @@ func (m *Meta) GetAssignmentStatement() error {
 			// FIXME: this should return an error that we can check
 			m.GetExpression()
 
-			declarations[declaredName] = declaredValue
+			// FIXME: this is changing the variable type to 'var', should probably have a 'realType' and an 'actingType'
+			if declaredType == token.VarType {
+				declaredValue.Type = token.VarType
+			}
+
+			m.DeclarationMap[declaredName] = declaredValue
 			declaredType = ""
 			declaredName = ""
 			declaredValue = token.Value{}
-			fmt.Println(declarations)
+			fmt.Println(m.DeclarationMap)
 		}
 
 	default:
@@ -358,7 +394,7 @@ func (m *Meta) GetStatement() {
 }
 
 // CheckBlock check the usage of the block
-func (m *Meta) CheckBlock() {
+func (m *Meta) CheckBlock() map[string]token.Value {
 	for {
 		m.GetStatement()
 
@@ -378,10 +414,9 @@ func (m *Meta) CheckBlock() {
 
 		if m.NextToken == (token.Token{}) {
 			fmt.Println("returning")
-			return
+			return m.DeclarationMap
 		}
 	}
-
 }
 
 // Semantic runs a semantic parse on the tokens
@@ -392,6 +427,7 @@ func Semantic(tokens []token.Token) ([]token.Token, error) {
 		Tokens:           tokens[0].Value.True.([]token.Token),
 		Length:           len(tokens[0].Value.True.([]token.Token)),
 		CheckOptmization: true,
+		DeclarationMap:   map[string]token.Value{},
 	}
 	meta.Shift()
 
@@ -400,7 +436,7 @@ func Semantic(tokens []token.Token) ([]token.Token, error) {
 	meta.CheckBlock()
 	fmt.Println("tokens", meta.EndTokens)
 
-	fmt.Println(declarations)
+	fmt.Println(meta.DeclarationMap)
 
 	// Here we are continuously applying semantic pressure to squash the tokens and furthur
 	// simplify the tokens generated

@@ -8,24 +8,32 @@ string a = b + " and i"
 // adding hex, binary, octal, and decimal ints
 int c = 0xA + 0b1010 + 0o12 + 10
 
-int me = 9
+// Declaring and changing the var to a different ActingType
+var me = true + false
+me = 6 + 55
+me = 5.5 + 5.0
+me = "this" + " is " + "dynamic!"
+
+// TODO: implement operations for 'var' types
+//me = me + 9
 
 // adding floats
 float d = 7.77 + 2.39
 
+// TODO: might look into doing "truthy" and "falsy"
 // bool declaration
 bool notFun = false
-bool fun = true
+bool fun = true + false
 
 // bool addition (OR operation)
 bool maybeFun = notFun + fun
 
+// TODO: not sure if I'm gonna do this
 // bytes are just single byte of data
 // byte a = 'a'
 
-// char is also a single byte of data but it has an implied unicode encoding
+// char is also a single byte of data but it has an implied encoding, which if not specified is unicode
 char z = '1'
-
 z = z + z
 
 //char b = u'b'
@@ -33,3 +41,11 @@ z = z + z
 //char d = iso8559'd'
 //char e = utf8'e'
 
+var dd = {
+  int c = 6
+  string whatever = "something"
+
+  var thing = {
+    string this = "some"
+  }
+}

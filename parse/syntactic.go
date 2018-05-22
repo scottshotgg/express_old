@@ -28,6 +28,8 @@ type Meta struct {
 
 	CheckOptmization     bool
 	OptimizationAttempts int
+
+	DeclarationMap map[string]token.Value
 }
 
 // CollectTokens appends an array of tokens passed in to the EndTokens attribute of Meta

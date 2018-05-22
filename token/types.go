@@ -2,46 +2,46 @@ package token
 
 // TypeMap holds all defined type tokens
 var TypeMap = map[string]Token{
-	"var": Token{
+	VarType: Token{
 		Type: Type,
 		Value: Value{
-			Type:   "var",
-			String: "var",
+			Type:   VarType,
+			String: VarType,
 		},
 	},
-	"int": Token{
+	IntType: Token{
 		Type: Type,
 		Value: Value{
-			Type:   "int",
-			String: "int",
+			Type:   IntType,
+			String: IntType,
 		},
 	},
-	"float": Token{
+	FloatType: Token{
 		Type: Type,
 		Value: Value{
-			Type:   "float",
-			String: "float",
+			Type:   FloatType,
+			String: FloatType,
 		},
 	},
-	"char": Token{
+	CharType: Token{
 		Type: Type,
 		Value: Value{
-			Type:   "char",
-			String: "char",
+			Type:   CharType,
+			String: CharType,
 		},
 	},
-	"string": Token{
+	StringType: Token{
 		Type: Type,
 		Value: Value{
-			Type:   "string",
-			String: "string",
+			Type:   StringType,
+			String: StringType,
 		},
 	},
-	"bool": Token{
+	BoolType: Token{
 		Type: Type,
 		Value: Value{
-			Type:   "bool",
-			String: "bool",
+			Type:   BoolType,
+			String: BoolType,
 		},
 	},
 }
