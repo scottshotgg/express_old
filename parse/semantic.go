@@ -8,13 +8,6 @@ import (
 	"github.com/scottshotgg/Express/token"
 )
 
-var (
-	declaredType  string
-	declaredName  string
-	declaredValue token.Value
-	declarations  = map[string]token.Value{}
-)
-
 // CheckType checks the usage of the type
 func (m *Meta) CheckType() {
 	fmt.Println("CheckType")
@@ -85,15 +78,15 @@ func (m *Meta) GetFactor() {
 			fmt.Println("Undefined variable reference")
 			os.Exit(9)
 		}
-		if declaredType != token.VarType && tValue.Type != declaredType {
+		if m.DeclaredType != token.VarType && tValue.Type != m.DeclaredType {
 			fmt.Println("Variable type mismatch")
-			fmt.Println("Expected", declaredType, "got", tValue.Type)
+			fmt.Println("Expected", m.DeclaredType, "got", tValue.Type)
 			os.Exit(9)
 		}
 
 		// TODO: we may actually want to say that this is in actuallality the variable and not the value so that it can do optimizations
-		declaredValue = tValue
-		fmt.Println("declareds", declaredName, declaredType, declaredValue)
+		m.DeclaredValue = tValue
+		fmt.Println("declareds", m.DeclaredName, m.DeclaredType, m.DeclaredValue)
 		m.CollectToken(token.Token{
 			ID: 1,
 			// Type:, // TODO: not sure what to put here
@@ -102,13 +95,13 @@ func (m *Meta) GetFactor() {
 
 	case token.Literal:
 		fmt.Println("found a literal")
-		if declaredType != token.VarType && m.CurrentToken.Value.Type != declaredType {
+		if m.DeclaredType != token.VarType && m.CurrentToken.Value.Type != m.DeclaredType {
 			fmt.Println("Variable type mismatch")
-			fmt.Println("Expected", declaredType, "got", m.CurrentToken.Value.Type)
+			fmt.Println("Expected", m.DeclaredType, "got", m.CurrentToken.Value.Type)
 			os.Exit(9)
 		}
 
-		declaredValue = m.CurrentToken.Value
+		m.DeclaredValue = m.CurrentToken.Value
 		m.CollectCurrentToken()
 
 	case token.LParen:
@@ -117,8 +110,8 @@ func (m *Meta) GetFactor() {
 
 	case token.Block:
 		// FIXME: remove this hack shit later
-		savedName := declaredName
-		fmt.Println("declaredName", declaredName)
+		savedName := m.DeclaredName
+		fmt.Println("m.DeclaredName", m.DeclaredName)
 		fmt.Println("found ze bracket")
 		meta := Meta{
 			IgnoreWS:         true,
@@ -132,7 +125,7 @@ func (m *Meta) GetFactor() {
 		meta.Shift()
 		dMap := meta.CheckBlock()
 		fmt.Println(meta.DeclarationMap)
-		fmt.Println("declaredName", declaredName)
+		fmt.Println("m.DeclaredName", m.DeclaredName)
 
 		m.DeclarationMap[savedName] = token.Value{
 			Type: "object",
@@ -224,7 +217,7 @@ func (m *Meta) GetExpression() {
 			fmt.Println(valueToken)
 			m.CollectToken(valueToken)
 
-			declaredValue = valueToken.Value
+			m.DeclaredValue = valueToken.Value
 
 		default:
 			fmt.Println("Operator not defined")
@@ -244,7 +237,7 @@ func (m *Meta) GetAssignmentStatement() error {
 		// switch m.CurrentToken.Value.String {
 		// 	case "int"
 		// }
-		declaredType = m.CurrentToken.Value.String
+		m.DeclaredType = m.CurrentToken.Value.String
 		m.CollectCurrentToken()
 
 		// Get the IDENT
@@ -259,7 +252,7 @@ func (m *Meta) GetAssignmentStatement() error {
 			fmt.Println("Variable already declared")
 			os.Exit(9)
 		}
-		declaredName = m.CurrentToken.Value.String
+		m.DeclaredName = m.CurrentToken.Value.String
 		m.CollectCurrentToken()
 
 		// Get the assignemnt operator
@@ -275,14 +268,14 @@ func (m *Meta) GetAssignmentStatement() error {
 		m.GetExpression()
 
 		// FIXME: this is changing the variable type to 'var', should probably have a 'realType' and an 'actingType'
-		if declaredType == token.VarType {
-			declaredValue.Type = token.VarType
+		if m.DeclaredType == token.VarType {
+			m.DeclaredValue.Type = token.VarType
 		}
 
-		m.DeclarationMap[declaredName] = declaredValue
-		declaredType = ""
-		declaredName = ""
-		declaredValue = token.Value{}
+		m.DeclarationMap[m.DeclaredName] = m.DeclaredValue
+		m.DeclaredType = ""
+		m.DeclaredName = ""
+		m.DeclaredValue = token.Value{}
 		fmt.Println(m.DeclarationMap)
 
 	case token.Ident:
@@ -290,8 +283,8 @@ func (m *Meta) GetAssignmentStatement() error {
 		currentIdent := m.CurrentToken
 
 		if current, ok := m.DeclarationMap[currentIdent.Value.String]; ok {
-			declaredName = currentIdent.Value.String
-			declaredType = current.Type
+			m.DeclaredName = currentIdent.Value.String
+			m.DeclaredType = current.Type
 		} else {
 			fmt.Println("Variable reference not found", currentIdent)
 			os.Exit(9)
@@ -306,14 +299,14 @@ func (m *Meta) GetAssignmentStatement() error {
 			m.GetExpression()
 
 			// FIXME: this is changing the variable type to 'var', should probably have a 'realType' and an 'actingType'
-			if declaredType == token.VarType {
-				declaredValue.Type = token.VarType
+			if m.DeclaredType == token.VarType {
+				m.DeclaredValue.Type = token.VarType
 			}
 
-			m.DeclarationMap[declaredName] = declaredValue
-			declaredType = ""
-			declaredName = ""
-			declaredValue = token.Value{}
+			m.DeclarationMap[m.DeclaredName] = m.DeclaredValue
+			m.DeclaredType = ""
+			m.DeclaredName = ""
+			m.DeclaredValue = token.Value{}
 			fmt.Println(m.DeclarationMap)
 		}
 
