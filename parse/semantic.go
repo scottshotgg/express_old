@@ -120,12 +120,8 @@ func (m *Meta) GetFactor() {
 			CheckOptmization: true,
 			DeclarationMap:   map[string]token.Value{},
 		}
-		fmt.Println(meta)
-		fmt.Println(len(meta.Tokens))
 		meta.Shift()
 		dMap := meta.CheckBlock()
-		fmt.Println("dMap", dMap)
-		fmt.Println("m.DeclaredName", m.DeclaredName)
 
 		// TODO: this will probably need to change when start doing functions but this is fine for now
 		// Filter out all private declared entites
@@ -149,10 +145,16 @@ func (m *Meta) GetFactor() {
 
 	case token.Array:
 		fmt.Println("found an array current", m.CurrentToken)
+		// TODO: this needs an error
+		_, arrayValue := m.CheckArray()
+		// if err != nil {
+		// 	// TODO:
+		// 	fmt.Println("ERROR: need to handle this", err)
+		// }
 		m.DeclaredValue = token.Value{
 			Type: token.ArrayType,
 			// Acting: arrayType,
-			True: m.CheckArray(),
+			True: arrayValue,
 		}
 		// os.Exit(1)
 		// look through the entire array and analyze the types
@@ -166,10 +168,16 @@ func (m *Meta) GetFactor() {
 		if m.NextToken.Type == token.Array {
 			arrayType := m.CurrentToken.Value.Type
 			m.Shift()
+			// TODO: this needs an error
+			_, arrayValue := m.CheckArray()
+			// if err != nil {
+			// 	// TODO:
+			// 	fmt.Println("ERROR: need to handle this", err)
+			// }
 			m.DeclaredValue = token.Value{
 				Type:   token.ArrayType,
 				Acting: arrayType,
-				True:   m.CheckArray(),
+				True:   arrayValue,
 			}
 		}
 
@@ -329,6 +337,7 @@ func (m *Meta) GetExpression() {
 		fmt.Println("valueToken", valueToken)
 		m.CollectToken(valueToken)
 
+		fmt.Println("DECLAREDVLUE", valueToken.Value)
 		m.DeclaredValue = valueToken.Value
 
 		// default:
@@ -510,21 +519,88 @@ func (m *Meta) GetAssignmentStatement() error {
 	return nil
 }
 
+// GetAnonymousScope ...
+func (m *Meta) GetAnonymousScope() error { //(token.Value, error) {
+	meta := Meta{
+		IgnoreWS:         true,
+		Tokens:           m.CurrentToken.Value.True.([]token.Token),
+		Length:           len(m.CurrentToken.Value.True.([]token.Token)),
+		CheckOptmization: true,
+		DeclarationMap:   map[string]token.Value{},
+	}
+	meta.Shift()
+
+	fmt.Println("m.CURRENTTT", m.CurrentToken)
+
+	dMap := meta.CheckBlock()
+
+	// TODO: this will probably need to change when start doing functions but this is fine for now
+	// Filter out all private declared entites
+	// Only publicly declared entities should be return from a scope/object
+	// FIXME: do not filter out yet
+	// for key, value := range dMap {
+	// 	if value.AccessType != token.PublicAccessType {
+	// 		delete(dMap, key)
+	// 	}
+	// }
+
+	m.DeclaredValue = token.Value{
+		Type: token.ObjectType,
+		True: dMap,
+	}
+	m.CollectToken(token.Token{
+		ID:    0,
+		Type:  token.Block,
+		Value: m.DeclaredValue,
+	})
+
+	return nil
+
+	// return token.Value{
+	// 	// Type:   token.ArrayType,
+	// 	// Acting: token.VarType,
+	// 	Type: token.ObjectType,
+	// 	True: meta.CheckBlock(),
+	// }, nil
+
+	// return token.Value
+}
+
 // GetStatement gets the next statement in the sequence
-func (m *Meta) GetStatement() {
+func (m *Meta) GetStatement() error {
+	// switch m.CurrentToken.Type {
+	// case token.Block:
+	// 	fmt.Println("m.CurrentToken GetStatement()", m.CurrentToken)
+	// 	err := m.CheckBlock()
+	// 	if err == nil {
+	// 		return nil
+	// 	}
+	// }
+	// os.Exit(9)
+	// err := m.GetAnonymousScope()
+	// if err == nil {
+	// 	return nil
+	// }
+
 	err := m.GetAssignmentStatement()
+	if err == nil {
+		return nil
+	}
+
 	// FIXME: ideally we should do a switch on the error but w/e for now
 	// TODO: we need some way to backtrack to before this operation ...
-	if err != nil {
-		fmt.Println("error getting statement", err)
-		// TODO: woah we could do partial compilation
-		os.Exit(9)
-	}
+	// if err != nil {
+	// TODO: woah we could do partial compilation
+	return errors.New("error getting statement")
+	// }
 }
 
 // CheckArray ...
-func (m *Meta) CheckArray() []token.Value {
+func (m *Meta) CheckArray() (string, []token.Value) {
 	arrayType := m.CurrentToken.Value.Type
+
+	var arrayTypeFound string
+
 	fmt.Println("FOUND AN ARRAY")
 	arrayTokens := m.CurrentToken.Value.True.([]token.Token)
 
@@ -533,23 +609,55 @@ func (m *Meta) CheckArray() []token.Value {
 	// TODO: good enough for now, going to sleep - FIXME: laterrrr brah
 	fmt.Println(arrayType)
 	for i, arrayToken := range arrayTokens {
-		fmt.Println(arrayToken)
+		fmt.Println("arrayToken", arrayToken)
 		// TODO: for the setType we need to ensure that if all are the same then it is static
 		if arrayType != token.VarType && m.DeclaredType != token.VarType && m.DeclaredType != token.SetType && arrayToken.Value.Type != arrayType {
 			fmt.Println("ERROR: array element", i, "does not match declared array type")
 			os.Exit(9)
 		}
 
-		tokenArray = append(tokenArray, arrayToken.Value)
+		switch arrayToken.Type {
+		case token.Block:
+			if arrayTypeFound != "" {
+				arrayTypeFound = token.Type
+			}
+
+			meta := Meta{
+				IgnoreWS:         true,
+				Tokens:           arrayToken.Value.True.([]token.Token),
+				Length:           len(arrayToken.Value.True.([]token.Token)),
+				CheckOptmization: true,
+				DeclarationMap:   map[string]token.Value{},
+			}
+			meta.Shift()
+
+			fmt.Println("m.CURRENTTT", arrayToken)
+
+			tokenArray = append(tokenArray, token.Value{
+				// Type:   token.ArrayType,
+				// Acting: token.VarType,
+				Type: token.ObjectType,
+				True: meta.CheckBlock(),
+			})
+			continue
+
+		default:
+			tokenArray = append(tokenArray, arrayToken.Value)
+		}
 	}
 
-	return tokenArray
+	return arrayTypeFound, tokenArray
 }
 
 // CheckBlock check the usage of the block
 func (m *Meta) CheckBlock() map[string]token.Value {
+	var err error
 	for {
-		m.GetStatement()
+		err = m.GetStatement()
+		if err != nil {
+			fmt.Println("ERROR: could not get statement", err)
+			os.Exit(8)
+		}
 
 		// current := m.CurrentToken
 		// switch current.Type {
