@@ -408,6 +408,10 @@ func (m *Meta) ParseBlock() token.Token {
 			fmt.Println("found a sec_op")
 			blockTokens = append(blockTokens, current)
 
+		case token.Array:
+			fmt.Println("found an array")
+			blockTokens = append(blockTokens, current)
+
 		case token.Keyword:
 			switch current.Value.Type {
 			case token.SQL:
@@ -489,6 +493,9 @@ func (m *Meta) ParseBlock() token.Token {
 			blockTokens = append(blockTokens, m.CurrentToken)
 			peek := m.NextToken
 			switch peek.Type {
+			case token.Array:
+				blockTokens = append(blockTokens, m.CurrentToken)
+
 			case token.Ident:
 				m.Shift()
 				m.ParseIdent(&blockTokens, m.CurrentToken)
@@ -499,7 +506,12 @@ func (m *Meta) ParseBlock() token.Token {
 				m.CurrentToken.Type = token.Ident
 				blockTokens = append(blockTokens, m.CurrentToken)
 
+			case token.LBracket:
+				m.Shift()
+				blockTokens = append(blockTokens, m.ParseArray())
+
 			default:
+				fmt.Println("ERROR after type declaration: peek, current", peek, current)
 				os.Exit(77)
 			}
 

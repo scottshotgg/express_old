@@ -51,4 +51,11 @@ var TypeMap = map[string]Token{
 			String: ObjectType,
 		},
 	},
+	ArrayType: Token{
+		Type: Type,
+		Value: Value{
+			Type:   ArrayType,
+			String: ArrayType,
+		},
+	},
 }

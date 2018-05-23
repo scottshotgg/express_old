@@ -82,11 +82,35 @@ func (m *Meta) AddOperands(left, right token.Value) (token.Value, error) {
 		}
 
 		return valueToken, nil
+	} else {
+		// 	if left side or right side is a string
+		//		-> string
+		//		-> object will be stringitized
+		//	if left or right side is a float and the other is an int
+		//		-> promote to float
+		//	if left is int and right is bool
+		//		-> int
+		//	if right is bool and left is int
+		//		-> bool
+		// 	if left or right is float and other is bool
+		//		-> float
+		//	if left or right is object
+		//		if other is string
+		//			if there is no key with that name
+		//				-> key and value named as string
+		//			else
+		//				-> undefined for now // FIXME: TODO:
+		//		if other is IDENT
+		//			-> ident name as key, ident value as value
+		//		else
+		//			-> undefined for now // FIXME: TODO:
+		//	if left or right is array
+		//		if other is SAME
+		//			-> append to array
+		//		if other is DIFFERENT
+		//			-> dump into object? // FIXME: TODO:
+
 	}
-	// switch declaredType {
-	// case token.IntType:
-	// 	fmt.Println(left, right)
-	// }
 
 	err := errors.New("Could not perform AddOperand on operands")
 	fmt.Println(err, left, right, leftType, rightType)

@@ -147,6 +147,32 @@ func (m *Meta) GetFactor() {
 			Value: m.DeclaredValue,
 		})
 
+	case token.Array:
+		fmt.Println("found an array current", m.CurrentToken)
+		m.DeclaredValue = token.Value{
+			Type: token.ArrayType,
+			// Acting: arrayType,
+			True: m.CheckArray(),
+		}
+		// os.Exit(1)
+		// look through the entire array and analyze the types
+		// check for type declaration
+		// if no type defined, array of vars (can be multitype)
+		// follow normal assignment rules, init, set, type implications, etc
+		// on and off switch for static array type implication
+
+	case token.Type:
+		m.Shift()
+		if m.NextToken.Type == token.Array {
+			arrayType := m.CurrentToken.Value.Type
+			m.Shift()
+			m.DeclaredValue = token.Value{
+				Type:   token.ArrayType,
+				Acting: arrayType,
+				True:   m.CheckArray(),
+			}
+		}
+
 	default:
 		fmt.Println("ERROR getting factor")
 		fmt.Println("Expected factor, got", m.CurrentToken)
@@ -329,10 +355,29 @@ func (m *Meta) GetAssignmentStatement() error {
 
 		// Get the IDENT
 		m.Shift()
-		if m.CurrentToken.Type != token.Ident {
+		// switch m.CurrentToken.Type {
+		// case token.Ident:
+		// }
+		if m.CurrentToken.Type != token.Ident && m.CurrentToken.Type != token.Array {
+			// TODO: logic ist very fucky, find better way
+			// if m.CurrentToken.Type == token.Array {
+			// 	fmt.Println("ARRAY I CHOOSE UUUUUU")
+			// 	m.GetFactor()
+			// meta := Meta{
+			// 	IgnoreWS:         true,
+			// 	Tokens:           m.CurrentToken.Value.True.([]token.Token),
+			// 	Length:           len(m.CurrentToken.Value.True.([]token.Token)),
+			// 	CheckOptmization: true,
+			// 	DeclarationMap:   map[string]token.Value{},
+			// }
+			// meta.Shift()
+			// meta.CheckArray()
+			// fmt.Println(meta.DeclarationMap)
+			// } else {
 			fmt.Println("Syntax error getting assignment_stmt")
 			fmt.Println("Expected IDENT, got", m.CurrentToken)
 			os.Exit(9)
+			// }
 		}
 		if _, ok := m.DeclarationMap[m.CurrentToken.Value.String]; ok {
 			fmt.Println("Variable already declared")
@@ -345,20 +390,31 @@ func (m *Meta) GetAssignmentStatement() error {
 
 		// Get the assignment operator
 		m.Shift()
-		if m.CurrentToken.Type != token.Assign && m.CurrentToken.Type != token.Init && m.CurrentToken.Type != token.Set {
-			// switch m.CurrentToken.Value.Type {
-			// case "init":
-			// case "set":
-			// case "assign":
-			// default:
-			// 	fmt.Println("ERROR how did we get in here", m.CurrentToken)
-			// }
+		switch m.CurrentToken.Type {
+		case token.Assign:
+			fallthrough
+		case token.Init:
+			fallthrough
+		case token.Set:
+			m.CollectCurrentToken()
 
-			fmt.Println("Syntax error getting assignment_stmt")
-			fmt.Println("Expected assign_op, got", m.CurrentToken)
-			os.Exit(9)
+			// case token.Array:
+			// 	m.Shift()
 		}
-		m.CollectCurrentToken()
+		// if m.CurrentToken.Type != token.Assign && m.CurrentToken.Type != token.Init && m.CurrentToken.Type != token.Set {
+		// 	// switch m.CurrentToken.Value.Type {
+		// 	// case "init":
+		// 	// case "set":
+		// 	// case "assign":
+		// 	// default:
+		// 	// 	fmt.Println("ERROR how did we get in here", m.CurrentToken)
+		// 	// }
+
+		// 	fmt.Println("Syntax error getting assignment_stmt")
+		// 	fmt.Println("Expected assign_op, got", m.CurrentToken)
+		// 	os.Exit(9)
+		// }
+		// m.CollectCurrentToken()
 
 		// FIXME: this should return an error that we can check
 		m.GetExpression()
@@ -386,7 +442,6 @@ func (m *Meta) GetAssignmentStatement() error {
 
 		m.Shift()
 		if m.CurrentToken.Type == token.Assign {
-
 			fmt.Println("CURRENTIDENT", currentIdent.Value.Type)
 			m.DeclaredAccessType = currentIdent.Value.Type
 			m.DeclaredName = currentIdent.Value.String
@@ -465,6 +520,30 @@ func (m *Meta) GetStatement() {
 		// TODO: woah we could do partial compilation
 		os.Exit(9)
 	}
+}
+
+// CheckArray ...
+func (m *Meta) CheckArray() []token.Value {
+	arrayType := m.CurrentToken.Value.Type
+	fmt.Println("FOUND AN ARRAY")
+	arrayTokens := m.CurrentToken.Value.True.([]token.Token)
+
+	var tokenArray []token.Value
+
+	// TODO: good enough for now, going to sleep - FIXME: laterrrr brah
+	fmt.Println(arrayType)
+	for i, arrayToken := range arrayTokens {
+		fmt.Println(arrayToken)
+		// TODO: for the setType we need to ensure that if all are the same then it is static
+		if arrayType != token.VarType && m.DeclaredType != token.VarType && m.DeclaredType != token.SetType && arrayToken.Value.Type != arrayType {
+			fmt.Println("ERROR: array element", i, "does not match declared array type")
+			os.Exit(9)
+		}
+
+		tokenArray = append(tokenArray, arrayToken.Value)
+	}
+
+	return tokenArray
 }
 
 // CheckBlock check the usage of the block

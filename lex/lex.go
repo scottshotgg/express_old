@@ -103,10 +103,16 @@ func (meta *lexMeta) LexLiteral() token.Token {
 				// 		}
 				// 	}
 
-				// If it errors, assume that it is an ident (for now)
-				t.Type = token.Ident
-				t.Value = token.Value{
-					String: meta.Accumulator,
+				// need to check whether it is a type/keyword in the map
+				keyword, ok := token.TokenMap[meta.Accumulator]
+				if ok {
+					t = keyword
+				} else {
+					// If it errors, assume that it is an ident (for now)
+					t.Type = token.Ident
+					t.Value = token.Value{
+						String: meta.Accumulator,
+					}
 				}
 			}
 		}
