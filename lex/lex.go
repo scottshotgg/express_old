@@ -159,9 +159,13 @@ func Lex(input string) ([]token.Token, error) {
 							for {
 								index++
 								if index == len(input) || (input[index] == '*' && input[index+1] == '/') {
+									index++
 									break
 								}
 							}
+
+						default:
+							meta.Tokens = append(meta.Tokens, token.TokenMap[string(char)])
 						}
 					}
 					continue

@@ -1,5 +1,8 @@
 // simple assignment program
 
+
+float cmake = 5.5 / 0.1
+
 // declaring a few strings with concatenation
 string b = "hey its you"
 b = "gee"
@@ -70,12 +73,15 @@ object productB = {
   }
 }
 
-object Addition = {
-  ayy: 665
-} + {
-  ayy: 1
+// FIXME: there is a bug in objects or sets where you don't need to have the same types
+waddup := {
+  ayy: 665.0
+} / {
+  ayy: .1
 }
 
-productTotal := ProductA + productB
+ProductTotal := ProductA + productB
 
-bbb := 3
+//bbb := 3
+
+meb := "hi" - "you"

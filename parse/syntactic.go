@@ -117,7 +117,6 @@ func (m *Meta) ParseAttribute() token.Token {
 			// TODO: should this just be an array of statements that get parsed like anything else?
 			// TODO: programmatic compiler directives/attributes?
 			// TODO: at this point we could just call an entirely separate ECMA-335 parser
-
 		case token.Ident:
 			ecmaTokens = append(ecmaTokens, current)
 

@@ -156,7 +156,49 @@ func (m *Meta) GetFactor() {
 
 // GetTerm gets the next term in the sequence
 func (m *Meta) GetTerm() {
+	// m.GetFactor()
 	m.GetFactor()
+
+	// FIXME: need to make something to evaluate the statement
+	if m.NextToken.Type == token.PriOp {
+		value1 := m.LastCollectedToken
+		m.RemoveLastCollectedToken()
+		fmt.Println("factor value1", value1)
+		fmt.Println("last", m.LastCollectedToken)
+
+		m.Shift()
+		op := m.CurrentToken
+
+		m.GetTerm()
+		value2 := m.LastCollectedToken
+		m.RemoveLastCollectedToken()
+
+		// FIXME: TODO: really should do this with some sort of eval or using reflection
+		// switch op.Value.String {
+		// case "+":
+		fmt.Println("value1, value2", value1, value2)
+
+		valueToken := token.Token{
+			ID:   1,
+			Type: token.Literal,
+			// Expected: "",
+			Value: m.GetOperationValue(value1, value2, op),
+		}
+		// FIXME: ??? fix this
+		fmt.Println("ACCESS", valueToken.Value.AccessType)
+		valueToken.Value.AccessType = m.DeclaredAccessType
+
+		fmt.Println("valueToken", valueToken)
+		m.CollectToken(valueToken)
+
+		m.DeclaredValue = valueToken.Value
+
+		// default:
+		// 	fmt.Println("Operator not defined")
+		// 	fmt.Println("Found operator:", op)
+		// 	os.Exit(9)
+		// }
+	}
 }
 
 // GetSecOp gets a secondary operation; + and -
@@ -187,6 +229,30 @@ func (m *Meta) GetOperationValue(left token.Token, right token.Token, op token.T
 		}
 		return value
 
+	case "-":
+		value, err := m.SubOperands(left.Value, right.Value)
+		if err != nil {
+			fmt.Println("could not sub operands idk wtf happened", left.Value, right.Value)
+			os.Exit(9)
+		}
+		return value
+
+	case "*":
+		value, err := m.MultOperands(left.Value, right.Value)
+		if err != nil {
+			fmt.Println("could not mult operands idk wtf happened", left.Value, right.Value)
+			os.Exit(9)
+		}
+		return value
+
+	case "/":
+		value, err := m.DivOperands(left.Value, right.Value)
+		if err != nil {
+			fmt.Println("could not mult operands idk wtf happened", left.Value, right.Value)
+			os.Exit(9)
+		}
+		return value
+
 	default:
 		fmt.Println("Invalid operand", op)
 	}
@@ -205,12 +271,13 @@ func (m *Meta) GetOperationValue(left token.Token, right token.Token, op token.T
 // GetExpression gets the next expression
 func (m *Meta) GetExpression() {
 	m.GetTerm()
-	value1 := m.LastCollectedToken
-	m.RemoveLastCollectedToken()
-	fmt.Println("last", m.LastCollectedToken)
 
 	// FIXME: need to make something to evaluate the statement
 	if m.NextToken.Type == token.SecOp {
+		value1 := m.LastCollectedToken
+		m.RemoveLastCollectedToken()
+		fmt.Println("last", m.LastCollectedToken)
+
 		m.Shift()
 		op := m.CurrentToken
 
@@ -219,28 +286,30 @@ func (m *Meta) GetExpression() {
 		m.RemoveLastCollectedToken()
 
 		// FIXME: TODO: really should do this with some sort of eval or using reflection
-		switch op.Value.String {
-		case "+":
-			fmt.Println("value1, value2", value1, value2)
+		// switch op.Value.String {
+		// case "+":
+		fmt.Println("value1, value2", value1, value2)
 
-			valueToken := token.Token{
-				ID:   1,
-				Type: token.Literal,
-				// Expected: "",
-				Value: m.GetOperationValue(value1, value2, op),
-			}
-			valueToken.Value.AccessType = m.DeclaredAccessType
-
-			fmt.Println("valueToken", valueToken)
-			m.CollectToken(valueToken)
-
-			m.DeclaredValue = valueToken.Value
-
-		default:
-			fmt.Println("Operator not defined")
-			fmt.Println("Found operator:", op)
-			os.Exit(9)
+		valueToken := token.Token{
+			ID:   1,
+			Type: token.Literal,
+			// Expected: "",
+			Value: m.GetOperationValue(value1, value2, op),
 		}
+		// FIXME: ??? fix this
+		fmt.Println("ACCESS", valueToken.Value.AccessType)
+		valueToken.Value.AccessType = m.DeclaredAccessType
+
+		fmt.Println("valueToken", valueToken)
+		m.CollectToken(valueToken)
+
+		m.DeclaredValue = valueToken.Value
+
+		// default:
+		// 	fmt.Println("Operator not defined")
+		// 	fmt.Println("Found operator:", op)
+		// 	os.Exit(9)
+		// }
 	}
 }
 
@@ -318,6 +387,7 @@ func (m *Meta) GetAssignmentStatement() error {
 		m.Shift()
 		if m.CurrentToken.Type == token.Assign {
 
+			fmt.Println("CURRENTIDENT", currentIdent.Value.Type)
 			m.DeclaredAccessType = currentIdent.Value.Type
 			m.DeclaredName = currentIdent.Value.String
 			current, ok := m.DeclarationMap[currentIdent.Value.String]
@@ -346,7 +416,7 @@ func (m *Meta) GetAssignmentStatement() error {
 					m.DeclaredType = current.Type
 				} else {
 					// FIXME: will have to look at this
-					m.DeclaredAccessType = currentIdent.Type
+					m.DeclaredAccessType = currentIdent.Value.Type
 					m.DeclaredType = token.SetType
 				}
 			} else {
