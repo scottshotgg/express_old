@@ -70,6 +70,12 @@ object productB = {
   }
 }
 
+object Addition = {
+  ayy: 665
+} + {
+  ayy: 1
+}
+
 productTotal := ProductA + productB
 
 bbb := 3

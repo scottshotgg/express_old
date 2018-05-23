@@ -141,6 +141,11 @@ func (m *Meta) GetFactor() {
 			Type: token.ObjectType,
 			True: dMap,
 		}
+		m.CollectToken(token.Token{
+			ID:    0,
+			Type:  token.Block,
+			Value: m.DeclaredValue,
+		})
 
 	default:
 		fmt.Println("ERROR getting factor")
