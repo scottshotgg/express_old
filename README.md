@@ -1,6 +1,6 @@
 # Express
 
-## Status: `tock`
+## Status: `tick`
 
 Code is pretty dirty right now; it is due for a "garbage collection" since a lot of the code is hacky garbage right now anyways. Will have to fix all of the FIXME and TODO stamps and clean up some of the workarounds later in the next phase.
 
