@@ -293,6 +293,10 @@ func (m *Meta) ParseGroup() token.Token {
 		case token.Type:
 			peek := m.NextToken
 			switch peek.Type {
+			case token.LBracket:
+				fmt.Println("found array")
+				os.Exit(8)
+
 			case token.Ident:
 				m.ParseIdent(&groupTokens, m.CurrentToken)
 
@@ -364,7 +368,7 @@ func (m *Meta) ParseArray() token.Token {
 				ID:   1,
 				Type: token.Array,
 				Value: token.Value{
-					Type: token.Array,
+					Type: token.ArrayType,
 					True: arrayTokens,
 				},
 			}
@@ -494,7 +498,7 @@ func (m *Meta) ParseBlock() token.Token {
 			peek := m.NextToken
 			switch peek.Type {
 			case token.Array:
-				blockTokens = append(blockTokens, m.CurrentToken)
+				blockTokens = append(blockTokens, peek)
 
 			case token.Ident:
 				m.Shift()
@@ -507,10 +511,35 @@ func (m *Meta) ParseBlock() token.Token {
 				blockTokens = append(blockTokens, m.CurrentToken)
 
 			case token.LBracket:
+				fmt.Println("found array", current)
 				m.Shift()
-				blockTokens = append(blockTokens, m.ParseArray())
+				if m.NextToken.Type != token.RBracket {
+					fmt.Println("syntax error")
+					os.Exit(8)
+				}
+
+				arrayToken, ok := token.TokenMap[current.Value.String+peek.Value.String+m.NextToken.Value.String]
+				m.Shift()
+				fmt.Println(arrayToken, ok)
+				// blockTokens = append(blockTokens, m.ParseArray())
+				blockTokens[len(blockTokens)-1] = arrayToken
+
+				fmt.Println()
+				fmt.Println("blockTokens", blockTokens)
+				fmt.Println()
+				// m.Shift()
+				// blockTokens = append(blockTokens, m.ParseArray())
+				// m.Shift()
+				// fmt.Println("m.Current shit", m.CurrentToken)
+
+				// if m.CurrentToken.Type != token.Ident {
+				// 	fmt.Println("syntax error: no ident after array type declaration")
+				// 	os.Exit(8)
+				// }
+				// m.ParseIdent(&blockTokens, m.CurrentToken)
 
 			default:
+				fmt.Printf("meta %+v\n", m)
 				fmt.Println("ERROR after type declaration: peek, current", peek, current)
 				os.Exit(77)
 			}

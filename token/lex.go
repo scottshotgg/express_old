@@ -5,6 +5,7 @@ var (
 	Lexemes = []string{
 		"var",
 		"int",
+		"int[]",
 		"float",
 		"string",
 		"bool",
