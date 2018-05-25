@@ -76,6 +76,11 @@ func (m *Meta) AddOperands(left, right token.Value) (token.Value, error) {
 			}
 			valueToken.True = result
 
+		case token.ArrayType:
+			valueToken.True = append(left.True.([]token.Value), right.True.([]token.Value)...)
+			fmt.Println("valueToken thingy", valueToken.True)
+			// valueToken.String
+
 		default:
 			fmt.Println("Type not declared for AddOperands", left, right, leftType, rightType)
 			os.Exit(9)
