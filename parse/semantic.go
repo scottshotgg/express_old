@@ -145,17 +145,27 @@ func (m *Meta) GetFactor() {
 
 	case token.Array:
 		fmt.Println("found an array current", m.CurrentToken)
+		m.DeclaredValue = token.Value{
+			Type: token.ArrayType,
+			True: m.CheckArray(),
+		}
+		m.CollectToken(token.Token{
+			ID:    0,
+			Type:  token.Array,
+			Value: m.DeclaredValue,
+		})
+
 		// TODO: this needs an error
-		_, arrayValue := m.CheckArray()
+		// _, arrayValue := m.CheckArray()
 		// if err != nil {
 		// 	// TODO:
 		// 	fmt.Println("ERROR: need to handle this", err)
 		// }
-		m.DeclaredValue = token.Value{
-			Type: token.ArrayType,
-			// Acting: arrayType,
-			True: arrayValue,
-		}
+		// m.DeclaredValue = token.Value{
+		// 	Type: token.ArrayType,
+		// 	// Acting: arrayType,
+		// 	True: arrayValue,
+		// }
 		// os.Exit(1)
 		// look through the entire array and analyze the types
 		// check for type declaration
@@ -166,19 +176,20 @@ func (m *Meta) GetFactor() {
 	case token.Type:
 		m.Shift()
 		if m.NextToken.Type == token.Array {
-			arrayType := m.CurrentToken.Value.Type
+			// arrayType := m.CurrentToken.Value.Type
 			m.Shift()
 			// TODO: this needs an error
-			_, arrayValue := m.CheckArray()
+			// _, arrayValue := m.CheckArray()
+			m.CheckArray()
 			// if err != nil {
 			// 	// TODO:
 			// 	fmt.Println("ERROR: need to handle this", err)
 			// }
-			m.DeclaredValue = token.Value{
-				Type:   token.ArrayType,
-				Acting: arrayType,
-				True:   arrayValue,
-			}
+			// m.DeclaredValue = token.Value{
+			// 	Type:   token.ArrayType,
+			// 	Acting: arrayType,
+			// 	True:   arrayValue,
+			// }
 		}
 
 	default:
@@ -596,32 +607,23 @@ func (m *Meta) GetStatement() error {
 }
 
 // CheckArray ...
-func (m *Meta) CheckArray() (string, []token.Value) {
-	arrayType := m.CurrentToken.Value.Type
+func (m *Meta) CheckArray() []token.Value {
+	fmt.Println("checking array", m.CurrentToken)
+	// os.Exit(9)
 
-	var arrayTypeFound string
-
-	fmt.Println("FOUND AN ARRAY")
 	arrayTokens := m.CurrentToken.Value.True.([]token.Token)
 
-	var tokenArray []token.Value
-
-	// TODO: good enough for now, going to sleep - FIXME: laterrrr brah
-	fmt.Println(arrayType)
-	for i, arrayToken := range arrayTokens {
-		fmt.Println("arrayToken", arrayToken)
-		// TODO: for the setType we need to ensure that if all are the same then it is static
-		if arrayType != token.VarType && m.DeclaredType != token.VarType && m.DeclaredType != token.SetType && arrayToken.Value.Type != arrayType {
-			fmt.Println("ERROR: array element", i, "does not match declared array type")
-			os.Exit(9)
-		}
+	aTokens := []token.Value{}
+	for _, arrayToken := range arrayTokens {
+		fmt.Println(arrayToken)
 
 		switch arrayToken.Type {
-		case token.Block:
-			if arrayTypeFound != "" {
-				arrayTypeFound = token.Type
-			}
+		case token.Literal:
+			fmt.Println("got a literal")
+			aTokens = append(aTokens, arrayToken.Value)
 
+		case token.Block:
+			fmt.Println("i haev get ze block")
 			meta := Meta{
 				IgnoreWS:         true,
 				Tokens:           arrayToken.Value.True.([]token.Token),
@@ -631,23 +633,123 @@ func (m *Meta) CheckArray() (string, []token.Value) {
 			}
 			meta.Shift()
 
-			fmt.Println("m.CURRENTTT", arrayToken)
-
-			tokenArray = append(tokenArray, token.Value{
-				// Type:   token.ArrayType,
-				// Acting: token.VarType,
-				Type: token.ObjectType,
+			aTokens = append(aTokens, token.Value{
 				True: meta.CheckBlock(),
 			})
-			continue
 
-		default:
-			tokenArray = append(tokenArray, arrayToken.Value)
+		case token.Array:
+			meta := Meta{
+				IgnoreWS:         true,
+				Tokens:           []token.Token{arrayToken},
+				Length:           1,
+				CheckOptmization: true,
+				DeclarationMap:   map[string]token.Value{},
+			}
+			meta.Shift()
+			meta.Shift()
+
+			aTokens = append(aTokens, token.Value{
+				True: meta.CheckArray(),
+			})
+
+			// Need to go look stuff up in the map this
+			// case token.Ident:
+			// 	aToken = append(aToken, )
 		}
 	}
 
-	return arrayTypeFound, tokenArray
+	fmt.Println(aTokens)
+	return aTokens
 }
+
+// // CheckArray ...
+// // TODO: fix this shit
+// func (m *Meta) CheckArray() (string, []token.Value) {
+// 	arrayType := m.CurrentToken.Value.Type
+
+// 	var arrayTypeFound string
+
+// 	fmt.Println("FOUND AN ARRAY", m.CurrentToken)
+// 	arrayTokens := m.CurrentToken.Value.True.([]token.Token)
+// 	fmt.Println("FOUND AN ARRAY 2", arrayTokens)
+
+// 	var tokenArray []token.Value
+
+// 	// TODO: good enough for now, going to sleep - FIXME: laterrrr brah
+// 	fmt.Println(arrayType)
+// 	for i, arrayToken := range arrayTokens {
+// 		fmt.Println("arrayToken", arrayToken)
+// 		// TODO: for the setType we need to ensure that if all are the same then it is static
+// 		if arrayType != token.VarType && m.DeclaredType != token.VarType && m.DeclaredType != token.SetType && arrayToken.Value.Type != arrayType {
+// 			fmt.Println("ERROR: array element", i, "does not match declared array type")
+// 			os.Exit(9)
+// 		}
+
+// 		switch arrayToken.Type {
+// 		case token.Block:
+// 			if arrayTypeFound != "" {
+// 				arrayTypeFound = token.Type
+// 			}
+
+// 			meta := Meta{
+// 				IgnoreWS:         true,
+// 				Tokens:           arrayToken.Value.True.([]token.Token),
+// 				Length:           len(arrayToken.Value.True.([]token.Token)),
+// 				CheckOptmization: true,
+// 				DeclarationMap:   map[string]token.Value{},
+// 			}
+// 			meta.Shift()
+
+// 			fmt.Println("m.CURRENTTT", arrayToken)
+
+// 			tokenArray = append(tokenArray, token.Value{
+// 				// Type:   token.ArrayType,
+// 				// Acting: token.VarType,
+// 				Type: token.ObjectType,
+// 				True: meta.CheckBlock(),
+// 			})
+// 			continue
+
+// 		case token.Array:
+// 			fmt.Println()
+// 			fmt.Println("found an array")
+// 			fmt.Println(arrayToken.Value.True.([]token.Token))
+// 			fmt.Println()
+// 			meta := Meta{
+// 				IgnoreWS: true,
+// 				Tokens: []token.Token{
+// 					token.Token{
+// 						ID:       0,
+// 						Type:     "ARRAY",
+// 						Expected: "",
+// 						Value: token.Value{
+// 							// Type: "array",
+// 							True: arrayToken.Value.True.([]token.Token),
+// 						},
+// 					},
+// 				},
+// 				Length:           1,
+// 				CheckOptmization: true,
+// 				DeclarationMap:   map[string]token.Value{},
+// 				DeclaredType:     token.VarType,
+// 			}
+// 			meta.Shift()
+// 			meta.Shift()
+// 			fmt.Printf("%+v\n", meta)
+// 			_, tValue := meta.CheckArray()
+// 			// FIXME: fix the type
+// 			tokenArray = append(tokenArray, token.Value{
+// 				Type: "var",
+// 				True: tValue,
+// 			})
+
+// 		default:
+// 			tokenArray = append(tokenArray, arrayToken.Value)
+// 		}
+// 	}
+
+// 	return arrayTypeFound, tokenArray
+// }
 
 // CheckBlock check the usage of the block
 func (m *Meta) CheckBlock() map[string]token.Value {

@@ -1,30 +1,18 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/scottshotgg/Express/lex"
 	"github.com/scottshotgg/Express/parse"
+	program "github.com/scottshotgg/Express/program"
 	"github.com/scottshotgg/Express/token"
 	//"llvm.org/llvm/bindings/go/llvm"
 )
 
 // TODO: we currently have to have the space afterwards, need to add the parsing code into the semicolon code
 // TODO: we currently only have numbers being parsed within floats, so nothing like '9.9f', etc
-
-// Program ...
-type Program struct {
-	Index  int
-	Name   string
-	Value  string
-	Length int
-	EOS    bool
-	Tokens map[string][]token.Token
-	// Tokens []token.Token
-}
 
 var (
 	jsonIndent = "\t"
@@ -40,58 +28,6 @@ var (
 	}
 )
 
-// NewProgram returns a new Express program struct with initialized values
-func NewProgram(programName string) (Program, error) {
-	input, err := ioutil.ReadFile(programName)
-	if err != nil {
-		fmt.Printf("ERROR: Cannot read input program: %s\n", programName)
-		return Program{}, err
-	}
-
-	return Program{
-		Value:  string(input),
-		Name:   programName,
-		Length: len(input),
-		Tokens: compileStages,
-	}, nil
-	// might do this later, figure this out later
-	// Tokens: func() {
-
-	// 	for _, stage := range compileStages {
-
-	// 	}
-	// }(),
-}
-
-// PrintTokens ...
-func (p *Program) PrintTokens(stage string) {
-	for _, t := range p.Tokens[stage] {
-		if t.Type == "BLOCK" || t.Type == "ARRAY" || t.Type == "GROUP" || t.Type == "FUNCTION" || t.Type == "ATTRIBUTE" {
-			jsonIndent += "\t"
-
-			po := Program{
-				Tokens: map[string][]token.Token{
-					"parse": t.Value.True.([]token.Token),
-				},
-			}
-
-			fmt.Println()
-			fmt.Println(jsonIndent[0:len(jsonIndent)-1] + t.Type)
-			po.PrintTokens("parse")
-
-			jsonIndent = jsonIndent[0 : len(jsonIndent)-1]
-			continue
-		}
-
-		tokenJSON, err := json.Marshal(t)
-		if err != nil {
-			fmt.Printf("\nERROR: Could not marshal JSON from token: %#v\n", t)
-			os.Exit(9)
-		}
-		fmt.Println(jsonIndent + string(tokenJSON))
-	}
-}
-
 func main() {
 	// TODO: add some flags later
 	// parseFlags()
@@ -103,7 +39,7 @@ func main() {
 		return
 	}
 
-	p, err := NewProgram(os.Args[argLen-1])
+	p, err := program.New(os.Args[argLen-1], compileStages)
 	if err != nil {
 		fmt.Println("ERROR: Could not instantiate program structure", err)
 		return
@@ -136,7 +72,7 @@ func main() {
 	// 	},
 	// })
 
-	p.PrintTokens("lex")
+	p.PrintTokens("lex", jsonIndent)
 
 	// TODO: always output tokens right now
 	// TODO: change the name of this to accurately reflect lex vs parse tokens
@@ -151,7 +87,7 @@ func main() {
 		fmt.Println("ERROR:", err)
 	}
 	fmt.Println("\nSemantic tokens:")
-	p.PrintTokens("parse")
+	p.PrintTokens("parse", jsonIndent)
 	fmt.Println()
 
 	// Semantic parse time
