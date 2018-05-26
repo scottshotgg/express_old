@@ -27,8 +27,10 @@ type Meta struct {
 	CheckOptmization     bool
 	OptimizationAttempts int
 
+	InheritedMap       map[string]token.Value
 	DeclarationMap     map[string]token.Value
 	DeclaredType       string
+	DeclaredActingType string
 	DeclaredName       string
 	DeclaredValue      token.Value
 	DeclaredAccessType string
@@ -373,6 +375,9 @@ func (m *Meta) ParseArray() token.Token {
 				},
 			}
 
+		case token.SecOp:
+			arrayTokens = append(arrayTokens, m.CurrentToken)
+
 		case "":
 			fmt.Println("we got nothing")
 
@@ -514,10 +519,11 @@ func (m *Meta) ParseBlock() token.Token {
 				fmt.Println("found array", current)
 				m.Shift()
 				if m.NextToken.Type != token.RBracket {
-					fmt.Println("syntax error")
+					fmt.Println("syntax ERROR: missing ] after type declaration")
 					os.Exit(8)
 				}
 
+				// FIXME: fix this and make the ok check
 				arrayToken, ok := token.TokenMap[current.Value.String+peek.Value.String+m.NextToken.Value.String]
 				m.Shift()
 				fmt.Println(arrayToken, ok)

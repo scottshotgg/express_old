@@ -114,12 +114,15 @@ func (m *Meta) GetFactor() {
 		// FIXME: remove this hack shit later
 		fmt.Println("m.DeclaredName", m.DeclaredName)
 		fmt.Println("found ze bracket")
+		fmt.Println("declarationMap", m.DeclarationMap)
+
 		meta := Meta{
 			IgnoreWS:         true,
 			Tokens:           m.CurrentToken.Value.True.([]token.Token),
 			Length:           len(m.CurrentToken.Value.True.([]token.Token)),
 			CheckOptmization: true,
 			DeclarationMap:   map[string]token.Value{},
+			// InheritedMap:     m.DeclarationMap, // TODO: anonymous scopes will not need this, if check it?
 		}
 		meta.Shift()
 		dMap := meta.CheckBlock()
@@ -145,6 +148,7 @@ func (m *Meta) GetFactor() {
 		})
 
 	case token.Array:
+		fmt.Println(m.DeclaredType, m.DeclaredValue)
 		fmt.Println("found an array current", m.CurrentToken)
 		m.DeclaredValue = token.Value{
 			Type:   token.ArrayType,
@@ -381,6 +385,8 @@ func (m *Meta) GetAssignmentStatement() error {
 		fmt.Println(m.CurrentToken.Value.String)
 		fmt.Println("HEY PICK ME BRAH")
 		m.DeclaredType = m.CurrentToken.Value.String
+		m.DeclaredActingType = m.CurrentToken.Value.Acting
+		fmt.Println(m.DeclaredActingType)
 
 		m.CollectCurrentToken()
 
@@ -617,76 +623,80 @@ func (m *Meta) GetStatement() error {
 	// }
 }
 
-// CheckArray ...
+// CheckArray builds an array of token.Values and deduces the type that they need to be
 func (m *Meta) CheckArray() []token.Value {
 	fmt.Println("checking array", m.CurrentToken)
 	fmt.Printf("stufffzzz %+v\n", m.DeclaredValue)
 	// os.Exit(9)
 
-	arrayType := ""
+	arrayType := m.DeclaredActingType
+
 	fmt.Println("ARRAY TYPE", arrayType)
 
 	arrayTokens := m.CurrentToken.Value.True.([]token.Token)
 
+	meta := Meta{
+		IgnoreWS:         true,
+		Tokens:           arrayTokens,
+		Length:           len(arrayTokens),
+		CheckOptmization: true,
+		DeclarationMap:   m.DeclarationMap,
+		InheritedMap:     m.DeclarationMap,
+	}
+
+	fmt.Println("declarationMap", meta.DeclarationMap)
+
+	meta.Shift()
+
+	fmt.Printf("%+v\n", meta)
+
 	aTokens := []token.Value{}
-	for _, arrayToken := range arrayTokens {
-		fmt.Println(arrayToken)
-
-		switch arrayToken.Type {
-		case token.Literal:
-			fmt.Println("got a literal")
-			aTokens = append(aTokens, arrayToken.Value)
-
-		case token.Ident:
-			fmt.Println("found an ident")
-			identToken, ok := m.DeclarationMap[arrayToken.Value.String]
-			if ok {
-				aTokens = append(aTokens, identToken)
-			}
-			fmt.Println(identToken, ok)
-
-		case token.Block:
-			fmt.Println("i haev get ze block")
-			meta := Meta{
-				IgnoreWS:         true,
-				Tokens:           arrayToken.Value.True.([]token.Token),
-				Length:           len(arrayToken.Value.True.([]token.Token)),
-				CheckOptmization: true,
-				DeclarationMap:   map[string]token.Value{},
-			}
-			meta.Shift()
-
-			aTokens = append(aTokens, token.Value{
-				True: meta.CheckBlock(),
-			})
-
-		case token.Array:
-			meta := Meta{
-				IgnoreWS:         true,
-				Tokens:           []token.Token{arrayToken},
-				Length:           1,
-				CheckOptmization: true,
-				DeclarationMap:   m.DeclarationMap,
-			}
-			meta.Shift()
-			meta.Shift()
-
-			aTokens = append(aTokens, token.Value{
-				True: meta.CheckArray(),
-			})
+	for {
+		fmt.Println("stuff for doing stuff 11")
+		fmt.Println(arrayType, m.DeclaredValue, meta.CurrentToken.Value.Type, m.DeclaredType, m.DeclaredActingType)
+		if meta.NextToken == (token.Token{}) {
+			break
 		}
+
+		if meta.NextToken.Type == token.Ident {
+			meta.DeclaredType = token.SetType
+
+		} else {
+			meta.DeclaredType = meta.NextToken.Value.Type
+		}
+
+		// meta.DeclaredType = meta.NextToken.Value.Type
+
+		meta.GetExpression()
 
 		if arrayType == "" { // && arrayType != "var" {
-			arrayType = arrayToken.Value.Type
+			if meta.CurrentToken.Type == token.Ident {
+				arrayType = meta.DeclaredValue.Type
+			} else {
+				arrayType = meta.CurrentToken.Value.Type
+			}
 			fmt.Println("SETTING arrayType", arrayType)
-		} else if arrayType != arrayToken.Value.Type {
+		} else {
+			fmt.Println("stuff for doing stuff")
+			fmt.Println(arrayType, meta.DeclaredValue.Type, meta.CurrentToken.Value.Type, meta.DeclaredType, m.DeclaredActingType)
 
-			if m.DeclaredType == token.SetType {
-				fmt.Println("SETTING STUFF")
-
-				arrayType = token.VarType
+			if m.DeclaredActingType != meta.CurrentToken.Value.Type {
+				if meta.DeclaredType == token.SetType {
+					arrayType = token.VarType
+				} else {
+					fmt.Println("ERROR: cannot use", meta.DeclaredValue.Type, "as type", arrayType, "in", meta.DeclaredName)
+					os.Exit(8)
+				}
+			} else {
+				if meta.CurrentToken.Type == token.Ident {
+					arrayType = meta.DeclaredValue.Type
+				} else {
+					arrayType = meta.CurrentToken.Value.Type
+				}
 			}
 		}
+
+		aTokens = append(aTokens, meta.DeclaredValue)
 	}
 
 	fmt.Println("arrayType, m.DeclaredType, m.DeclaredValue.Type", arrayType, m.DeclaredType, m.DeclaredValue.Type)

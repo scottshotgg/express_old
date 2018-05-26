@@ -1,1 +1,14 @@
-int[] arrayDude = ["6", 7, 8 ]
+b :=  9 
+a := 5 
+bb := 10
+
+ints := [ "5", bb, b ]
+int[] arrayBrah = [ 5, 5 ]
+
+/* 
+TODO: things like this can be fixed with a simple 'InheritedMap' structure
+but I am too lazy right now to do that
+o := {
+    be: b
+}
+*/
