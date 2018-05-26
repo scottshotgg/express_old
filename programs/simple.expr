@@ -87,8 +87,8 @@ ProductTotal := ProductA + productB
 meb := "hi" - "you"
 
 // TODO: fix object nested in array
-int someArray = [ "3", 4, [ 7, 8 ] ]
-someOtherArray := int[ 3, 4, 5 ]
+//int[] someArray = [ "3", 4, [ 7, 8 ] ]
+//someOtherArray := [ 3, 4, 5 ]
 
 /*{
   five: 5

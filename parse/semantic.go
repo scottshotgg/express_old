@@ -75,7 +75,7 @@ func (m *Meta) GetFactor() {
 	case token.Ident:
 		fmt.Println("found an ident")
 		tValue, ok := m.DeclarationMap[m.CurrentToken.Value.String]
-		fmt.Println("tValue, ok", tValue, ok)
+		fmt.Printf("tValue %+v, ok %b\n", tValue, ok)
 		if !ok {
 			fmt.Println("Undefined variable reference")
 			os.Exit(9)
@@ -83,6 +83,7 @@ func (m *Meta) GetFactor() {
 		if m.DeclaredType != token.SetType && m.DeclaredType != token.VarType && tValue.Type != m.DeclaredType {
 			fmt.Println("Variable type mismatch")
 			fmt.Println("Expected", m.DeclaredType, "got", tValue.Type)
+			fmt.Println(tValue)
 			os.Exit(9)
 		}
 
@@ -100,6 +101,7 @@ func (m *Meta) GetFactor() {
 		if m.DeclaredType != token.SetType && m.DeclaredType != token.VarType && m.CurrentToken.Value.Type != m.DeclaredType {
 			fmt.Println("Variable type mismatch")
 			fmt.Println("Expected", m.DeclaredType, "got", m.CurrentToken.Value.Type)
+			// fmt.Println()
 			os.Exit(9)
 		}
 
@@ -205,11 +207,12 @@ func (m *Meta) GetFactor() {
 		os.Exit(9)
 	}
 
-	if m.DeclaredType != token.SetType && m.DeclaredType != token.VarType && m.CurrentToken.Value.Type != m.DeclaredType {
-		fmt.Println("Variable type mismatch")
-		fmt.Println("Expected", m.DeclaredType, "got", m.CurrentToken.Value.Type)
-		os.Exit(9)
-	}
+	// idk why this was here but it was breaking addition with idents in it...
+	// if m.DeclaredType != token.SetType && m.DeclaredType != token.VarType && m.CurrentToken.Value.Type != m.DeclaredType {
+	// 	fmt.Println("Variable type mismatch")
+	// 	fmt.Println("Expected", m.DeclaredType, "got", m.CurrentToken.Value.Type)
+	// 	os.Exit(9)
+	// }
 }
 
 // GetTerm gets the next term in the sequence

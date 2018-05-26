@@ -422,11 +422,11 @@ func (m *Meta) ParseBlock() token.Token {
 			blockTokens = append(blockTokens, current)
 
 		case token.Keyword:
-			switch current.Value.Type {
-			case token.SQL:
-				fmt.Println("found a sql keyword")
-				blockTokens = append(blockTokens, current)
-			}
+			blockTokens = append(blockTokens, current)
+			// switch current.Value.Type {
+			// case token.SQL:
+			// 	fmt.Println("found a sql keyword")
+			// }
 			// os.Exit(9)
 
 		case token.GThan:
@@ -483,6 +483,7 @@ func (m *Meta) ParseBlock() token.Token {
 
 			default:
 				fmt.Println("wtf peek following group", peek, m)
+				os.Exit(8)
 			}
 
 		case token.Hash:
