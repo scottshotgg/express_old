@@ -717,9 +717,33 @@ func (m *Meta) CheckArray() []token.Value {
 func (m *Meta) CheckBlock() map[string]token.Value {
 	var err error
 	for {
-		switch m.CurrentToken.Type {
+		fmt.Printf("CURRENT %+v\n", m.NextToken.Type)
+
+		switch m.NextToken.Type {
 		case token.Keyword:
 			fmt.Println("found a keyword")
+			m.Shift()
+
+			switch m.CurrentToken.Value.String{
+			case "for":
+				fmt.Println("found a for")
+				// expect grouping
+					// grouping has 0-3 expressions within it
+				// expect block
+
+			case "if":
+				fmt.Println("found an if")
+				// expect grouping
+					// grouping size of 0-3
+				// expect block
+				// evaluate based on group of block
+
+			case "else":
+				// expect block
+
+			default:
+				fmt.Println("hey its me", m.CurrentToken)
+			}
 		}
 
 		err = m.GetStatement()
