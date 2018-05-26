@@ -717,6 +717,11 @@ func (m *Meta) CheckArray() []token.Value {
 func (m *Meta) CheckBlock() map[string]token.Value {
 	var err error
 	for {
+		switch m.CurrentToken.Type {
+		case token.Keyword:
+			fmt.Println("found a keyword")
+		}
+
 		err = m.GetStatement()
 		if err != nil {
 			fmt.Println("ERROR: could not get statement", err)
