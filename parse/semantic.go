@@ -215,6 +215,7 @@ func (m *Meta) GetFactor() {
 	// }
 }
 
+// TODO: need to check for statement seaparators
 // GetTerm gets the next term in the sequence
 func (m *Meta) GetTerm() {
 	// m.GetFactor()
@@ -259,6 +260,33 @@ func (m *Meta) GetTerm() {
 		// 	fmt.Println("Found operator:", op)
 		// 	os.Exit(9)
 		// }
+	} else if m.NextToken.Type == token.LThan {
+		// FIXME: this needs to handle boolean and other things
+		// just ints for now though, we should just put this up there with token.PriOp
+		// or call the same function, too lazy right now though
+		// TODO: here is where we can have boolean exppressions
+
+		value1 := m.LastCollectedToken
+		m.RemoveLastCollectedToken()
+		fmt.Println("factor value1", value1)
+		fmt.Println("last", m.LastCollectedToken)
+
+		m.Shift()
+		// op := m.CurrentToken
+
+		m.GetTerm()
+		value2 := m.LastCollectedToken
+		m.RemoveLastCollectedToken()
+
+		fmt.Println(m.DeclaredType)
+		fmt.Println(m.DeclaredValue)
+		fmt.Println(m.CurrentToken)
+
+		m.DeclaredType = token.BoolType
+		m.DeclaredValue = token.Value{
+			Type: token.BoolType,
+			True: value1.Value.True.(int) < value2.Value.True.(int),
+		}
 	}
 }
 
@@ -342,20 +370,30 @@ func (m *Meta) GetExpression() {
 		m.Shift()
 		op := m.CurrentToken
 
-		m.GetExpression()
-		value2 := m.LastCollectedToken
-		m.RemoveLastCollectedToken()
+		opValue := token.Value{}
+		if m.CurrentToken.Value.String == "+" && m.NextToken.Value.String == "+" {
+			opValue = token.Value{
+				Type: token.IntType,
+				True: value1.Value.True.(int) + 1,
+			}
+			m.Shift()
+		} else {
+			m.GetExpression()
+			value2 := m.LastCollectedToken
+			m.RemoveLastCollectedToken()
+			fmt.Println("value1, value2", value1, value2)
+			m.GetOperationValue(value1, value2, op)
+		}
 
 		// FIXME: TODO: really should do this with some sort of eval or using reflection
 		// switch op.Value.String {
 		// case "+":
-		fmt.Println("value1, value2", value1, value2)
 
 		valueToken := token.Token{
 			ID:   1,
 			Type: token.Literal,
 			// Expected: "",
-			Value: m.GetOperationValue(value1, value2, op),
+			Value: opValue,
 		}
 		// FIXME: ??? fix this
 		fmt.Println("ACCESS", valueToken.Value.AccessType)
@@ -540,9 +578,20 @@ func (m *Meta) GetAssignmentStatement() error {
 			fmt.Println(m.DeclarationMap)
 		}
 
+	case token.Separator:
+		m.Shift()
+
+		// TODO: Whatever processing we need to do needs to be added on here
+		m.DeclarationMap[m.DeclaredName] = m.DeclaredValue
+		m.DeclaredType = ""
+		m.DeclaredName = ""
+		m.DeclaredAccessType = ""
+		m.DeclaredValue = token.Value{}
+		fmt.Println(m.DeclarationMap)
+
 	default:
 		fmt.Println("ERROR getting assignement statement")
-		fmt.Println("expected assignement statement beginning, got", m.CurrentToken)
+		fmt.Println("expected assignment statement beginning, got", m.CurrentToken)
 		return errors.New("blah")
 	}
 
@@ -713,6 +762,57 @@ func (m *Meta) CheckArray() []token.Value {
 	return aTokens
 }
 
+// CheckGroup ...
+func (m *Meta) CheckGroup() []token.Value {
+	m.Shift()
+	fmt.Println("checking group")
+	fmt.Println(m.CurrentToken)
+
+	groupTokens := []token.Value{}
+
+	for {
+		// TODO: dont do any checking for now, idc
+		// FIXME: need to do checking for bool expressions, maybe we should just change to get expression?
+
+		groupTokens = append(groupTokens, m.CurrentToken.Value)
+
+		if m.NextToken == (token.Token{}) {
+			break
+		}
+	}
+
+	return groupTokens
+}
+
+// CheckFunctionDef ...
+func (m *Meta) CheckFunctionDef() []token.Value {
+	m.Shift()
+	fmt.Println("checking function d	efinition", m.Tokens)
+	fmt.Println(m.CurrentToken)
+
+	if len(m.Tokens) > 3 {
+		fmt.Println("ERROR: More than three parts for function definition")
+		os.Exit(9)
+	}
+
+	meta := Meta{
+		IgnoreWS:         true,
+		Tokens:           m.CurrentToken.Value.True.([]token.Token),
+		Length:           len(m.CurrentToken.Value.True.([]token.Token)),
+		CheckOptmization: true,
+		DeclarationMap:   m.DeclarationMap,
+	}
+	meta.Shift()
+
+	fmt.Println(meta.CheckGroup())
+
+	// if m.NextToken == (token.Token{}) {
+	// 	break
+	// }
+
+	return []token.Value{}
+}
+
 // CheckBlock check the usage of the block
 func (m *Meta) CheckBlock() map[string]token.Value {
 	var err error
@@ -724,17 +824,101 @@ func (m *Meta) CheckBlock() map[string]token.Value {
 			fmt.Println("found a keyword")
 			m.Shift()
 
-			switch m.CurrentToken.Value.String{
+			switch m.CurrentToken.Value.String {
 			case "for":
 				fmt.Println("found a for")
+
+				// m.Shift()
+
+				fmt.Println("current", m.CurrentToken)
+
+				// START of the for loop
+				as := m.GetAssignmentStatement()
+
+				fmt.Println("as", as)
+				m.Shift()
+				fmt.Println("getexpr", m.CurrentToken)
+
+				// TODO: FIXME: major hack, take the logic to check the type of vars out of GetFactor
+				m.DeclaredType = m.LastCollectedToken.Value.Type
+
+				// END of the for loop
+				m.GetExpression()
+				fmt.Println(m.DeclaredValue)
+
+				// TODO: at this point the loop isn't needed at all, don't even emit the tokens
+				if m.DeclaredValue.True.(bool) == false {
+					fmt.Println("loop not needed")
+					// TODO: we still need to clear the loop tokens, just don't generate the end token
+				} else {
+					// FIXME: TODO: major hack, take the logic to check the type of vars out of GetFactor
+					m.DeclaredType = token.IntType
+					m.Shift()
+
+					// STEP of the for loop
+					m.GetExpression()
+					m.Shift()
+
+					meta := Meta{
+						IgnoreWS:         true,
+						Tokens:           m.CurrentToken.Value.True.([]token.Token),
+						Length:           len(m.CurrentToken.Value.True.([]token.Token)),
+						CheckOptmization: true,
+						DeclarationMap:   map[string]token.Value{},
+					}
+					meta.Shift()
+
+					// BODY of the loop
+					// TODO: this needs to be fixed because we only get back variables.... ?
+					meta.CheckBlock()
+
+					m.CollectToken(token.Token{
+						ID:    0,
+						Type:  "FOR",
+						Value: token.Value{
+						// TODO: not sure what to put for 'Type'
+						//Type:
+						// TODO: make a specific token.ForLoopValue that contains all the pieces
+						// True:
+						},
+					})
+				}
+
+				// expect FUNCTION definition
 				// expect grouping
-					// grouping has 0-3 expressions within it
+				// grouping has 0-3 expressions within it
 				// expect block
+
+				// maybe instead of that -
+				// check for
+				// 1. assignment statement (standard for)
+				// 2. boolean qualifier
+				// 3. add statement
+				// OR
+				// 1. boolean qualifer (while)
+				// ORf
+				// 1. nothing (for-ever)
+
+				// fmt.Println(m.CurrentToken.Value)
+				// meta := Meta{
+				// 	IgnoreWS:         true,
+				// 	Tokens:           m.CurrentToken.Value.True.([]token.Token),
+				// 	Length:           len(m.CurrentToken.Value.True.([]token.Token)),
+				// 	CheckOptmization: true,
+				// 	DeclarationMap:   m.DeclarationMap,
+				// }
+				// meta.Shift()
+
+				// theRest := meta.CheckFunctionDef()
+
+				// check that we have up to 3 arguments
+
+				fmt.Println()
 
 			case "if":
 				fmt.Println("found an if")
 				// expect grouping
-					// grouping size of 0-3
+				// grouping size of 0-3
 				// expect block
 				// evaluate based on group of block
 

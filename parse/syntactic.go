@@ -481,6 +481,23 @@ func (m *Meta) ParseBlock() token.Token {
 					})
 				}
 
+			case token.Block:
+				m.Shift()
+
+				// TODO: could make a change here to instead just put it as a group but w/e
+				// if m.LastCollectedToken.Type == token.Keyword {
+
+				// }
+
+				blockTokens = append(blockTokens, token.Token{
+					ID:   4,
+					Type: token.Function,
+					Value: token.Value{
+						Type: "def",
+						True: append(functionTokens, m.CurrentToken),
+					},
+				})
+
 			default:
 				fmt.Println("wtf peek following group", peek, m)
 				os.Exit(8)

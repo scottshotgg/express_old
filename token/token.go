@@ -71,7 +71,7 @@ const (
 	LBrace       = "L_BRACE"
 	LBracket     = "L_BRACKET"
 	LParen       = "L_PAREN"
-	LThan        = "L_Than"
+	LThan        = "L_THAN"
 	RBrace       = "R_BRACE"
 	RBracket     = "R_BRACKET"
 	RParen       = "R_PAREN"
