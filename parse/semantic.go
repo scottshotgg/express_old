@@ -75,7 +75,7 @@ func (m *Meta) GetFactor() {
 	case token.Ident:
 		fmt.Println("found an ident")
 		tValue, ok := m.DeclarationMap[m.CurrentToken.Value.String]
-		fmt.Printf("tValue %+v, ok %b\n", tValue, ok)
+		// fmt.Printf("tValue %+v, ok %b\n", tValue, ok)
 		if !ok {
 			fmt.Println("Undefined variable reference")
 			os.Exit(9)
@@ -876,10 +876,10 @@ func (m *Meta) CheckBlock() map[string]token.Value {
 						ID:    0,
 						Type:  "FOR",
 						Value: token.Value{
-						// TODO: not sure what to put for 'Type'
-						//Type:
-						// TODO: make a specific token.ForLoopValue that contains all the pieces
-						// True:
+							// TODO: not sure what to put for 'Type'
+							//Type:
+							// TODO: make a specific token.ForLoopValue that contains all the pieces
+							// True:
 						},
 					})
 				}

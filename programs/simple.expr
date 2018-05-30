@@ -8,8 +8,6 @@ string b = "hey its you"
 b = "gee"
 string a = b + " and i"
 
-int Zinger = 40
-
 // adding hex, binary, octal, and decimal ints
 int c = 0xA + 0b1010 + 0o12 + 10
 
