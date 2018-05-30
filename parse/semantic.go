@@ -238,7 +238,7 @@ func (m *Meta) GetTerm() {
 		// FIXME: TODO: really should do this with some sort of eval or using reflection
 		// switch op.Value.String {
 		// case "+":
-		fmt.Println("value1, value2", value1, value2)
+		fmt.Println("value1, value2, op", value1, value2, op)
 
 		valueToken := token.Token{
 			ID:   1,
@@ -372,6 +372,7 @@ func (m *Meta) GetExpression() {
 
 		opValue := token.Value{}
 		if m.CurrentToken.Value.String == "+" && m.NextToken.Value.String == "+" {
+			// TODO: FIXME: this needs to be fixed and shouldn't even really be done here
 			opValue = token.Value{
 				Type: token.IntType,
 				True: value1.Value.True.(int) + 1,
@@ -381,8 +382,10 @@ func (m *Meta) GetExpression() {
 			m.GetExpression()
 			value2 := m.LastCollectedToken
 			m.RemoveLastCollectedToken()
-			fmt.Println("value1, value2", value1, value2)
-			m.GetOperationValue(value1, value2, op)
+			fmt.Println("value1, value2, op", value1, value2, op)
+			ov := m.GetOperationValue(value1, value2, op)
+			opValue = ov
+			fmt.Println("opValue", opValue)
 		}
 
 		// FIXME: TODO: really should do this with some sort of eval or using reflection
