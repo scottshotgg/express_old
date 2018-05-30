@@ -9,6 +9,7 @@ import (
 type (
 	Value struct {
 		// FIXME: to maintain compatibility, just add an 'actingType' var for now, use a struct later
+		Name       string
 		Type       string
 		Acting     string
 		True       interface{}

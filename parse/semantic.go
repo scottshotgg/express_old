@@ -16,9 +16,9 @@ func (m *Meta) CheckType() {
 	switch m.NextToken.Type {
 	case token.Ident:
 
-		m.CollectCurrentToken()
+		// //m.CollectCurrentToken()
 		m.Shift()
-		m.CollectCurrentToken()
+		// //m.CollectCurrentToken()
 
 		//TODO: change all of these to be assign
 		switch m.NextToken.Type {
@@ -29,7 +29,7 @@ func (m *Meta) CheckType() {
 		case token.Assign:
 			fmt.Println("found an ASSIGN type")
 			m.Shift()
-			m.CollectCurrentToken()
+			//m.CollectCurrentToken()
 
 			fmt.Println(m.NextToken)
 			if m.NextToken.Type != token.Literal && m.NextToken.Type != token.Ident {
@@ -38,7 +38,7 @@ func (m *Meta) CheckType() {
 			}
 
 			m.Shift()
-			m.CollectCurrentToken()
+			//m.CollectCurrentToken()
 		}
 	}
 }
@@ -47,7 +47,7 @@ func (m *Meta) CheckType() {
 func (m *Meta) CheckIdent() {
 	fmt.Println(token.Ident)
 
-	m.CollectCurrentToken()
+	//m.CollectCurrentToken()
 
 	switch m.NextToken.Type {
 	case token.Init:
@@ -57,7 +57,7 @@ func (m *Meta) CheckIdent() {
 	case token.Assign:
 		fmt.Println("found an ASSIGN type")
 		m.Shift()
-		m.CollectCurrentToken()
+		//m.CollectCurrentToken()
 
 		// if the form is [ident] [= | : | :=] then expect an expression
 		m.GetExpression()
@@ -106,7 +106,7 @@ func (m *Meta) GetFactor() {
 		}
 
 		m.DeclaredValue = m.CurrentToken.Value
-		m.CollectCurrentToken()
+		//m.CollectCurrentToken()
 
 	case token.LParen:
 		fmt.Println("found an expr")
@@ -143,6 +143,7 @@ func (m *Meta) GetFactor() {
 			Type: token.ObjectType,
 			True: dMap,
 		}
+		m.DeclaredValue.Name = m.DeclaredName
 		m.CollectToken(token.Token{
 			ID:    0,
 			Type:  token.Block,
@@ -432,7 +433,7 @@ func (m *Meta) GetAssignmentStatement() error {
 		m.DeclaredActingType = m.CurrentToken.Value.Acting
 		fmt.Println(m.DeclaredActingType)
 
-		m.CollectCurrentToken()
+		//m.CollectCurrentToken()
 
 		// Get the IDENT
 		m.Shift()
@@ -467,7 +468,7 @@ func (m *Meta) GetAssignmentStatement() error {
 		fmt.Println("m.CurrentToken.Value.Type", m.CurrentToken.Value.Type)
 		m.DeclaredAccessType = m.CurrentToken.Value.Type
 		m.DeclaredName = m.CurrentToken.Value.String
-		m.CollectCurrentToken()
+		//m.CollectCurrentToken()
 
 		// Get the assignment operator
 		m.Shift()
@@ -477,7 +478,7 @@ func (m *Meta) GetAssignmentStatement() error {
 		case token.Init:
 			fallthrough
 		case token.Set:
-			m.CollectCurrentToken()
+			//m.CollectCurrentToken()
 
 			// case token.Array:
 			// 	m.Shift()
@@ -495,7 +496,7 @@ func (m *Meta) GetAssignmentStatement() error {
 		// 	fmt.Println("Expected assign_op, got", m.CurrentToken)
 		// 	os.Exit(9)
 		// }
-		// m.CollectCurrentToken()
+		// //m.CollectCurrentToken()
 
 		// FIXME: this should return an error that we can check
 		m.GetExpression()
@@ -510,6 +511,12 @@ func (m *Meta) GetAssignmentStatement() error {
 		fmt.Printf("DECLARED %+v\n", m.DeclaredValue)
 
 		m.DeclarationMap[m.DeclaredName] = m.DeclaredValue
+		m.DeclaredValue.Name = m.DeclaredName
+		m.CollectToken(token.Token{
+			ID: 0,
+			// Type:  m.DeclaredName, // TODO: not sure about this yet
+			Value: m.DeclaredValue,
+		})
 		m.DeclaredType = ""
 		m.DeclaredName = ""
 		m.DeclaredAccessType = ""
@@ -574,6 +581,12 @@ func (m *Meta) GetAssignmentStatement() error {
 			fmt.Printf("DECLARED %+v\n", m.DeclaredValue)
 
 			m.DeclarationMap[m.DeclaredName] = m.DeclaredValue
+			m.DeclaredValue.Name = m.DeclaredName
+			m.CollectToken(token.Token{
+				ID:    0,
+				Type:  m.DeclaredName,
+				Value: m.DeclaredValue,
+			})
 			m.DeclaredType = ""
 			m.DeclaredName = ""
 			m.DeclaredAccessType = ""
@@ -586,6 +599,12 @@ func (m *Meta) GetAssignmentStatement() error {
 
 		// TODO: Whatever processing we need to do needs to be added on here
 		m.DeclarationMap[m.DeclaredName] = m.DeclaredValue
+		m.DeclaredValue.Name = m.DeclaredName
+		m.CollectToken(token.Token{
+			ID:    0,
+			Type:  m.DeclaredName,
+			Value: m.DeclaredValue,
+		})
 		m.DeclaredType = ""
 		m.DeclaredName = ""
 		m.DeclaredAccessType = ""
@@ -879,11 +898,11 @@ func (m *Meta) CheckBlock() map[string]token.Value {
 						ID:    0,
 						Type:  "FOR",
 						Value: token.Value{
-							// True:
-							// The true value should be a map with three parts:
-							// 1. the range; start and end
-							// 2. the steps; how to get from the start to the end
-							// 3. the body; what are we doing at each iteration
+						// True:
+						// The true value should be a map with three parts:
+						// 1. the range; start and end
+						// 2. the steps; how to get from the start to the end
+						// 3. the body; what are we doing at each iteration
 						},
 					})
 				}
