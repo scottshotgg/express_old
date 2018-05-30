@@ -215,8 +215,8 @@ func (m *Meta) GetFactor() {
 	// }
 }
 
-// TODO: need to check for statement seaparators
 // GetTerm gets the next term in the sequence
+// TODO: need to check for statement seaparators
 func (m *Meta) GetTerm() {
 	// m.GetFactor()
 	m.GetFactor()
@@ -879,10 +879,11 @@ func (m *Meta) CheckBlock() map[string]token.Value {
 						ID:    0,
 						Type:  "FOR",
 						Value: token.Value{
-							// TODO: not sure what to put for 'Type'
-							//Type:
-							// TODO: make a specific token.ForLoopValue that contains all the pieces
 							// True:
+							// The true value should be a map with three parts:
+							// 1. the range; start and end
+							// 2. the steps; how to get from the start to the end
+							// 3. the body; what are we doing at each iteration
 						},
 					})
 				}
@@ -917,6 +918,7 @@ func (m *Meta) CheckBlock() map[string]token.Value {
 				// check that we have up to 3 arguments
 
 				fmt.Println()
+				continue
 
 			case "if":
 				fmt.Println("found an if")
@@ -931,12 +933,6 @@ func (m *Meta) CheckBlock() map[string]token.Value {
 			default:
 				fmt.Println("hey its me", m.CurrentToken)
 			}
-		}
-
-		err = m.GetStatement()
-		if err != nil {
-			fmt.Println("ERROR: could not get statement", err)
-			os.Exit(8)
 		}
 
 		// current := m.CurrentToken
@@ -956,6 +952,12 @@ func (m *Meta) CheckBlock() map[string]token.Value {
 		if m.NextToken == (token.Token{}) {
 			fmt.Println("returning")
 			return m.DeclarationMap
+		}
+
+		err = m.GetStatement()
+		if err != nil {
+			fmt.Println("ERROR: could not get statement", err)
+			os.Exit(8)
 		}
 	}
 }

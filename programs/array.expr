@@ -4,10 +4,6 @@ bb := 10
 
 bb = bb + 1
 
-for i := 0, i < 10, i++ {
-    int j = 0
-}
-
 //ints := [ "5", bb, b ]
 int[] arrayBrah = [ 5, 5 ]
 
