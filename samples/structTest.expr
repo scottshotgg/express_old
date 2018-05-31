@@ -1,0 +1,7 @@
+structTest := {
+  id: "ba3d4793-cfae-48d1-ad51-47cbfd70f98a"
+  time: 1527799745
+  price: 55.3592
+  name: "dank meme"
+  enabled: true
+}
