@@ -5,11 +5,41 @@
 _main:                                  ## @main
 	.cfi_startproc
 ## %bb.0:                               ## %main
-	pushl	%eax
-	.cfi_def_cfa_offset 8
-	movl	$10, (%esp)
+	subl	$124, %esp
+	.cfi_def_cfa_offset 128
+	movl	$1078689792, 20(%esp)   ## imm = 0x404B8000
+	movl	$0, 16(%esp)
+	movl	$117, 120(%esp)
+	movl	$111, 116(%esp)
+	movl	$121, 112(%esp)
+	movl	$32, 108(%esp)
+	movl	$115, 104(%esp)
+	movl	$116, 100(%esp)
+	movl	$105, 96(%esp)
+	movl	$32, 92(%esp)
+	movl	$121, 88(%esp)
+	movl	$101, 84(%esp)
+	movl	$104, 80(%esp)
+	movl	$101, 76(%esp)
+	movl	$101, 72(%esp)
+	movl	$103, 68(%esp)
+	movl	$105, 64(%esp)
+	movl	$32, 60(%esp)
+	movl	$100, 56(%esp)
+	movl	$110, 52(%esp)
+	movl	$97, 48(%esp)
+	movl	$32, 44(%esp)
+	movl	$101, 40(%esp)
+	movl	$101, 36(%esp)
+	movl	$103, 32(%esp)
+	movl	$40, 28(%esp)
+	movl	$1076122091, 12(%esp)   ## imm = 0x402451EB
+	movl	$-2061584302, 8(%esp)   ## imm = 0x851EB852
+	movb	$0, 7(%esp)
+	movb	$1, 6(%esp)
+	movb	$1, 5(%esp)
 	xorl	%eax, %eax
-	popl	%ecx
+	addl	$124, %esp
 	retl
 	.cfi_endproc
                                         ## -- End function

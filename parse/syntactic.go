@@ -27,6 +27,9 @@ type Meta struct {
 	CheckOptmization     bool
 	OptimizationAttempts int
 
+	// hacky
+	LLVMTokens []token.Token
+
 	InheritedMap       map[string]token.Value
 	DeclarationMap     map[string]token.Value
 	DeclaredType       string
