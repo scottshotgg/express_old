@@ -5,16 +5,59 @@
 _main:                                  ## @main
 	.cfi_startproc
 ## %bb.0:                               ## %main
-	subl	$28, %esp
-	.cfi_def_cfa_offset 32
-	movl	$0, 12(%esp)
-	movl	$0, 8(%esp)
-	movb	$0, 20(%esp)
-	movl	$32, 16(%esp)
-	movl	$0, 4(%esp)
-	movl	$32, (%esp)
+	subl	$196, %esp
+	.cfi_def_cfa_offset 200
+	movl	$1078701562, 152(%esp)  ## imm = 0x404BADFA
+	movl	$1140743314, 148(%esp)  ## imm = 0x43FE5C92
+	movb	$1, 192(%esp)
+	movl	$101, 188(%esp)
+	movl	$109, 184(%esp)
+	movl	$101, 180(%esp)
+	movl	$109, 176(%esp)
+	movl	$32, 172(%esp)
+	movl	$107, 168(%esp)
+	movl	$110, 164(%esp)
+	movl	$97, 160(%esp)
+	movl	$100, 156(%esp)
+	movl	$1527799745, 144(%esp)  ## imm = 0x5B105FC1
+	movl	$97, 140(%esp)
+	movl	$56, 136(%esp)
+	movl	$57, 132(%esp)
+	movl	$102, 128(%esp)
+	movl	$48, 124(%esp)
+	movl	$55, 120(%esp)
+	movl	$100, 116(%esp)
+	movl	$102, 112(%esp)
+	movl	$98, 108(%esp)
+	movl	$99, 104(%esp)
+	movl	$55, 100(%esp)
+	movl	$52, 96(%esp)
+	movl	$45, 92(%esp)
+	movl	$49, 88(%esp)
+	movl	$53, 84(%esp)
+	movl	$100, 80(%esp)
+	movl	$97, 76(%esp)
+	movl	$45, 72(%esp)
+	movl	$49, 68(%esp)
+	movl	$100, 64(%esp)
+	movl	$56, 60(%esp)
+	movl	$52, 56(%esp)
+	movl	$45, 52(%esp)
+	movl	$101, 48(%esp)
+	movl	$97, 44(%esp)
+	movl	$102, 40(%esp)
+	movl	$99, 36(%esp)
+	movl	$45, 32(%esp)
+	movl	$51, 28(%esp)
+	movl	$57, 24(%esp)
+	movl	$55, 20(%esp)
+	movl	$52, 16(%esp)
+	movl	$100, 12(%esp)
+	movl	$51, 8(%esp)
+	movl	$97, 4(%esp)
+	movl	$98, (%esp)
 	xorl	%eax, %eax
-	addl	$28, %esp
+	addl	$196, %esp
 	retl
 	.cfi_endproc
                                         ## -- End function

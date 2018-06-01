@@ -13,18 +13,30 @@ import (
 
 // Translate ...
 func Translate(tokens []token.Token) {
+	fmt.Println("tokens", tokens)
+
 	// Create a new LLVM IR module.
 	m := ir.NewModule()
 
-	// Create a function definition and append it to the module.
-	//
-	//    int rand(void) { ... }
+	// TODO: FIXME: this needs to be based on the flag or w/e to turn off dynamic types
+	// m.NewType("var", types.NewStruct([]types.Type{
+	// 	types.NewInt(8),
+	// 	types.NewPointer(types.NewInt(32)),
+	// }...))
+
 	mainFunc := m.NewFunction("main", types.I32)
 	mainBlock := mainFunc.NewBlock("main")
 
-	returnBlock := ir.NewBlock("")
+	// iPtr := mainBlock.NewAlloca(types.NewPointer(types.I32))
+	// mainBlock.NewStore(constant.NewInt(10, types.I32), iPtr)
 
-	fmt.Println("hi", tokens)
+	// fmt.Println("iPtr.Typ", iPtr.Typ)
+	// iPtr.Typ = types.NewPointer(types.Float)
+	// fmt.Println("iPtr.Typ2", iPtr.Typ)
+
+	// ir.NewAddrSpaceCast()
+
+	returnBlock := ir.NewBlock("")
 
 	for _, t := range tokens {
 		// fmt.Println(t)
@@ -56,11 +68,11 @@ func Translate(tokens []token.Token) {
 			}
 			fmt.Println("found a bool")
 
-			boolValue := 0
+			boolValue := int64(0)
 			if value {
 				boolValue = 1
 			}
-			mainBlock.NewStore(constant.NewInt(int64(boolValue), types.I8), mainBlock.NewAlloca(types.I8))
+			mainBlock.NewStore(constant.NewInt(boolValue, types.I8), mainBlock.NewAlloca(types.I8))
 
 		// store i8* getelementptr inbounds ([12 x i8], [12 x i8]* @.str, i32 0, i32 0), i8** %2, align 8
 		case token.StringType:
@@ -91,19 +103,42 @@ func Translate(tokens []token.Token) {
 				// ideally we should call this function recursively
 				switch field.Type {
 				case token.IntType:
-					fields = append(fields, constant.NewInt(0, types.I32))
+					value, ok := field.True.(int)
+					if !ok {
+						fmt.Println("ERROR: not able to assert type")
+						os.Exit(8)
+					}
+					fields = append(fields, constant.NewInt(int64(value), types.I32))
 					fieldTypes = append(fieldTypes, types.I32)
 
 				case token.FloatType:
-					fields = append(fields, constant.NewFloat(0, types.Double))
+					value, ok := field.True.(float64)
+					if !ok {
+						fmt.Println("ERROR: not able to assert type")
+						os.Exit(8)
+					}
+					fields = append(fields, constant.NewFloat(value, types.Double))
 					fieldTypes = append(fieldTypes, types.Double)
 
 				case token.BoolType:
-					fields = append(fields, constant.NewInt(0, types.I8))
+					value, ok := field.True.(bool)
+					if !ok {
+						fmt.Println("ERROR: not able to assert type")
+						os.Exit(8)
+					}
+					boolValue := int64(0)
+					if value {
+						boolValue = 1
+					}
+					fields = append(fields, constant.NewInt(boolValue, types.I8))
 					fieldTypes = append(fieldTypes, types.I8)
 
 				case token.StringType:
-					value := " "
+					value, ok := field.True.(string)
+					if !ok {
+						fmt.Println("ERROR: not able to assert type", t)
+						os.Exit(8)
+					}
 					vArray := []constant.Constant{}
 					for _, char := range value {
 						vArray = append(vArray, constant.NewInt(int64(char), types.I32))
@@ -112,12 +147,13 @@ func Translate(tokens []token.Token) {
 					fieldTypes = append(fieldTypes, types.NewArray(types.I32, int64(len(value))))
 					//constant.NewArray(vArray...), mainBlock.NewAlloca()
 
+				case token.VarType:
+
 				default:
+					fmt.Println("wtf is this token", t)
 					continue
 				}
 			}
-
-			fmt.Println()
 
 			mainBlock.NewStore(constant.NewStruct(fields...), mainBlock.NewAlloca(types.NewStruct(fieldTypes...)))
 

@@ -466,12 +466,15 @@ func (m *Meta) GetAssignmentStatement() error {
 			os.Exit(9)
 		}
 		fmt.Println("m.CurrentToken.Value.Type", m.CurrentToken.Value.Type)
+		fmt.Println("m.NextToken.Value.Type", m.NextToken.Value.Type)
 		m.DeclaredAccessType = m.CurrentToken.Value.Type
 		m.DeclaredName = m.CurrentToken.Value.String
 		m.CollectCurrentToken()
 
 		// Get the assignment operator
 		m.Shift()
+		fmt.Println("m.CurrentToken.Value.Type", m.CurrentToken.Value.Type)
+		fmt.Println("m.NextToken.Value.Type", m.NextToken.Value.Type)
 		switch m.CurrentToken.Type {
 		case token.Assign:
 			fallthrough

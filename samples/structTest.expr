@@ -5,3 +5,5 @@ structTest := {
   name: "dank meme"
   enabled: true
 }
+
+var thing = 6
