@@ -1,0 +1,4 @@
+- Change to printf so statements are more readable
+- Comment the code
+- Inject comments into the C code
+- fix the tokens coming out of the semantic parser

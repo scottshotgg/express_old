@@ -9,6 +9,8 @@ int[] arrayBrah = [ 5, 5 ]
 
 float thing = 77.0
 
+var me = 5
+
 /* 
 TODO: things like this can be fixed with a simple 'InheritedMap' structure
 but I am too lazy right now to do that
@@ -17,6 +19,10 @@ o := {
 }
 */
 
+hey := "its me"
+
 obj := {
     a := 5
+    b := 67.8
+    string thing = "hey its me"
 }

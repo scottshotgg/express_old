@@ -1,0 +1,26 @@
+#include <map>
+#include <string>
+struct Any { std::string type; void* data; };
+int main() {
+int bb = 10;
+int bb = 11;
+int arrayBrah[] = { 5, 5 };
+float thing = 77;
+std::map<std::string, Any> thing;5
+}
+
+-----------
+
+#include <map>
+#include <string>
+#include <iostream>
+struct Any { std::string type; void* data; };
+int main() {
+int bb = 10;
+int arrayBrah[] = { 5, 5 };
+float thing = 77;
+std::map<std::string, Any>obj;
+int a = 5;
+obj["a"] = Any{ "int", &a };
+std::cout << *(int*)obj["a"].data << std::endl;
+}

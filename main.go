@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	c "github.com/scottshotgg/Express/c"
@@ -102,13 +100,12 @@ func main() {
 
 	// llvm.Translate(p.Tokens["semantic"])
 	c.Translate(p.Tokens["semantic"])
-}
 
-	fmt.Println(string(semanticTokensJSON))
+	// fmt.Println(string(semanticTokensJSON))
 
-	err = ioutil.WriteFile("main.tokens.json", []byte(string(semanticTokensJSON)), 0644)
-	if err != nil {
-		fmt.Println("ERROR", err)
-		os.Exit(9)
-	}
+	// err = ioutil.WriteFile("main.tokens.json", []byte(string(semanticTokensJSON)), 0644)
+	// if err != nil {
+	// 	fmt.Println("ERROR", err)
+	// 	os.Exit(9)
+	// }
 }

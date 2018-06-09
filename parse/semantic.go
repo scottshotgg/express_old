@@ -922,11 +922,11 @@ func (m *Meta) CheckBlock() map[string]token.Value {
 						ID:    0,
 						Type:  "FOR",
 						Value: token.Value{
-							// True:
-							// The true value should be a map with three parts:
-							// 1. the range; start and end
-							// 2. the steps; how to get from the start to the end
-							// 3. the body; what are we doing at each iteration
+						// True:
+						// The true value should be a map with three parts:
+						// 1. the range; start and end
+						// 2. the steps; how to get from the start to the end
+						// 3. the body; what are we doing at each iteration
 						},
 					})
 				}
@@ -1071,5 +1071,18 @@ func Semantic(tokens []token.Token) ([]token.Token, error) {
 	// }
 
 	// return meta.EndTokens, nil
-	return meta.LLVMTokens, nil
+
+	// FIXME: TODO: hacking this in for the C++ translator for now, this is only variable statements
+	tks := []token.Token{}
+	for k, v := range meta.DeclarationMap {
+		v.Name = k
+		tks = append(tks, token.Token{
+			ID:    0,
+			Type:  "VAR",
+			Value: v,
+		})
+	}
+
+	// return meta.LLVMTokens, nil
+	return tks, nil
 }
