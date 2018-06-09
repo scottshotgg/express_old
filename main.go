@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	c "github.com/scottshotgg/Express/c"
 	"github.com/scottshotgg/Express/lex"
-	"github.com/scottshotgg/Express/llvm"
 	"github.com/scottshotgg/Express/parse"
 	program "github.com/scottshotgg/Express/program"
 	"github.com/scottshotgg/Express/token"
@@ -98,7 +98,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	llvm.Translate(p.Tokens["semantic"])
+	// llvm.Translate(p.Tokens["semantic"])
+	c.Translate(p.Tokens["semantic"])
 }
 
 // TODO: MAJOR TODO : IDENT adding is broken now - pls fix
