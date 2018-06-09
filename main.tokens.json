@@ -1,0 +1,121 @@
+[
+	{
+		"ID": 0,
+		"Type": "",
+		"Expected": "",
+		"Value": {
+			"Name": "b",
+			"Type": "int",
+			"Acting": "",
+			"True": 10,
+			"String": "",
+			"AccessType": "private"
+		}
+	},
+	{
+		"ID": 0,
+		"Type": "a",
+		"Expected": "",
+		"Value": {
+			"Name": "a",
+			"Type": "float",
+			"Acting": "",
+			"True": 1.123456,
+			"String": "",
+			"AccessType": "private"
+		}
+	},
+	{
+		"ID": 0,
+		"Type": "",
+		"Expected": "",
+		"Value": {
+			"Name": "c",
+			"Type": "int",
+			"Acting": "",
+			"True": 20,
+			"String": "20",
+			"AccessType": "private"
+		}
+	},
+	{
+		"ID": 0,
+		"Type": "",
+		"Expected": "",
+		"Value": {
+			"Name": "stringthing",
+			"Type": "string",
+			"Acting": "",
+			"True": "hey its me and there",
+			"String": "hey its me and there",
+			"AccessType": "private"
+		}
+	},
+	{
+		"ID": 0,
+		"Type": "structTest",
+		"Expected": "",
+		"Value": {
+			"Name": "structTest",
+			"Type": "object",
+			"Acting": "",
+			"True": {
+				"enabled": {
+					"Name": "",
+					"Type": "bool",
+					"Acting": "",
+					"True": true,
+					"String": "",
+					"AccessType": ""
+				},
+				"id": {
+					"Name": "",
+					"Type": "string",
+					"Acting": "",
+					"True": "ba3d4793-cfae-48d1-ad51-47cbfd70f98a",
+					"String": "ba3d4793-cfae-48d1-ad51-47cbfd70f98a",
+					"AccessType": ""
+				},
+				"name": {
+					"Name": "",
+					"Type": "string",
+					"Acting": "",
+					"True": "dank meme",
+					"String": "dank meme",
+					"AccessType": ""
+				},
+				"price": {
+					"Name": "",
+					"Type": "float",
+					"Acting": "",
+					"True": 55.3592,
+					"String": "",
+					"AccessType": ""
+				},
+				"time": {
+					"Name": "",
+					"Type": "int",
+					"Acting": "",
+					"True": 1527799745,
+					"String": "",
+					"AccessType": ""
+				}
+			},
+			"String": "",
+			"AccessType": "private"
+		}
+	},
+	{
+		"ID": 0,
+		"Type": "",
+		"Expected": "",
+		"Value": {
+			"Name": "thing",
+			"Type": "var",
+			"Acting": "int",
+			"True": 6,
+			"String": "",
+			"AccessType": "private"
+		}
+	}
+]

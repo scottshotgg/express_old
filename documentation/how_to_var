@@ -1,0 +1,4 @@
+generate all static variables
+at compile time instantiate var types as vars with an implied typing
+when a var is referenced - "unbox" it into a variable and do the operation
+when a var is declared, make a new memory space 

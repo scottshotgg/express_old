@@ -11,8 +11,26 @@ import (
 	"github.com/scottshotgg/Express/token"
 )
 
+func boolToInt(value bool) int64 {
+	if value {
+		return 1
+	}
+
+	return 0
+}
+
+func stringToArray(value string) []constant.Constant {
+	vArray := []constant.Constant{}
+	for _, char := range value {
+		vArray = append(vArray, constant.NewInt(int64(char), types.I32))
+	}
+
+	return vArray
+}
+
 // Translate ...
 func Translate(tokens []token.Token) {
+	// TODO: FIXME: need to fix the unique token names coming from the semantic parser
 	fmt.Println("tokens", tokens)
 
 	// Create a new LLVM IR module.
@@ -36,11 +54,9 @@ func Translate(tokens []token.Token) {
 
 	// ir.NewAddrSpaceCast()
 
-	returnBlock := ir.NewBlock("")
+	returnBlock := ir.NewBlock("return")
 
 	for _, t := range tokens {
-		// fmt.Println(t)
-
 		switch t.Value.Type {
 		case token.IntType:
 			value, ok := t.Value.True.(int)
@@ -49,7 +65,9 @@ func Translate(tokens []token.Token) {
 				os.Exit(8)
 			}
 			fmt.Println("found an int")
-			mainBlock.NewStore(constant.NewInt(int64(value), types.I32), mainBlock.NewAlloca(types.I32))
+			alloc := mainBlock.NewAlloca(types.I32)
+			// alloc.SetName(t.Value.Name)
+			mainBlock.NewStore(constant.NewInt(int64(value), types.I32), alloc)
 
 		case token.FloatType:
 			value, ok := t.Value.True.(float64)
@@ -58,7 +76,9 @@ func Translate(tokens []token.Token) {
 				os.Exit(8)
 			}
 			fmt.Println("found a float")
-			mainBlock.NewStore(constant.NewFloat(value, types.Double), mainBlock.NewAlloca(types.Double))
+			alloc := mainBlock.NewAlloca(types.Double)
+			// alloc.SetName(t.Value.Name)
+			mainBlock.NewStore(constant.NewFloat(value, types.Double), alloc)
 
 		case token.BoolType:
 			value, ok := t.Value.True.(bool)
@@ -67,14 +87,10 @@ func Translate(tokens []token.Token) {
 				os.Exit(8)
 			}
 			fmt.Println("found a bool")
+			alloc := mainBlock.NewAlloca(types.I8)
+			// alloc.SetName(t.Value.Name)
+			mainBlock.NewStore(constant.NewInt(boolToInt(value), types.I8), alloc)
 
-			boolValue := int64(0)
-			if value {
-				boolValue = 1
-			}
-			mainBlock.NewStore(constant.NewInt(boolValue, types.I8), mainBlock.NewAlloca(types.I8))
-
-		// store i8* getelementptr inbounds ([12 x i8], [12 x i8]* @.str, i32 0, i32 0), i8** %2, align 8
 		case token.StringType:
 			value, ok := t.Value.True.(string)
 			if !ok {
@@ -82,12 +98,12 @@ func Translate(tokens []token.Token) {
 				os.Exit(8)
 			}
 			fmt.Println("found a string")
+			alloc := mainBlock.NewAlloca(types.NewArray(types.I32, int64(len(value))))
+			// alloc.SetName(t.Value.Name)
+			mainBlock.NewStore(constant.NewArray(stringToArray(value)...), alloc)
 
-			var vArray []constant.Constant
-			for _, char := range value {
-				vArray = append(vArray, constant.NewInt(int64(char), types.I32))
-			}
-			mainBlock.NewStore(constant.NewArray(vArray...), mainBlock.NewAlloca(types.NewArray(types.I32, int64(len(value)))))
+		case token.VarType:
+			fmt.Println("hmm... not sure if varType should be in here", t)
 
 		case token.ObjectType:
 			value, ok := t.Value.True.(map[string]token.Value)
@@ -126,11 +142,7 @@ func Translate(tokens []token.Token) {
 						fmt.Println("ERROR: not able to assert type")
 						os.Exit(8)
 					}
-					boolValue := int64(0)
-					if value {
-						boolValue = 1
-					}
-					fields = append(fields, constant.NewInt(boolValue, types.I8))
+					fields = append(fields, constant.NewInt(boolToInt(value), types.I8))
 					fieldTypes = append(fieldTypes, types.I8)
 
 				case token.StringType:
@@ -139,23 +151,20 @@ func Translate(tokens []token.Token) {
 						fmt.Println("ERROR: not able to assert type", t)
 						os.Exit(8)
 					}
-					vArray := []constant.Constant{}
-					for _, char := range value {
-						vArray = append(vArray, constant.NewInt(int64(char), types.I32))
-					}
-					fields = append(fields, constant.NewArray(vArray...))
+					fields = append(fields, constant.NewArray(stringToArray(value)...))
 					fieldTypes = append(fieldTypes, types.NewArray(types.I32, int64(len(value))))
-					//constant.NewArray(vArray...), mainBlock.NewAlloca()
 
 				case token.VarType:
+					fmt.Println("hmm... not sure if varType should be in here", t)
 
 				default:
 					fmt.Println("wtf is this token", t)
 					continue
 				}
 			}
-
-			mainBlock.NewStore(constant.NewStruct(fields...), mainBlock.NewAlloca(types.NewStruct(fieldTypes...)))
+			alloc := mainBlock.NewAlloca(types.NewStruct(fieldTypes...))
+			// alloc.SetName(t.Value.Name)
+			mainBlock.NewStore(constant.NewStruct(fields...), alloc)
 
 		default:
 			fmt.Println("ERROR: did not know what to do with token", t)

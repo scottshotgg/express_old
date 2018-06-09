@@ -1,11 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/scottshotgg/Express/lex"
-	"github.com/scottshotgg/Express/llvm"
 	"github.com/scottshotgg/Express/parse"
 	program "github.com/scottshotgg/Express/program"
 	"github.com/scottshotgg/Express/token"
@@ -98,7 +99,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	llvm.Translate(p.Tokens["semantic"])
-}
+	// turn off llvm for now
+	// llvm.Translate(p.Tokens["semantic"])
 
-// TODO: MAJOR TODO : IDENT adding is broken now - pls fix
+	semanticTokensJSON, err := json.MarshalIndent(p.Tokens["semantic"], "", "\t")
+	if err != nil {
+		fmt.Println("ERROR:", err)
+		os.Exit(9)
+	}
+
+	fmt.Println(string(semanticTokensJSON))
+
+	err = ioutil.WriteFile("main.tokens.json", []byte(string(semanticTokensJSON)), 0644)
+	if err != nil {
+		fmt.Println("ERROR", err)
+		os.Exit(9)
+	}
+}
