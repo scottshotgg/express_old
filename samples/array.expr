@@ -7,6 +7,8 @@ bb = bb + 1
 //ints := [ "5", bb, b ]
 int[] arrayBrah = [ 5, 5 ]
 
+float thing = 77.0
+
 /* 
 TODO: things like this can be fixed with a simple 'InheritedMap' structure
 but I am too lazy right now to do that
@@ -14,3 +16,7 @@ o := {
     be: b
 }
 */
+
+obj := {
+    a := 5
+}
