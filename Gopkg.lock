@@ -2,6 +2,20 @@
 
 
 [[projects]]
+  name = "github.com/llir/llvm"
+  packages = [
+    "internal/enc",
+    "internal/floats",
+    "ir",
+    "ir/constant",
+    "ir/metadata",
+    "ir/types",
+    "ir/value"
+  ]
+  revision = "39a7f4ad4a4b76e2141305c055e6812b6039fa46"
+  version = "v0.2"
+
+[[projects]]
   name = "github.com/pkg/errors"
   packages = ["."]
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
@@ -10,6 +24,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "be52a27ec302b8a6c01d9cceda92c94ebffda1207e5c8ec8bee6579b794eaa8e"
+  inputs-digest = "046b50b7b1639e31ec793d76251279d3f3d8b67b5e992fe0cacd8876e6d5d61a"
   solver-name = "gps-cdcl"
   solver-version = 1

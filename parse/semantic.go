@@ -523,6 +523,7 @@ func (m *Meta) GetAssignmentStatement() error {
 
 		m.LLVMTokens = append(m.LLVMTokens, token.Token{
 			ID:    0,
+			Type:  "VAR",
 			Value: m.DeclaredValue,
 		})
 
@@ -599,7 +600,7 @@ func (m *Meta) GetAssignmentStatement() error {
 
 			m.LLVMTokens = append(m.LLVMTokens, token.Token{
 				ID:    0,
-				Type:  m.DeclaredName,
+				Type:  "VAR",
 				Value: m.DeclaredValue,
 			})
 
@@ -624,7 +625,7 @@ func (m *Meta) GetAssignmentStatement() error {
 
 		m.LLVMTokens = append(m.LLVMTokens, token.Token{
 			ID:    0,
-			Type:  m.DeclaredName,
+			Type:  "VAR",
 			Value: m.DeclaredValue,
 		})
 
@@ -921,11 +922,11 @@ func (m *Meta) CheckBlock() map[string]token.Value {
 						ID:    0,
 						Type:  "FOR",
 						Value: token.Value{
-						// True:
-						// The true value should be a map with three parts:
-						// 1. the range; start and end
-						// 2. the steps; how to get from the start to the end
-						// 3. the body; what are we doing at each iteration
+							// True:
+							// The true value should be a map with three parts:
+							// 1. the range; start and end
+							// 2. the steps; how to get from the start to the end
+							// 3. the body; what are we doing at each iteration
 						},
 					})
 				}

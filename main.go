@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	c "github.com/scottshotgg/Express/c"
 	"github.com/scottshotgg/Express/lex"
 	"github.com/scottshotgg/Express/parse"
 	program "github.com/scottshotgg/Express/program"
@@ -99,14 +100,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	// turn off llvm for now
 	// llvm.Translate(p.Tokens["semantic"])
-
-	semanticTokensJSON, err := json.MarshalIndent(p.Tokens["semantic"], "", "\t")
-	if err != nil {
-		fmt.Println("ERROR:", err)
-		os.Exit(9)
-	}
+	c.Translate(p.Tokens["semantic"])
+}
 
 	fmt.Println(string(semanticTokensJSON))
 
