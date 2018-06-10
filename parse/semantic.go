@@ -884,13 +884,17 @@ func (m *Meta) CheckBlock() map[string]token.Value {
 				fmt.Println("as", as)
 				m.Shift()
 				fmt.Println("getexpr", m.CurrentToken)
+				fmt.Println("forLoop lastToken", m.LastCollectedToken)
+				start := m.LastCollectedToken.Value.True.(int)
 
 				// TODO: FIXME: major hack, take the logic to check the type of vars out of GetFactor
 				m.DeclaredType = m.LastCollectedToken.Value.Type
 
 				// END of the for loop
 				m.GetExpression()
-				fmt.Println(m.DeclaredValue)
+				fmt.Println("m.GetExpression()", m.DeclaredValue)
+				fmt.Println("forLoop lastToken2", m.LastCollectedToken)
+				end := m.LastCollectedToken.Value.True.(int)
 
 				// TODO: at this point the loop isn't needed at all, don't even emit the tokens
 				if m.DeclaredValue.True.(bool) == false {
@@ -903,7 +907,11 @@ func (m *Meta) CheckBlock() map[string]token.Value {
 
 					// STEP of the for loop
 					m.GetExpression()
+					fmt.Println("forLoop lastToken3", m.LastCollectedToken)
+					step := m.LastCollectedToken.Value.True.(int)
 					m.Shift()
+
+					fmt.Println("start, end, step", start, end, step)
 
 					meta := Meta{
 						IgnoreWS:         true,
@@ -916,19 +924,35 @@ func (m *Meta) CheckBlock() map[string]token.Value {
 
 					// BODY of the loop
 					// TODO: this needs to be fixed because we only get back variables.... ?
-					meta.CheckBlock()
+					block := meta.CheckBlock()
 
 					m.CollectToken(token.Token{
-						ID:    0,
-						Type:  "FOR",
+						ID:   0,
+						Type: "FOR",
 						Value: token.Value{
-						// True:
-						// The true value should be a map with three parts:
-						// 1. the range; start and end
-						// 2. the steps; how to get from the start to the end
-						// 3. the body; what are we doing at each iteration
+							// True:
+							// The true value should be a map with three parts:
+							// 1. the range; start and end
+							// 2. the steps; how to get from the start to the end
+							// 3. the body; what are we doing at each iteration
+							True: map[string]token.Value{
+								"start": token.Value{
+									True: start,
+								},
+								"end": token.Value{
+									True: end,
+								},
+								"step": token.Value{
+									True: step,
+								},
+								"body": token.Value{
+									True: block,
+								},
+							},
 						},
 					})
+					fmt.Println("lastToken", m.LastCollectedToken)
+					m.LLVMTokens = append(m.LLVMTokens, m.LastCollectedToken)
 				}
 
 				// expect FUNCTION definition

@@ -42,9 +42,8 @@ var (
 		"float":  4,
 		"char":   5,
 		"object": 6,
-		"string": 7,
 		// don't know if I'll need this
-		"int[]": 8,
+		"int[]": 7,
 	}
 )
 
