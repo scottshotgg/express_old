@@ -1,0 +1,10 @@
+strategy
+
+- for Loops
+  - figure out beginning, end, and step: generate for loop in C with this
+  - for {} -> while(1) {}
+
+- if statement
+  - directly translate the if statement over
+  - same thing with else
+

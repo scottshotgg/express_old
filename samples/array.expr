@@ -25,4 +25,13 @@ obj := {
     a := 5
     b := 67.8
     string thing = "hey its me"
+    notMe: false
+    anotherOne: {
+        //a: {
+          //  woah: "brah:
+        //}
+        a: 7
+    }
+    int[] arrayMeUpScotty = [7, 8, 9]
+    //var hey = "is me"
 }

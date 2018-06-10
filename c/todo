@@ -1,4 +1,8 @@
 - Change to printf so statements are more readable
+  - change map/object declaration, make function
+- Write to file more efficiently
+  - build one string
+  - buffered?
 - Comment the code
 - Inject comments into the C code
 - fix the tokens coming out of the semantic parser
