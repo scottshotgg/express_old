@@ -27,11 +27,13 @@ obj := {
     string thing = "hey its me"
     notMe: false
     anotherOne: {
-        //a: {
-          //  woah: "brah:
-        //}
         a: 7
     }
     int[] arrayMeUpScotty = [7, 8, 9]
-    //var hey = "is me"
 }
+
+//json = {
+//    amount: 3,
+//    name: "scott",
+//    attribute: "funny"
+//}

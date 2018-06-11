@@ -47,21 +47,6 @@ var (
 	}
 )
 
-// class MyFieldInterface
-// {
-//     int m_Size; // of course use appropriate access level in the real code...
-//     ~MyFieldInterface() = default;
-// }
-
-// template <typename T>
-// class MyField : public MyFieldInterface {
-//     T m_Value;
-// }
-
-// struct MyClass {
-//     std::map<string, MyFieldInterface* > fields;
-// }
-
 func translateObject(t token.Token) {
 	trueValue := t.Value.True.(map[string]token.Value)
 	mapString := "std::map<std::string, Any>" + t.Value.Name + ";\n"
@@ -150,14 +135,16 @@ func translateArray(t token.Token) {
 
 func translateVariableStatement(t token.Token) {
 	// if the token type is var make a var statement in C
-	if t.Type == "VAR" {
+
+	switch t.Type {
+	case "VAR":
 		switch t.Value.Type {
 		case "var":
 			// int abc = 5;
 			// Any zyx = Any{ "int", &abc };
 			varName := t.Value.Name + strconv.Itoa(int(r.Uint32()))
 			thing := strings.Join([]string{t.Value.Acting, varName, "=", fmt.Sprintf("%v", t.Value.True)}, " ") + ";\n"
-			thing += "Any " + t.Value.Name + " = Any{ \"" + t.Value.Acting + "\", &" + varName + "};\n"
+			thing += "Any " + t.Value.Name + " = Any{ \"" + t.Value.Acting + "\", &" + varName + " };\n"
 			fmt.Println(thing)
 			_, err = f.Write([]byte(thing))
 			if err != nil {
@@ -192,6 +179,34 @@ func translateVariableStatement(t token.Token) {
 				os.Exit(9)
 			}
 		}
+
+	// why is the containing function named that ...
+	case "FOR":
+		tValue := t.Value.True.(map[string]token.Value)
+		loop := fmt.Sprintf("for (int %s = %d; %s < %d; %s+=%d) {\n", t.Value.Name, tValue["start"].True.(int), t.Value.Name, tValue["end"].True.(int), t.Value.Name, tValue["step"].True.(int))
+		fmt.Println(loop)
+		_, err = f.Write([]byte(loop))
+		if err != nil {
+			fmt.Println("error writing to file")
+			os.Exit(9)
+		}
+
+		loopBody := tValue["body"].True.([]token.Token)
+		for _, t := range loopBody {
+			fmt.Println("loopBody", t)
+			translateVariableStatement(t)
+		}
+
+		loopEnding := "}\n"
+		fmt.Println(loopEnding)
+		_, err = f.Write([]byte(loopEnding))
+		if err != nil {
+			fmt.Println("error writing to file")
+			os.Exit(9)
+		}
+
+	default:
+		fmt.Println("didnt know wtf to do with this token", t)
 	}
 }
 

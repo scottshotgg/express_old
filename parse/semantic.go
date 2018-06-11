@@ -521,11 +521,11 @@ func (m *Meta) GetAssignmentStatement() error {
 			Value: m.DeclaredValue,
 		})
 
-		m.LLVMTokens = append(m.LLVMTokens, token.Token{
-			ID:    0,
-			Type:  "VAR",
-			Value: m.DeclaredValue,
-		})
+		// m.LLVMTokens = append(m.LLVMTokens, token.Token{
+		// 	ID:    0,
+		// 	Type:  "VAR",
+		// 	Value: m.DeclaredValue,
+		// })
 
 		m.DeclaredType = ""
 		m.DeclaredName = ""
@@ -598,11 +598,11 @@ func (m *Meta) GetAssignmentStatement() error {
 				Value: m.DeclaredValue,
 			})
 
-			m.LLVMTokens = append(m.LLVMTokens, token.Token{
-				ID:    0,
-				Type:  "VAR",
-				Value: m.DeclaredValue,
-			})
+			// m.LLVMTokens = append(m.LLVMTokens, token.Token{
+			// 	ID:    0,
+			// 	Type:  "VAR",
+			// 	Value: m.DeclaredValue,
+			// })
 
 			m.DeclaredType = ""
 			m.DeclaredName = ""
@@ -623,11 +623,11 @@ func (m *Meta) GetAssignmentStatement() error {
 			Value: m.DeclaredValue,
 		})
 
-		m.LLVMTokens = append(m.LLVMTokens, token.Token{
-			ID:    0,
-			Type:  "VAR",
-			Value: m.DeclaredValue,
-		})
+		// m.LLVMTokens = append(m.LLVMTokens, token.Token{
+		// 	ID:    0,
+		// 	Type:  "VAR",
+		// 	Value: m.DeclaredValue,
+		// })
 
 		m.DeclaredType = ""
 		m.DeclaredName = ""
@@ -885,7 +885,7 @@ func (m *Meta) CheckBlock() map[string]token.Value {
 				m.Shift()
 				fmt.Println("getexpr", m.CurrentToken)
 				fmt.Println("forLoop lastToken", m.LastCollectedToken)
-				start := m.LastCollectedToken.Value.True.(int)
+				start := m.LastCollectedToken.Value
 
 				// TODO: FIXME: major hack, take the logic to check the type of vars out of GetFactor
 				m.DeclaredType = m.LastCollectedToken.Value.Type
@@ -894,7 +894,7 @@ func (m *Meta) CheckBlock() map[string]token.Value {
 				m.GetExpression()
 				fmt.Println("m.GetExpression()", m.DeclaredValue)
 				fmt.Println("forLoop lastToken2", m.LastCollectedToken)
-				end := m.LastCollectedToken.Value.True.(int)
+				end := m.LastCollectedToken.Value
 
 				// TODO: at this point the loop isn't needed at all, don't even emit the tokens
 				if m.DeclaredValue.True.(bool) == false {
@@ -908,7 +908,7 @@ func (m *Meta) CheckBlock() map[string]token.Value {
 					// STEP of the for loop
 					m.GetExpression()
 					fmt.Println("forLoop lastToken3", m.LastCollectedToken)
-					step := m.LastCollectedToken.Value.True.(int)
+					step := m.LastCollectedToken.Value
 					m.Shift()
 
 					fmt.Println("start, end, step", start, end, step)
@@ -926,10 +926,17 @@ func (m *Meta) CheckBlock() map[string]token.Value {
 					// TODO: this needs to be fixed because we only get back variables.... ?
 					block := meta.CheckBlock()
 
+					// TODO: probably need to do a check somewhere to glean this information
+					// if !(start.Name == end.Name && start.Name == step.Name) {
+					// fmt.Println("ERROR: iteratable in loop has multiple references")
+					// os.Exit(9)
+					// }
+
 					m.CollectToken(token.Token{
 						ID:   0,
 						Type: "FOR",
 						Value: token.Value{
+							Name: start.Name,
 							// True:
 							// The true value should be a map with three parts:
 							// 1. the range; start and end
@@ -937,16 +944,26 @@ func (m *Meta) CheckBlock() map[string]token.Value {
 							// 3. the body; what are we doing at each iteration
 							True: map[string]token.Value{
 								"start": token.Value{
-									True: start,
+									True: start.True.(int),
 								},
 								"end": token.Value{
-									True: end,
+									True: end.True.(int),
 								},
 								"step": token.Value{
-									True: step,
+									True: step.True.(int),
 								},
 								"body": token.Value{
-									True: block,
+									True: append(func() (tks []token.Token) {
+										for k, v := range block {
+											v.Name = k
+											tks = append(tks, token.Token{
+												ID:    0,
+												Type:  "VAR",
+												Value: v,
+											})
+										}
+										return
+									}(), meta.LLVMTokens...),
 								},
 							},
 						},
@@ -1107,6 +1124,6 @@ func Semantic(tokens []token.Token) ([]token.Token, error) {
 		})
 	}
 
-	// return meta.LLVMTokens, nil
-	return tks, nil
+	return append(tks, meta.LLVMTokens...), nil
+	// return tks, nil
 }
