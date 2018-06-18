@@ -102,6 +102,15 @@ var OperatorMap = map[string]Token{
 		},
 	},
 
+	// Increment
+	"++": Token{
+		Type: SecOp,
+		Value: Value{
+			Type:   "increment",
+			String: "++",
+		},
+	},
+
 	// TODO: add the templated operators ability to the parser and remove the tokens completely
 	// VECTOR OPERANDS
 	".+": Token{

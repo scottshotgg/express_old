@@ -343,6 +343,16 @@ func (m *Meta) GetOperationValue(left token.Token, right token.Token, op token.T
 		}
 		return value
 
+	// case "++":
+	// 	value, err := m.AddOperands(left.Value, token.Value{
+
+	// 	})
+	// 	if err != nil {
+	// 		fmt.Println("could not increment value idk wtf happened", left.Value)
+	// 		os.Exit(9)
+	// 	}
+	// 	return value
+
 	default:
 		fmt.Println("Invalid operand", op)
 	}
@@ -859,6 +869,138 @@ func (m *Meta) CheckFunctionDef() []token.Value {
 	return []token.Value{}
 }
 
+// CheckFor check the syntax of the for loop
+func (m *Meta) CheckFor() {
+	fmt.Println("found a for")
+
+	// m.Shift()
+
+	fmt.Println("current", m.CurrentToken)
+
+	// START of the for loop
+	as := m.GetAssignmentStatement()
+
+	fmt.Println("as", as)
+	m.Shift()
+	fmt.Println("getexpr", m.CurrentToken)
+	fmt.Println("forLoop lastToken", m.LastCollectedToken)
+	start := m.LastCollectedToken.Value
+
+	// TODO: FIXME: major hack, take the logic to check the type of vars out of GetFactor
+	m.DeclaredType = m.LastCollectedToken.Value.Type
+
+	// END of the for loop
+	m.GetExpression()
+	fmt.Println("m.GetExpression()", m.DeclaredValue)
+	fmt.Println("forLoop lastToken2", m.LastCollectedToken)
+	end := m.LastCollectedToken.Value
+
+	// TODO: at this point the loop isn't needed at all, don't even emit the tokens
+	if m.DeclaredValue.True.(bool) == false {
+		fmt.Println("loop not needed")
+		// TODO: we still need to clear the loop tokens, just don't generate the end token
+	} else {
+		// FIXME: TODO: major hack, take the logic to check the type of vars out of GetFactor
+		m.DeclaredType = token.IntType
+		m.Shift()
+
+		// STEP of the for loop
+		m.GetExpression()
+		fmt.Println("forLoop lastToken3", m.LastCollectedToken)
+		step := m.LastCollectedToken.Value
+		m.Shift()
+
+		fmt.Println("start, end, step", start, end, step)
+
+		meta := Meta{
+			IgnoreWS:         true,
+			Tokens:           m.CurrentToken.Value.True.([]token.Token),
+			Length:           len(m.CurrentToken.Value.True.([]token.Token)),
+			CheckOptmization: true,
+			DeclarationMap:   map[string]token.Value{},
+		}
+		meta.Shift()
+
+		// BODY of the loop
+		// TODO: this needs to be fixed because we only get back variables.... ?
+		block := meta.CheckBlock()
+
+		// TODO: probably need to do a check somewhere to glean this information
+		// if !(start.Name == end.Name && start.Name == step.Name) {
+		// fmt.Println("ERROR: iteratable in loop has multiple references")
+		// os.Exit(9)
+		// }
+
+		m.CollectToken(token.Token{
+			ID:   0,
+			Type: "FOR",
+			Value: token.Value{
+				Name: start.Name,
+				// True:
+				// The true value should be a map with three parts:
+				// 1. the range; start and end
+				// 2. the steps; how to get from the start to the end
+				// 3. the body; what are we doing at each iteration
+				True: map[string]token.Value{
+					"start": token.Value{
+						True: start.True.(int),
+					},
+					"end": token.Value{
+						True: end.True.(int),
+					},
+					"step": token.Value{
+						True: step.True.(int),
+					},
+					"body": token.Value{
+						True: append(func() (tks []token.Token) {
+							for k, v := range block {
+								v.Name = k
+								tks = append(tks, token.Token{
+									ID:    0,
+									Type:  "VAR",
+									Value: v,
+								})
+							}
+							return
+						}(), meta.LLVMTokens...),
+					},
+				},
+			},
+		})
+		fmt.Println("lastToken", m.LastCollectedToken)
+		m.LLVMTokens = append(m.LLVMTokens, m.LastCollectedToken)
+	}
+
+	// expect FUNCTION definition
+	// expect grouping
+	// grouping has 0-3 expressions within it
+	// expect block
+
+	// maybe instead of that -
+	// check for
+	// 1. assignment statement (standard for)
+	// 2. boolean qualifier
+	// 3. add statement
+	// OR
+	// 1. boolean qualifer (while)
+	// ORf
+	// 1. nothing (for-ever)
+
+	// fmt.Println(m.CurrentToken.Value)
+	// meta := Meta{
+	// 	IgnoreWS:         true,
+	// 	Tokens:           m.CurrentToken.Value.True.([]token.Token),
+	// 	Length:           len(m.CurrentToken.Value.True.([]token.Token)),
+	// 	CheckOptmization: true,
+	// 	DeclarationMap:   m.DeclarationMap,
+	// }
+	// meta.Shift()
+
+	// theRest := meta.CheckFunctionDef()
+
+	// check that we have up to 3 arguments
+}
+
 // CheckBlock check the usage of the block
 func (m *Meta) CheckBlock() map[string]token.Value {
 	var err error
@@ -872,138 +1014,9 @@ func (m *Meta) CheckBlock() map[string]token.Value {
 
 			switch m.CurrentToken.Value.String {
 			case "for":
-				fmt.Println("found a for")
-
-				// m.Shift()
-
-				fmt.Println("current", m.CurrentToken)
-
-				// START of the for loop
-				as := m.GetAssignmentStatement()
-
-				fmt.Println("as", as)
-				m.Shift()
-				fmt.Println("getexpr", m.CurrentToken)
-				fmt.Println("forLoop lastToken", m.LastCollectedToken)
-				start := m.LastCollectedToken.Value
-
-				// TODO: FIXME: major hack, take the logic to check the type of vars out of GetFactor
-				m.DeclaredType = m.LastCollectedToken.Value.Type
-
-				// END of the for loop
-				m.GetExpression()
-				fmt.Println("m.GetExpression()", m.DeclaredValue)
-				fmt.Println("forLoop lastToken2", m.LastCollectedToken)
-				end := m.LastCollectedToken.Value
-
-				// TODO: at this point the loop isn't needed at all, don't even emit the tokens
-				if m.DeclaredValue.True.(bool) == false {
-					fmt.Println("loop not needed")
-					// TODO: we still need to clear the loop tokens, just don't generate the end token
-				} else {
-					// FIXME: TODO: major hack, take the logic to check the type of vars out of GetFactor
-					m.DeclaredType = token.IntType
-					m.Shift()
-
-					// STEP of the for loop
-					m.GetExpression()
-					fmt.Println("forLoop lastToken3", m.LastCollectedToken)
-					step := m.LastCollectedToken.Value
-					m.Shift()
-
-					fmt.Println("start, end, step", start, end, step)
-
-					meta := Meta{
-						IgnoreWS:         true,
-						Tokens:           m.CurrentToken.Value.True.([]token.Token),
-						Length:           len(m.CurrentToken.Value.True.([]token.Token)),
-						CheckOptmization: true,
-						DeclarationMap:   map[string]token.Value{},
-					}
-					meta.Shift()
-
-					// BODY of the loop
-					// TODO: this needs to be fixed because we only get back variables.... ?
-					block := meta.CheckBlock()
-
-					// TODO: probably need to do a check somewhere to glean this information
-					// if !(start.Name == end.Name && start.Name == step.Name) {
-					// fmt.Println("ERROR: iteratable in loop has multiple references")
-					// os.Exit(9)
-					// }
-
-					m.CollectToken(token.Token{
-						ID:   0,
-						Type: "FOR",
-						Value: token.Value{
-							Name: start.Name,
-							// True:
-							// The true value should be a map with three parts:
-							// 1. the range; start and end
-							// 2. the steps; how to get from the start to the end
-							// 3. the body; what are we doing at each iteration
-							True: map[string]token.Value{
-								"start": token.Value{
-									True: start.True.(int),
-								},
-								"end": token.Value{
-									True: end.True.(int),
-								},
-								"step": token.Value{
-									True: step.True.(int),
-								},
-								"body": token.Value{
-									True: append(func() (tks []token.Token) {
-										for k, v := range block {
-											v.Name = k
-											tks = append(tks, token.Token{
-												ID:    0,
-												Type:  "VAR",
-												Value: v,
-											})
-										}
-										return
-									}(), meta.LLVMTokens...),
-								},
-							},
-						},
-					})
-					fmt.Println("lastToken", m.LastCollectedToken)
-					m.LLVMTokens = append(m.LLVMTokens, m.LastCollectedToken)
-				}
-
-				// expect FUNCTION definition
-				// expect grouping
-				// grouping has 0-3 expressions within it
-				// expect block
-
-				// maybe instead of that -
-				// check for
-				// 1. assignment statement (standard for)
-				// 2. boolean qualifier
-				// 3. add statement
-				// OR
-				// 1. boolean qualifer (while)
-				// ORf
-				// 1. nothing (for-ever)
-
-				// fmt.Println(m.CurrentToken.Value)
-				// meta := Meta{
-				// 	IgnoreWS:         true,
-				// 	Tokens:           m.CurrentToken.Value.True.([]token.Token),
-				// 	Length:           len(m.CurrentToken.Value.True.([]token.Token)),
-				// 	CheckOptmization: true,
-				// 	DeclarationMap:   m.DeclarationMap,
-				// }
-				// meta.Shift()
-
-				// theRest := meta.CheckFunctionDef()
-
-				// check that we have up to 3 arguments
-
-				fmt.Println()
+				m.CheckFor()
+				// this continue may need to be conditional
 				continue
-
 			case "if":
 				fmt.Println("found an if")
 				// expect grouping
