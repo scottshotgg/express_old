@@ -10,14 +10,14 @@ import (
 
 // Meta holds information about the current parse
 type Meta struct {
-	AppendVar       bool
-	IgnoreWS        bool
-	ParseIndex      int
-	Length          int
-	Tokens          []token.Token
-	SemanticTokens  []token.Token
-	SyntacticTokens []token.Token
-	EndTokens       []token.Token
+	AppendDeclarations bool
+	IgnoreWS           bool
+	ParseIndex         int
+	Length             int
+	Tokens             []token.Token
+	SemanticTokens     []token.Token
+	SyntacticTokens    []token.Token
+	EndTokens          []token.Token
 
 	LastToken    token.Token
 	CurrentToken token.Token
@@ -419,18 +419,18 @@ func (m *Meta) ParseBlock() token.Token {
 
 		case token.SecOp:
 			fmt.Println("found a sec_op")
-			// if m.NextToken.Type == current.Type {
-			// 	m.Shift()
-			// 	if t, ok := token.TokenMap[current.Value.String+m.CurrentToken.Value.String]; ok {
-			// 		blockTokens = append(blockTokens, t)
-			// 	} else {
-			// 		fmt.Println("wtf happened here: ", current.Value.String+m.CurrentToken.Value.String)
-			// 		os.Exit(9)
-			// 	}
-			// } else {
-			// 	blockTokens = append(blockTokens, current)
-			// }
-			blockTokens = append(blockTokens, current)
+			if m.NextToken.Type == current.Type {
+				m.Shift()
+				if t, ok := token.TokenMap[current.Value.String+m.CurrentToken.Value.String]; ok {
+					blockTokens = append(blockTokens, t)
+				} else {
+					fmt.Println("wtf happened here: ", current.Value.String+m.CurrentToken.Value.String)
+					os.Exit(9)
+				}
+			} else {
+				blockTokens = append(blockTokens, current)
+			}
+			// blockTokens = append(blockTokens, current)
 
 		case token.Array:
 			fmt.Println("found an array")
@@ -694,8 +694,8 @@ func (m *Meta) ParseBlock() token.Token {
 	}
 }
 
-// Symtactic begins the parsing process for a passes set of tokens
-func Symtactic(tokens []token.Token) ([]token.Token, error) {
+// Syntactic begins the parsing process for a passes set of tokens
+func Syntactic(tokens []token.Token) ([]token.Token, error) {
 	// Auto inject the brackets to ensure that they are there
 	meta := Meta{
 		IgnoreWS:         true,

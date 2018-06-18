@@ -100,6 +100,8 @@ const (
 
 	PublicAccessType  = "public"
 	PrivateAccessType = "private"
+
+	For = "for"
 )
 
 func init() {

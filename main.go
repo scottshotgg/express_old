@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/scottshotgg/Express/c"
 	"github.com/scottshotgg/Express/lex"
 	"github.com/scottshotgg/Express/parse"
 	program "github.com/scottshotgg/Express/program"
@@ -83,7 +82,7 @@ func main() {
 	fmt.Println()
 
 	// Syntactic parse time
-	p.Tokens["parse"], err = parse.Symtactic(p.Tokens["lex"])
+	p.Tokens["parse"], err = parse.Syntactic(p.Tokens["lex"])
 	if err != nil {
 		fmt.Println("ERROR:", err)
 	}
@@ -98,12 +97,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	// for _, t := range p.Tokens["semantic"] {
-	// 	fmt.Println(t)
-	// }
+	// // for _, t := range p.Tokens["semantic"] {
+	// // 	fmt.Println(t)
+	// // }
 
-	// llvm.Translate(p.Tokens["semantic"])
-	c.Translate(p.Tokens["semantic"])
+	// // llvm.Translate(p.Tokens["semantic"])
+	// c.Translate(p.Tokens["semantic"])
 
 	// fmt.Println(string(semanticTokensJSON))
 
