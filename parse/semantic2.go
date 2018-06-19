@@ -74,24 +74,34 @@ func (m *Meta) GetTerm() (token.Value, error) {
 	}
 	fmt.Println("factor", factor)
 
-	m.Shift()
-	if m.CurrentToken.Type == token.SecOp {
-		secop := m.CurrentToken.Value
-		fmt.Println("secop", secop)
-		// we need to look for another factor
+	for {
 		m.Shift()
-		factor2, err := m.GetFactor()
-		if err != nil {
-			return token.Value{}, errors.New("Error finding factor after operator")
-		}
-		fmt.Println("factor2", factor2)
+		switch m.CurrentToken.Type {
+		case token.SecOp:
+			secop := m.CurrentToken.Value
+			fmt.Println("secop", secop)
+			// we need to look for another factor
+			m.Shift()
+			factor2, err := m.GetFactor()
+			if err != nil {
+				return token.Value{}, errors.New("Error finding factor after operator")
+			}
+			fmt.Println("factor2", factor2)
 
-		value, err := m.GetBinaryOperationValue(factor, factor2, secop)
-		if err != nil {
-			return token.Value{}, errors.New("Error adding operands")
+			value, err := m.GetBinaryOperationValue(factor, factor2, secop)
+			if err != nil {
+				return token.Value{}, errors.New("Error adding operands")
+			}
+			fmt.Println("value", value)
+			return value, nil
+
+		case token.Separator:
+			m.Shift()
+			return factor, nil
+
+		default:
+			return token.Value{}, errors.New("wtf")
 		}
-		fmt.Println("value", value)
-		return value, nil
 	}
 
 	return factor, nil
