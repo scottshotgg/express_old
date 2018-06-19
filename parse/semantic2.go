@@ -7,12 +7,17 @@ import (
 	"github.com/scottshotgg/Express/token"
 )
 
+// TODO: FIXME: add token IDs, make token Types consistent
+// TODO: handle token.Separator to dump the parse
+
 // GetFactor ...
 func (m *Meta) GetFactor() (token.Value, error) {
 	// A factor can be one of three things right now
 	// - literal value
 	// - ident value
 	// - another expression; started by a left paren
+	// TODO: add in idents
+	// TODO: add in expression
 
 	current := m.CurrentToken
 	switch current.Type {
@@ -25,11 +30,10 @@ func (m *Meta) GetFactor() (token.Value, error) {
 		fmt.Println(err.Error(), current)
 		return token.Value{}, err
 	}
-
-	return token.Value{}, nil
 }
 
 // GetBinaryOperationValue ...
+// TODO: add in * and /
 func (m *Meta) GetBinaryOperationValue(left, right, op token.Value) (token.Value, error) {
 	switch op.Type {
 	case "add":
@@ -46,26 +50,16 @@ func (m *Meta) GetBinaryOperationValue(left, right, op token.Value) (token.Value
 		}
 		return subValue, nil
 
-		// case "add":
-		// 	addValue, err := m.AddOperands(factor, factor2)
-		// 	if err != nil {
-		// 		return token.Value{}, errors.New("Error adding operands", factor, factor2)
-		// 	}
-		// 	return addValue, nil
-
-		// case "add":
-		// 	addValue, err := m.AddOperands(factor, factor2)
-		// 	if err != nil {
-		// 		return token.Value{}, errors.New("Error adding operands", factor, factor2)
-		// 	}
-		// 	return addValue, nil
-
+	default:
+		err := errors.Errorf("Undefined operator; left: %+v right: %+v op: %+v", left, right, op)
+		fmt.Println(err.Error())
+		return token.Value{}, err
 	}
-
-	return token.Value{}, nil
 }
 
 // GetTerm ...
+// TODO: recurse if there is another term operator
+// TODO: need to change this to PriOp
 func (m *Meta) GetTerm() (token.Value, error) {
 	factor, err := m.GetFactor()
 	if err != nil {
@@ -120,6 +114,10 @@ func (m *Meta) GetExpression() (token.Value, error) {
 }
 
 // GetAssignmentStatement ...
+// TODO: should we move ident discovery to GetExpression ?
+// TODO: need to somehow do < and >
+// TODO: need to include SecOp
+// TODO: recurse GetExpression call if another op
 func (m *Meta) GetAssignmentStatement() (token.Value, error) {
 	fmt.Println("hi im getassignmentstatement")
 
