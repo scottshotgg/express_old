@@ -1,0 +1,17 @@
+program    -> block
+block      -> []statements
+statement  -> block, assignment_expression
+assignment_expression -> ident assign_op expression
+expression -> term (+|-) term
+term       -> factor (*|/) factor
+factor     -> ident, literal, (expression)
+
+ex:
+for i := 2, i < 10, i++ {}
+
+trace would be:
+-> program
+-> block
+-> statement
+-> "then it would see for and start the 'for' parse"
+-> standard for is defined as "for", assignment expression, boolean expression, increment expression, block

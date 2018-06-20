@@ -104,7 +104,7 @@ var OperatorMap = map[string]Token{
 
 	// Increment
 	"++": Token{
-		Type: SecOp,
+		Type: Increment,
 		Value: Value{
 			Type:   "increment",
 			String: "++",

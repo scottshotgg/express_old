@@ -38,6 +38,8 @@ type Meta struct {
 	DeclaredName       string
 	DeclaredValue      token.Value
 	DeclaredAccessType string
+
+	// LastMeta *Meta
 }
 
 // ParseVar parses a variable declaration and other statements related to type later on. Anything in the form of <type><ident>
@@ -451,6 +453,10 @@ func (m *Meta) ParseBlock() token.Token {
 
 		case token.LThan:
 			fmt.Println("found a greater than")
+			blockTokens = append(blockTokens, current)
+
+		case token.Increment:
+			fmt.Println("found an increment")
 			blockTokens = append(blockTokens, current)
 
 		case token.At:

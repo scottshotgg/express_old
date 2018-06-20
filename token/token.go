@@ -84,8 +84,8 @@ const (
 	DDBY         = "DDBY"
 	Underscore   = "UNDERSCORE"
 	QuestionMark = "QM"
-	Accessor     = "Accessor"
-	Increment    = "Increment"
+	Accessor     = "ACCESSOR"
+	Increment    = "INCREMENT"
 
 	VarType      = "var"
 	IntType      = "int"

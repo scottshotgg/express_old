@@ -91,10 +91,14 @@ func main() {
 	fmt.Println()
 
 	// Semantic parse time
-	p.Tokens["semantic"], err = parse.Semantic(p.Tokens["parse"])
+	t, err := parse.Semantic(p.Tokens["parse"])
 	if err != nil {
 		fmt.Println("wat dat err do brah", err)
 		os.Exit(1)
+	}
+
+	for _, tok := range t.True.([]token.Value) {
+		fmt.Println("token: ", tok)
 	}
 
 	// // for _, t := range p.Tokens["semantic"] {

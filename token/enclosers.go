@@ -42,7 +42,7 @@ var EncloserMap = map[string]Token{
 	"]": Token{
 		Type: "R_BRACKET",
 		Value: Value{
-			Type:   "op_3",
+			Type:   "lthan",
 			String: "]",
 		},
 	},
@@ -50,14 +50,14 @@ var EncloserMap = map[string]Token{
 	"<": Token{
 		Type: "L_THAN",
 		Value: Value{
-			Type:   "op_3",
+			Type:   "lthan",
 			String: "<",
 		},
 	},
 	">": Token{
 		Type: "G_THAN",
 		Value: Value{
-			Type:   "op_3",
+			Type:   "rthan",
 			String: ">",
 		},
 	},
