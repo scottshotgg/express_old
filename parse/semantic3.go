@@ -110,45 +110,32 @@ func (m *Meta) GetFactor() (token.Value, error) {
 func (m *Meta) GetTerm() (token.Value, error) {
 	fmt.Println("GetTerm")
 
-	factor, err := m.GetFactor()
+	totalTerm, err := m.GetFactor()
 	if err != nil {
 		return token.Value{}, err
 	}
 
-	switch m.NextToken.Type {
-	case token.SecOp:
-		m.Shift()
-		fmt.Println("woah i got a secop")
-		op := m.CurrentToken
-		factor2, err := m.GetTerm()
-		if err != nil {
-			return token.Value{}, err
-		}
-		// If the operation is subtraction, change the operatoin to addition of a negative
-		switch op.Value.Type {
-		case "sub":
-			factor, err = m.MultOperands(factor, token.Value{
-				Type: token.IntType,
-				True: -1,
-			})
+	for {
+		switch m.NextToken.Type {
+		case token.SecOp:
+			m.Shift()
+			fmt.Println("woah i got a secop")
+			op := m.CurrentToken
+			factor2, ferr := m.GetFactor()
+			if ferr != nil {
+				return token.Value{}, ferr
+			}
+			fmt.Println("factor2", factor2)
+
+			totalTerm, err = m.EvaluateBinaryOperation(totalTerm, factor2, op.Value)
 			if err != nil {
 				return token.Value{}, err
 			}
-			op = token.TokenMap["+"]
-		}
-		fmt.Println("factor2", factor2)
 
-		eval, err := m.EvaluateBinaryOperation(factor, factor2, op.Value)
-		if err != nil {
-			return token.Value{}, err
+		default:
+			return totalTerm, err
 		}
-		return eval, nil
-
-		// TODO:
-		// default:
 	}
-
-	return factor, nil
 }
 
 // GetExpression ...
