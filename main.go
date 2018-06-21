@@ -90,6 +90,7 @@ func main() {
 	p.PrintTokens("parse", jsonIndent)
 	fmt.Println()
 
+	fmt.Println(p.Tokens["parse"])
 	// Semantic parse time
 	t, err := parse.Semantic(p.Tokens["parse"])
 	if err != nil {
@@ -97,9 +98,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	for _, tok := range t.True.([]token.Value) {
-		fmt.Println("token: ", tok)
-	}
+	fmt.Println(t)
+
+	// for _, tok := range t.True.([]token.Value) {
+	// 	fmt.Println("token: ", tok)
+	// }
 
 	// // for _, t := range p.Tokens["semantic"] {
 	// // 	fmt.Println(t)
