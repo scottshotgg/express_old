@@ -35,6 +35,13 @@ func (m *Meta) EvaluateBinaryOperation(left, right, op token.Value) (token.Value
 		}
 		return multValue, nil
 
+	case "div":
+		divValue, err := m.DivOperands(left, right)
+		if err != nil {
+			return token.Value{}, errors.New("Error dividing operands")
+		}
+		return divValue, nil
+
 	case "lthan":
 		// lessValue, err := m.LessThanOperands(left, right)
 		// if err != nil {
@@ -64,7 +71,7 @@ func (m *Meta) EvaluateUnaryOperation(left, op token.Value) { // (token.Value, e
 // GetFactor ...
 func (m *Meta) GetFactor() (token.Value, error) {
 	fmt.Println("GetFactor")
-	fmt.Println("m.NextToken", m.NextToken)
+	fmt.Println("next", m.NextToken)
 
 	var value token.Value
 	var err error
@@ -72,28 +79,58 @@ func (m *Meta) GetFactor() (token.Value, error) {
 	switch m.NextToken.Type {
 	case token.Literal:
 		m.Shift()
-		value, err = m.CurrentToken.Value, nil
-		if err != nil {
-			return token.Value{}, err
-		}
+		value = m.CurrentToken.Value
+		fmt.Println("hey its me the value", value)
 
 	case token.Ident:
 		m.Shift()
-		if identValue, ok := m.DeclarationMap[m.CurrentToken.Value.String]; ok {
-			return identValue, nil
+		var ok bool
+		if value, ok = m.DeclarationMap[m.CurrentToken.Value.String]; !ok {
+			if m.LastMeta != nil {
+				fmt.Println(m.DeclarationMap)
+				if value, ok = (*m.LastMeta).DeclarationMap[m.CurrentToken.Value.String]; !ok {
+					fmt.Println((*m.LastMeta).DeclarationMap)
+					return token.Value{}, errors.New("Undefined variable reference")
+				}
+			}
 		}
-		return token.Value{}, errors.New("Undefined variable reference")
 
-	default:
-		return token.Value{}, errors.Errorf("default %+v", m.NextToken)
-	}
-
-	if m.NextToken.Type == token.PriOp {
-		m.Shift()
-		op := m.CurrentToken
-		value2, err := m.GetFactor()
+	case token.Group:
+		meta := Meta{
+			AppendDeclarations: true,
+			IgnoreWS:           true,
+			Tokens:             m.NextToken.Value.True.([]token.Token),
+			Length:             len(m.NextToken.Value.True.([]token.Token)),
+			CheckOptmization:   true,
+			LastMeta:           m,
+			DeclarationMap:     map[string]token.Value{},
+		}
+		meta.Shift()
+		// Might have to change this to GetExpression
+		value, err = meta.GetExpression()
 		if err != nil {
 			return token.Value{}, err
+		}
+		m.Shift()
+		// os.Exit(9)
+
+	// case "":
+	// 	fmt.Println("we at the end?")
+	// 	os.Exit(8)
+
+	default:
+		fmt.Println("next", m.NextToken)
+		return token.Value{}, errors.Errorf("default %+v", m.NextToken)
+	}
+	fmt.Println("value thing again", value)
+
+	switch m.NextToken.Type {
+	case token.PriOp:
+		m.Shift()
+		op := m.CurrentToken
+		value2, verr := m.GetFactor()
+		if verr != nil {
+			return token.Value{}, verr
 		}
 		fmt.Println("value2", value2)
 
@@ -101,8 +138,18 @@ func (m *Meta) GetFactor() (token.Value, error) {
 		if err != nil {
 			return token.Value{}, err
 		}
+
+	case token.Increment:
+		value, err = m.AddOperands(value, token.Value{
+			Type: token.IntType,
+			True: 1,
+		})
+		if err != nil {
+			return token.Value{}, err
+		}
 	}
 
+	fmt.Println("returning")
 	return value, nil
 }
 
@@ -132,8 +179,31 @@ func (m *Meta) GetTerm() (token.Value, error) {
 				return token.Value{}, err
 			}
 
+		// TODO: need to fix this....
+		case token.LThan:
+			// ident := m.LastToken
+			m.Shift()
+			// op := m.CurrentToken
+			factor2, ferr := m.GetTerm()
+			if ferr != nil {
+				return token.Value{}, ferr
+			}
+			fmt.Println("lthan totalTerm", totalTerm)
+			fmt.Println("lthan factor2", factor2)
+			// totalTerm, err = m.EvaluateBinaryOperation(totalTerm, factor2, op.Value)
+			// if err != nil {
+			// 	return token.Value{}, err
+			// }
+			fmt.Println("totalBoolTerm", totalTerm)
+			return factor2, nil
+
+		case token.Separator:
+			m.Shift()
+			return totalTerm, nil
+
 		default:
-			return totalTerm, err
+			fmt.Println("i am here", m.NextToken)
+			return totalTerm, nil
 		}
 	}
 }
@@ -141,6 +211,7 @@ func (m *Meta) GetTerm() (token.Value, error) {
 // GetExpression ...
 func (m *Meta) GetExpression() (token.Value, error) {
 	fmt.Println("GetExpression")
+	fmt.Println("m.NextToken", m.NextToken)
 
 	switch m.NextToken.Type {
 	// Assignment Expression
@@ -174,14 +245,119 @@ func (m *Meta) GetExpression() (token.Value, error) {
 				True:       expr.True,
 				AccessType: m.DeclaredAccessType,
 			}
+			fmt.Println(m.DeclarationMap)
 			return m.DeclarationMap[m.DeclaredName], nil
 		}
+
+	// case token.LThan:
+	// 	fmt.Println("wtf")
+	// 	fmt.Println("current", m.CurrentToken)
+	// 	fmt.Println("next", m.NextToken)
+	// 	m.Shift()
+	// 	term, err := m.GetTerm()
+	// 	if err != nil {
+	// 		return token.Value{}, err
+	// 	}
+	// 	return term, nil
+
+	case token.Increment:
+		fmt.Println("woah increment brah")
+		// term, err := m.AddOperands()
 
 	default:
 		return m.GetTerm()
 	}
 
 	return token.Value{}, errors.Errorf("default %+v", m.NextToken)
+}
+
+// GetKeyword ...
+func (m *Meta) GetKeyword() (token.Value, error) {
+	fmt.Println("GetKeyword")
+
+	switch m.NextToken.Value.String {
+	// TODO: this needs to be reworked
+	case token.For:
+		fmt.Println("formap", m.DeclarationMap)
+		fmt.Println("found a for loop22")
+		temp := *m
+		meta := &temp
+		fmt.Println("formap22", meta.DeclarationMap)
+		meta.LastMeta = m
+		fmt.Println("heyy7y22", (*meta.LastMeta).DeclarationMap)
+		meta.DeclarationMap = map[string]token.Value{}
+		fmt.Println("heyyyy22", (*meta.LastMeta).DeclarationMap)
+		meta.Shift()
+		fmt.Println("m.Next", m.NextToken)
+		// Might have to change this to GetExpression
+		value, err := meta.GetStatement()
+		if err != nil {
+			return token.Value{}, err
+		}
+		fmt.Println("value11", value)
+		fmt.Println("last", meta.LastToken)
+		fmt.Println("current", meta.CurrentToken)
+		fmt.Println("next", meta.NextToken)
+
+		value2, err := meta.GetExpression()
+		if err != nil {
+			return token.Value{}, err
+		}
+		fmt.Println("value22", value2)
+		fmt.Println("last", meta.LastToken)
+		fmt.Println("current", meta.CurrentToken)
+		fmt.Println("next", meta.NextToken)
+		// m.Shift()
+
+		value3, err := meta.GetExpression()
+		if err != nil {
+			return token.Value{}, err
+		}
+		fmt.Println("value3", value3)
+
+		stepAmount, err := m.SubOperands(value3, value)
+		if err != nil {
+			return token.Value{}, err
+		}
+		fmt.Println("step", stepAmount)
+
+		// Need to open up the block
+		// we might try doing something
+		// where the new meta stuff is in the function
+		// block, err := meta.CheckBlock()
+		// if err != nil {
+		// 	return token.Value{}, err
+		// }
+		// fmt.Println("block", block)
+		// os.Exit(9)
+		meta.Shift()
+		fmt.Println(meta.NextToken)
+		block, err := Semantic([]token.Token{
+			meta.NextToken,
+		})
+		if err != nil {
+			return token.Value{}, err
+		}
+		fmt.Println("block", block)
+
+		// Swap the scopes back when the for loop is out of execution
+		meta.DeclarationMap = m.DeclarationMap
+		meta.InheritedMap = m.InheritedMap
+		*m = *meta
+
+		return token.Value{
+			Type: token.For,
+			True: map[string]token.Value{
+				"start": value,
+				"end":   value2,
+				"step":  stepAmount,
+				"block": block[0],
+				"check": "",
+			},
+		}, nil
+	}
+
+	return token.Value{}, nil
 }
 
 // GetStatement ...
@@ -204,7 +380,29 @@ func (m *Meta) GetStatement() (token.Value, error) {
 		m.Shift()
 		return m.GetExpression()
 
+	case token.Keyword:
+		keyword, err := m.GetKeyword()
+		if err != nil {
+			return token.Value{}, err
+		}
+		m.Shift()
+		return keyword, nil
+
+	case token.Separator:
+		fmt.Println("should we have gotten this here?")
+		os.Exit(9)
+
+	case token.SecOp:
+		switch m.CurrentToken.Value.Type {
+		case "sub":
+			// TODO: need to do something here for negative expression
+
+		default:
+			return token.Value{}, errors.New("Unrecognized position for operator")
+		}
+
 	default:
+		// TODO: this causes infinite loops when you cant parse
 		fmt.Println("hey its me, the default", m.NextToken)
 	}
 
@@ -229,6 +427,7 @@ func (m *Meta) CheckBlock() (token.Value, error) {
 		m.DeclaredAccessType = ""
 		m.DeclaredActingType = ""
 		m.DeclaredValue = token.Value{}
+		fmt.Println("m.DeclarationMap", m.DeclarationMap)
 
 		if m.NextToken == (token.Token{}) {
 			return token.Value{

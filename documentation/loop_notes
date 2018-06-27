@@ -1,0 +1,9 @@
+notes about loops
+
+loop token:
+  - start
+  - end           # I don't think we need this, but w/e
+  - step
+  - accessor      # This should be added to the previous scope, but such that it is not accessible (obscured)
+  - check
+ 

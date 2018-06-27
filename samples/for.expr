@@ -1,2 +1,7 @@
-int a = 77 + 8
-b := 3 * 3 + 3 * 3 - 3
+int a = 8 
+bool t = false
+b := 3 + (a / 2) * 2
+
+for i := 2, i < 10+a, i++ {
+  f := 8
+}

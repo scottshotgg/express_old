@@ -39,7 +39,7 @@ type Meta struct {
 	DeclaredValue      token.Value
 	DeclaredAccessType string
 
-	// LastMeta *Meta
+	LastMeta *Meta
 }
 
 // ParseVar parses a variable declaration and other statements related to type later on. Anything in the form of <type><ident>
@@ -295,6 +295,10 @@ func (m *Meta) ParseGroup() token.Token {
 				},
 			}
 
+		case token.PriOp:
+			fallthrough
+		case token.SecOp:
+			fallthrough
 		case token.Literal:
 			groupTokens = append(groupTokens, current)
 
@@ -334,7 +338,7 @@ func (m *Meta) ParseGroup() token.Token {
 			groupTokens = append(groupTokens, m.ParseArray())
 
 		default:
-			fmt.Println("ERROR: Unrecognized group token\n", current, m)
+			fmt.Printf("ERROR: Unrecognized group token; current: %+v\n meta: %+v\n\n", current, m)
 			os.Exit(8)
 		}
 	}
@@ -521,8 +525,11 @@ func (m *Meta) ParseBlock() token.Token {
 				})
 
 			default:
-				fmt.Println("wtf peek following group", peek, m)
-				os.Exit(8)
+				fmt.Printf("%+v\n%+v", m.CurrentToken, m.NextToken)
+				blockTokens = append(blockTokens, m.CurrentToken)
+				// fmt.Printf("wtf peek following group %+v \n%+v\n", peek, m)
+				// os.Exit(8)
+
 			}
 
 		case token.Hash:
