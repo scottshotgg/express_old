@@ -10,8 +10,7 @@ import (
 )
 
 // MultOperands returns the addition of two operands based on their type
-func (m *Meta) MultOperands(left, right token.Value) (token.Value, error) {
-	var valueToken token.Value
+func (m *Meta) MultOperands(left, right token.Value) (valueToken token.Value, err error) {
 	leftType := left.Type
 	rightType := right.Type
 	fmt.Println("firsttime", left, right, leftType, rightType)
@@ -50,7 +49,6 @@ func (m *Meta) MultOperands(left, right token.Value) (token.Value, error) {
 			left.Type = left.Acting
 			right.Type = right.Acting
 
-			var err error
 			valueToken, err = m.MultOperands(left, right)
 			if err != nil {
 				fmt.Println("ERROR", err)
@@ -89,7 +87,7 @@ func (m *Meta) MultOperands(left, right token.Value) (token.Value, error) {
 	// 	fmt.Println(left, right)
 	// }
 
-	err := errors.New("Could not perform MultOperands on operands")
+	err = errors.New("Could not perform MultOperands on operands")
 	fmt.Println(err, left, right, leftType, rightType)
 	return token.Value{}, err
 }

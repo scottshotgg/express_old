@@ -6,6 +6,10 @@ import (
 	"github.com/scottshotgg/Express/token"
 )
 
+// func TestNewMeta(t *testing.T) {
+
+// }
+
 func TestShiftWithWS(t *testing.T) {
 	tokens := []token.Token{
 		token.TokenMap[" "],

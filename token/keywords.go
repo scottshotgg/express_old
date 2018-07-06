@@ -25,4 +25,12 @@ var KeywordMap = map[string]Token{
 			String: "for",
 		},
 	},
+	"if": Token{
+		ID:   9,
+		Type: "KEYWORD",
+		Value: Value{
+			Type:   "keyword", // TODO: what to put here?
+			String: "if",
+		},
+	},
 }

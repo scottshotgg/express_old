@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/scottshotgg/Express/c"
 	"github.com/scottshotgg/Express/lex"
 	"github.com/scottshotgg/Express/parse"
 	program "github.com/scottshotgg/Express/program"
@@ -31,6 +32,9 @@ var (
 func main() {
 	// TODO: add some flags later
 	// parseFlags()
+
+	// collector.DoShit()
+	// collector.DoShit2()
 
 	argLen := len(os.Args)
 
@@ -98,18 +102,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println(t)
-
-	// for _, tok := range t.True.([]token.Value) {
-	// 	fmt.Println("token: ", tok)
-	// }
+	for _, tok := range t[0].True.([]token.Value) {
+		fmt.Println("token: ", tok)
+	}
 
 	// // for _, t := range p.Tokens["semantic"] {
 	// // 	fmt.Println(t)
 	// // }
 
 	// // llvm.Translate(p.Tokens["semantic"])
-	// c.Translate(p.Tokens["semantic"])
+	c.Translate(t)
 
 	// fmt.Println(string(semanticTokensJSON))
 

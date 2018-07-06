@@ -13,6 +13,7 @@ type (
 		Type       string
 		Acting     string
 		True       interface{}
+		OpMap      interface{}
 		String     string
 		AccessType string
 	}
@@ -102,6 +103,7 @@ const (
 	PrivateAccessType = "private"
 
 	For = "for"
+	If  = "if"
 )
 
 func init() {

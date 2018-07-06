@@ -1,0 +1,6 @@
+TODO for tonight:
+
+  - restructure the data to be more extensible
+    - go with the token2 format of implementation
+
+  - a NewMeta function to clean up

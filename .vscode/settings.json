@@ -31,7 +31,9 @@
     "system_error": "cpp",
     "type_traits": "cpp",
     "tuple": "cpp",
-    "utility": "cpp"
+    "utility": "cpp",
+    "__tree": "cpp",
+    "map": "cpp"
   },
   "todo-tree.flat": false
 }

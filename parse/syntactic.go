@@ -8,6 +8,159 @@ import (
 	"github.com/scottshotgg/Express/token"
 )
 
+type VariableType int
+
+const (
+	UNRECOGNIZED VariableType = iota
+	INT
+	FLOAT
+	BOOL
+	STRING
+	VAR // I think we should prevent var from being a multiple things
+	ARRAY
+	OBJECT // Use this for a hashmap
+	POINTER
+)
+
+type AccessType int
+
+const (
+	PRIVATE AccessType = iota
+	PUBLIC
+)
+
+type Variable struct {
+	Name       string
+	Type       VariableType
+	ActingType VariableType
+	Value      interface{}
+	AccessType AccessType
+}
+
+func NewVariable(name string, value interface{}, variableType VariableType) *Variable {
+	return &Variable{
+		Name:       name,
+		Type:       variableType,
+		ActingType: variableType,
+		Value:      value,
+		AccessType: PRIVATE,
+	}
+}
+
+type Scope map[string]*Variable
+
+type Scope2 map[string]*Variable
+
+// type Meta struct {
+// 	// global       Scope
+// 	currentScope Scope
+// 	scopes       *Stack
+
+// 	currentVariable *Variable
+// 	variableStack   *Stack
+// }
+
+func (m *Meta2) DeclareVariable() error {
+	// TODO: check all the required fields and matching types, etc
+	m.currentScope[m.currentVariable.Name] = m.currentVariable
+
+	return nil
+}
+
+func (m *Meta2) NewVariable() *Variable {
+	m.variableStack.Push(m.currentVariable)
+	m.currentVariable = &Variable{}
+	return m.currentVariable
+}
+
+func (m *Meta2) Height() int {
+	return m.scopes.Length() + 1
+}
+
+func (m *Meta2) GetVariable(variableName string) (*Variable, bool) {
+	// Might have problems with the pointer here
+	if variable, ok := m.currentScope[variableName]; ok {
+		return variable, true
+	}
+
+	currentScope := m.currentScope
+	defer func(m *Meta2, current Scope) {
+		m.currentScope = current
+	}(m, currentScope)
+
+	pop, err := m.ExitScope()
+	defer m.scopes.Push(pop)
+	if err != nil {
+		return nil, false
+	}
+
+	return m.GetVariable(variableName)
+}
+
+func (m *Meta2) NewScope() {
+	m.scopes.Push(m.currentScope)
+	m.currentScope = Scope{}
+}
+
+func (m *Meta2) NewInheritedScope() {
+	// Just push the current scope there, leave all the vars in the scope
+	// since Variable is a pointer, it should set it if we set it in a
+	// lower scope
+	m.scopes.Push(m.currentScope)
+}
+
+func (m *Meta2) ExitScope() (Scope, error) {
+	scope, err := m.scopes.Pop()
+	if err != nil {
+		// TODO:
+		return Scope{}, err
+	}
+
+	m.currentScope = scope.(Scope)
+	return m.currentScope, nil
+}
+
+// // Shift operates the parses like a 3-bit (3 token) SIPO shift register consuming the tokens until the end of the line
+// func (p *Parser) Shift() {
+// 	p.LastLexeme = p.CurrentLexeme
+// 	p.CurrentLexeme = p.NextLexeme
+
+// 	for {
+// 		if p.Index < p.length {
+// 			// if p.IgnoreWhiteSpace && p.source[p.Index].Type == "space" {
+// 			if p.source[p.Index].Type == "space" {
+// 				p.Index++
+// 				continue
+// 			}
+
+// 			p.NextLexeme = p.source[p.Index]
+// 			p.Index++
+// 			return
+// 		}
+
+// 		p.NextLexeme = lex.Lexeme{}
+// 		return
+// 	}
+// }
+
+// // ShiftWithWS operates the parses like a 3-bit (3 token) SIPO shift register consuming the tokens until the end of the line
+// func (p *Parser) ShiftWithWS() {
+// 	p.LastLexeme = p.CurrentLexeme
+// 	p.CurrentLexeme = p.source[p.Index]
+
+// 	for {
+// 		if p.Index+1 < p.length {
+// 			p.Index++
+
+// 			p.NextLexeme = p.source[p.Index]
+// 			return
+// 		}
+
+// 		p.NextLexeme = lex.Lexeme{}
+// 		return
+// 	}
+// }
+
 // Meta holds information about the current parse
 type Meta struct {
 	AppendDeclarations bool
@@ -40,7 +193,47 @@ type Meta struct {
 	DeclaredAccessType string
 
 	LastMeta *Meta
+	// MetaStack stack.stack
+
+	Meta2 *Meta2
 }
+
+type Meta2 struct {
+	// global       Scope
+	currentScope Scope
+	scopes       *Stack
+
+	currentVariable *Variable
+	variableStack   *Stack
+}
+
+func NewMeta2() *Meta2 {
+	globalScope := Scope{
+		"test": NewVariable("test", "test", STRING),
+	}
+
+	return &Meta2{
+		currentScope:    globalScope,
+		scopes:          NewStack(),
+		currentVariable: &Variable{},
+		variableStack:   NewStack(),
+	}
+}
+
+// NewMeta ...
+func NewMeta(tokens []token.Token) *Meta { //, err error) {
+	m := &Meta{
+		Tokens: tokens,
+	}
+	m.Shift()
+	m.Shift()
+
+	return m
+}
+
+// func NewMetaFromMeta(tokens []token.Token) (*Meta, error) {
+// 	return &Meta{}
+// }
 
 // ParseVar parses a variable declaration and other statements related to type later on. Anything in the form of <type><ident>
 func (m *Meta) ParseVar(t token.Token) error {

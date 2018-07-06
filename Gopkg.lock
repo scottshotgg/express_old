@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  branch = "master"
+  name = "github.com/golang-collections/collections"
+  packages = ["stack"]
+  revision = "604e922904d35e97f98a774db7881f049cd8d970"
+
+[[projects]]
   name = "github.com/llir/llvm"
   packages = [
     "internal/enc",
@@ -24,6 +30,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "046b50b7b1639e31ec793d76251279d3f3d8b67b5e992fe0cacd8876e6d5d61a"
+  inputs-digest = "28c47a0f90e26e65639b94075cb4bb677af26554a193075435ce6a53264a850b"
   solver-name = "gps-cdcl"
   solver-version = 1
