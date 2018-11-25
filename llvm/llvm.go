@@ -19,13 +19,8 @@ func boolToInt(value bool) int64 {
 	return 0
 }
 
-func stringToArray(value string) []constant.Constant {
-	vArray := []constant.Constant{}
-	for _, char := range value {
-		vArray = append(vArray, constant.NewInt(int64(char), types.I32))
-	}
-
-	return vArray
+func stringToArray(value string) *constant.CharArray {
+	return constant.NewCharArray([]byte(value))
 }
 
 // Translate ...
@@ -42,7 +37,7 @@ func Translate(tokens []token.Token) {
 	// 	types.NewPointer(types.NewInt(32)),
 	// }...))
 
-	mainFunc := m.NewFunction("main", types.I32)
+	mainFunc := m.NewFunc("main", types.I32)
 	mainBlock := mainFunc.NewBlock("main")
 
 	// iPtr := mainBlock.NewAlloca(types.NewPointer(types.I32))
@@ -67,7 +62,7 @@ func Translate(tokens []token.Token) {
 			fmt.Println("found an int")
 			alloc := mainBlock.NewAlloca(types.I32)
 			// alloc.SetName(t.Value.Name)
-			mainBlock.NewStore(constant.NewInt(int64(value), types.I32), alloc)
+			mainBlock.NewStore(constant.NewInt(types.I32, int64(value)), alloc)
 
 		case token.FloatType:
 			value, ok := t.Value.True.(float64)
@@ -78,7 +73,7 @@ func Translate(tokens []token.Token) {
 			fmt.Println("found a float")
 			alloc := mainBlock.NewAlloca(types.Double)
 			// alloc.SetName(t.Value.Name)
-			mainBlock.NewStore(constant.NewFloat(value, types.Double), alloc)
+			mainBlock.NewStore(constant.NewFloat(types.Double, value), alloc)
 
 		case token.BoolType:
 			value, ok := t.Value.True.(bool)
@@ -89,7 +84,7 @@ func Translate(tokens []token.Token) {
 			fmt.Println("found a bool")
 			alloc := mainBlock.NewAlloca(types.I8)
 			// alloc.SetName(t.Value.Name)
-			mainBlock.NewStore(constant.NewInt(boolToInt(value), types.I8), alloc)
+			mainBlock.NewStore(constant.NewInt(types.I8, boolToInt(value)), alloc)
 
 		case token.StringType:
 			value, ok := t.Value.True.(string)
@@ -98,9 +93,9 @@ func Translate(tokens []token.Token) {
 				os.Exit(8)
 			}
 			fmt.Println("found a string")
-			alloc := mainBlock.NewAlloca(types.NewArray(types.I32, int64(len(value))))
+			alloc := mainBlock.NewAlloca(types.NewArray(uint64(len(value)), types.I32))
 			// alloc.SetName(t.Value.Name)
-			mainBlock.NewStore(constant.NewArray(stringToArray(value)...), alloc)
+			mainBlock.NewStore(stringToArray(value), alloc)
 
 		case token.VarType:
 			fmt.Println("hmm... not sure if varType should be in here", t)
@@ -124,7 +119,7 @@ func Translate(tokens []token.Token) {
 						fmt.Println("ERROR: not able to assert type")
 						os.Exit(8)
 					}
-					fields = append(fields, constant.NewInt(int64(value), types.I32))
+					fields = append(fields, constant.NewInt(types.I32, int64(value)))
 					fieldTypes = append(fieldTypes, types.I32)
 
 				case token.FloatType:
@@ -133,7 +128,7 @@ func Translate(tokens []token.Token) {
 						fmt.Println("ERROR: not able to assert type")
 						os.Exit(8)
 					}
-					fields = append(fields, constant.NewFloat(value, types.Double))
+					fields = append(fields, constant.NewFloat(types.Double, value))
 					fieldTypes = append(fieldTypes, types.Double)
 
 				case token.BoolType:
@@ -142,7 +137,7 @@ func Translate(tokens []token.Token) {
 						fmt.Println("ERROR: not able to assert type")
 						os.Exit(8)
 					}
-					fields = append(fields, constant.NewInt(boolToInt(value), types.I8))
+					fields = append(fields, constant.NewInt(types.I8, boolToInt(value)))
 					fieldTypes = append(fieldTypes, types.I8)
 
 				case token.StringType:
@@ -151,8 +146,8 @@ func Translate(tokens []token.Token) {
 						fmt.Println("ERROR: not able to assert type", t)
 						os.Exit(8)
 					}
-					fields = append(fields, constant.NewArray(stringToArray(value)...))
-					fieldTypes = append(fieldTypes, types.NewArray(types.I32, int64(len(value))))
+					fields = append(fields, stringToArray(value))
+					fieldTypes = append(fieldTypes, types.NewArray(uint64(len(value)), types.I32))
 
 				case token.VarType:
 					fmt.Println("hmm... not sure if varType should be in here", t)
@@ -176,8 +171,9 @@ func Translate(tokens []token.Token) {
 	// TODO: will have to do something to figure out where this goes next
 	mainBlock.NewBr(returnBlock)
 
-	returnBlock.NewRet(constant.NewInt(0, types.I32))
-	mainFunc.AppendBlock(returnBlock)
+	returnBlock.NewRet(constant.NewInt(types.I32, 0))
+	returnBlock.Parent = mainFunc
+	mainFunc.Blocks = append(mainFunc.Blocks, returnBlock)
 
 	fmt.Println()
 	fmt.Println(m)
